@@ -1,0 +1,139 @@
+rexql_title = rexQL - GraphQL API
+rexql_description = GraphQL API für REDAXO CMS
+rexql_overview = Übersicht
+
+# Navigation
+rexql_nav_overview = Übersicht
+rexql_nav_config = Konfiguration  
+rexql_nav_permissions = Berechtigungen
+rexql_nav_playground = Playground
+rexql_nav_docs = Dokumentation
+rexql_config = Konfiguration
+rexql_permissions = Berechtigungen
+rexql_endpoint = API Endpoint
+rexql_docs = Dokumentation
+rexql_save = Speichern
+rexql_cancel = Abbrechen
+
+# Configuration
+rexql_config_title = GraphQL Konfiguration
+rexql_config_general = Allgemeine Einstellungen
+rexql_config_endpoint_enabled = API Endpoint aktivieren
+rexql_config_proxy_enabled = Backend-Proxy aktivieren
+rexql_config_require_authentication = Authentifizierung erforderlich
+rexql_config_allow_public_dev = Öffentlicher Zugriff im Dev-Modus
+rexql_config_rate_limit = Rate Limit (Anfragen pro Minute)
+rexql_config_max_query_depth = Maximale Query-Tiefe
+rexql_config_advanced = Erweiterte Einstellungen
+rexql_config_introspection_enabled = Introspection aktivieren
+rexql_config_debug_mode = Debug-Modus
+rexql_config_cors_origins = CORS: Erlaubte Origins (einer pro Zeile)
+rexql_config_cors_methods = CORS: Erlaubte HTTP-Methoden
+rexql_config_cors_headers = CORS: Erlaubte Headers
+rexql_config_saved = Konfiguration gespeichert
+rexql_config_cache_queries = API-Ergebnisse zwischenspeichern
+rexql_config_allowed_tables = Verfügbare Tabellen
+
+# Tabellen-Konfiguration
+rexql_config_tables = Tabellen-Konfiguration
+rexql_config_core_tables = Core-Tabellen
+rexql_config_yform_tables = YForm-Tabellen
+rexql_config_custom_tables = Benutzerdefinierte Tabellen
+rexql_config_select_all = Alle auswählen
+
+# Berechtigungen
+rexql_permissions_title = API-Schlüssel Verwaltung
+rexql_permissions_add = API-Schlüssel hinzufügen
+rexql_permissions_name = Name
+rexql_permissions_api_key = API-Schlüssel
+rexql_permissions_permissions = Berechtigungen
+rexql_permissions_rate_limit = Usage Limit
+rexql_permissions_active = Aktiv
+rexql_permissions_last_used = Zuletzt verwendet
+rexql_permissions_usage_count = Usage
+rexql_permissions_created = Erstellt
+rexql_permissions_generate_key = Schlüssel generieren
+rexql_permissions_updated = Aktualisiert
+rexql_permissions_type = Typ
+rexql_permissions_created_by = Von
+rexql_permissions_not_used = Nicht verwendet
+
+# API Key Types
+rexql_key_type_standard = Standard API-Schlüssel
+rexql_key_type_standard_desc = Klassischer API-Schlüssel für Server-zu-Server Kommunikation
+rexql_key_type_public_private = Public/Private Key Pair
+rexql_key_type_public_private_desc = Sicherer Proxy-Modus mit öffentlichem und privatem Schlüssel
+rexql_key_type_domain_restricted = Domain-beschränkter Schlüssel
+rexql_key_type_domain_restricted_desc = Standard-Schlüssel mit Domain/IP-Beschränkungen
+
+# Domain Restrictions
+rexql_permissions_domain_restrictions = Domain-Beschränkungen
+rexql_permissions_allowed_domains = Erlaubte Domains
+rexql_permissions_allowed_ips = Erlaubte IP-Adressen
+rexql_permissions_https_only = Nur HTTPS
+
+# Endpoint
+rexql_endpoint_title = GraphQL Playground
+rexql_endpoint_url = Endpoint URL
+rexql_endpoint_not_enabled = Der API Endpoint ist nicht aktiviert.
+
+# Dokumentation
+rexql_docs_title = API Dokumentation
+rexql_docs_intro = Einführung in die rexQL GraphQL API
+
+# Meldungen
+rexql_config_saved = Konfiguration gespeichert
+rexql_api_key_created = API-Schlüssel erstellt
+rexql_api_key_updated = API-Schlüssel aktualisiert
+rexql_api_key_deleted = API-Schlüssel gelöscht
+rexql_error_invalid_api_key = Ungültiger API-Schlüssel
+rexql_error_rate_limit_exceeded = Rate Limit überschritten
+rexql_error_permission_denied = Zugriff verweigert
+rexql_error_query_too_deep = Query zu tief verschachtelt
+rexql_error_endpoint_disabled = GraphQL API ist nicht aktiviert
+rexql_error_domain_not_allowed = Domain nicht erlaubt
+rexql_error_ip_not_allowed = IP-Adresse nicht erlaubt
+rexql_error_https_required = HTTPS erforderlich
+rexql_error_authentication_required = Authentifizierung erforderlich
+
+# Dev Mode
+rexql_dev_mode_notice = Entwicklungsmodus aktiv - API ohne Authentifizierung zugänglich
+rexql_dev_mode_warning = Achtung: In Produktion sollte die Authentifizierung aktiviert sein
+
+# Playground
+rexql_playground_title = GraphQL Playground
+rexql_playground_desc = Testen Sie GraphQL Queries interaktiv
+rexql_playground_query_examples = Beispiel-Queries
+rexql_playground_api_key_placeholder = Ihr API-Schlüssel
+rexql_playground_execute = Query ausführen
+
+# Public Headless CMS
+rexql_config_cors = CORS Konfiguration
+rexql_config_cors_allowed_origins = CORS: Erlaubte Origins (einer pro Zeile)
+rexql_config_cors_allowed_methods = CORS: Erlaubte HTTP-Methoden
+rexql_config_cors_allowed_headers = CORS: Erlaubte Headers (einer pro Zeile)
+rexql_config_public_headless_cms = Public Headless CMS
+rexql_config_public_headless_cms_desc = Optimiert für öffentliche Frontend-Apps ohne Benutzer-Authentifizierung
+rexql_config_headless_security_notice = Sicherheit durch Domain-/IP-Beschränkungen und CORS
+
+# API Key Management
+rexql_key_for_headless_cms = Für Public Headless CMS
+rexql_key_for_headless_cms_desc = Domain-beschränkter Schlüssel ohne Benutzer-Authentifizierung
+rexql_key_generate_for_domain = Schlüssel für Domain generieren
+rexql_key_domain_placeholder = z.B. app.ihre-domain.de
+rexql_key_ip_placeholder = z.B. 192.168.1.100
+
+# Missing permission strings
+rexql_permissions_add_key = API-Schlüssel hinzufügen
+rexql_public_private_key_created = Public/Private Schlüsselpaar erstellt
+rexql_domain_restricted_key_created = Domain-beschränkter API-Schlüssel erstellt
+rexql_permissions_all = Alle
+rexql_permissions_inactive = Inaktiv
+rexql_permissions_functions = Funktionen
+rexql_permissions_delete_confirm = Wirklich löschen?
+rexql_permissions_edit_key = API-Schlüssel bearbeiten
+
+# Additional permission strings
+rexql_key_type = API-Schlüssel Typ
+rexql_permissions_allowed_domains_hint = Geben Sie erlaubte Domains ein (eine pro Zeile)
+rexql_permissions_allowed_ips_hint = Geben Sie erlaubte IP-Adressen ein (eine pro Zeile)

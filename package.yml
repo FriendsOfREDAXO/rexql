@@ -1,0 +1,42 @@
+package: rexql
+version: '0.0.8'
+license: MIT
+author: 'Friends Of REDAXO'
+supportpage: 'https://github.com/FriendsOfREDAXO/rexql/issues'
+
+page:
+  title: 'translate:rexql_title'
+  icon: rex-icon fa-exchange-alt
+  subpages:
+    overview:
+      title: 'Übersicht'
+      perm: uploader[bulk_rework]
+    config:
+      title: 'translate:rexql_config'
+      perm: rexql[config]
+    permissions:
+      title: 'translate:rexql_permissions'
+      perm: rexql[permissions]
+    apiinfo:
+      title: 'API Information'
+      perm: rexql[apiinfo]
+    playground:
+      title: 'Playground'
+      perm: rexql[playground]
+    docs:
+      title: 'translate:rexql_docs'
+      icon: rex-icon fa-info-circle
+
+requires:
+  redaxo: '^5.17.0'
+  php:
+    version: '^8.1'
+  packages:
+    yform: '^4.0'
+    url: '^2'
+    yrewrite: '^2.7'
+
+installer_ignore:
+  - .tools
+  - node_modules
+  - assets-src

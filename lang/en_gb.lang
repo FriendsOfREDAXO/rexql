@@ -1,0 +1,139 @@
+rexql_title = rexQL - GraphQL API
+rexql_description = GraphQL API for REDAXO CMS
+rexql_overview = Overview
+
+# Navigation
+rexql_nav_overview = Overview
+rexql_nav_config = Configuration  
+rexql_nav_permissions = Permissions
+rexql_nav_playground = Playground
+rexql_nav_docs = Documentation
+rexql_config = Configuration
+rexql_permissions = Permissions
+rexql_endpoint = API Endpoint
+rexql_docs = Documentation
+rexql_save = Save
+rexql_cancel = Cancel
+
+# Configuration
+rexql_config_title = GraphQL Configuration
+rexql_config_general = General Settings
+rexql_config_endpoint_enabled = Enable API Endpoint
+rexql_config_proxy_enabled = Enable Backend Proxy
+rexql_config_require_authentication = Require Authentication
+rexql_config_allow_public_dev = Allow Public Access in Dev Mode
+rexql_config_rate_limit = Rate Limit (requests per minute)
+rexql_config_max_query_depth = Maximum Query Depth
+rexql_config_advanced = Advanced Settings
+rexql_config_introspection_enabled = Enable Introspection
+rexql_config_debug_mode = Debug Mode
+rexql_config_cors_origins = CORS: Allowed Origins (one per line)
+rexql_config_cors_methods = CORS: Allowed HTTP Methods
+rexql_config_cors_headers = CORS: Allowed Headers
+rexql_config_saved = Configuration saved
+rexql_config_cache_queries = Cache API Results
+rexql_config_allowed_tables = Available Tables
+
+# Table Configuration
+rexql_config_tables = Table Configuration
+rexql_config_core_tables = Core Tables
+rexql_config_yform_tables = YForm Tables
+rexql_config_custom_tables = Custom Tables
+rexql_config_select_all = Select All
+
+# Permissions
+rexql_permissions_title = API Key Management
+rexql_permissions_add = Add API Key
+rexql_permissions_add_key = Add API Key
+rexql_permissions_name = Name
+rexql_permissions_api_key = API Key
+rexql_permissions_permissions = Permissions
+rexql_permissions_rate_limit = Rate Limit
+rexql_permissions_active = Active
+rexql_permissions_last_used = Last Used
+rexql_permissions_usage_count = Usage
+rexql_permissions_created = Created
+rexql_permissions_generate_key = Generate Key
+rexql_permissions_updated = Updated
+rexql_permissions_type = Type
+rexql_permissions_created_by = By
+rexql_permissions_not_used = Not used
+
+# Missing permission strings
+rexql_permissions_all = All
+rexql_permissions_inactive = Inactive
+rexql_permissions_functions = Functions
+rexql_permissions_delete_confirm = Really delete?
+rexql_permissions_edit_key = Edit API Key
+
+# API Key Types
+rexql_key_type_standard = Standard API Key
+rexql_key_type_standard_desc = Classic API key for server-to-server communication
+rexql_key_type_public_private = Public/Private Key Pair
+rexql_key_type_public_private_desc = Secure proxy mode with public and private key
+rexql_key_type_domain_restricted = Domain-Restricted Key
+rexql_key_type_domain_restricted_desc = Standard key with domain/IP restrictions
+
+# Domain Restrictions
+rexql_permissions_domain_restrictions = Domain Restrictions
+rexql_permissions_allowed_domains = Allowed Domains
+rexql_permissions_allowed_ips = Allowed IP Addresses
+rexql_permissions_https_only = HTTPS Only
+
+# Endpoint
+rexql_endpoint_title = GraphQL Playground
+rexql_endpoint_url = Endpoint URL
+rexql_endpoint_not_enabled = The API endpoint is not enabled.
+
+# Documentation
+rexql_docs_title = API Documentation
+rexql_docs_intro = Introduction to the rexQL GraphQL API
+
+# Messages
+rexql_config_saved = Configuration saved
+rexql_api_key_created = API key created
+rexql_api_key_updated = API key updated
+rexql_api_key_deleted = API key deleted
+rexql_public_private_key_created = Public/Private key pair created
+rexql_domain_restricted_key_created = Domain-restricted API key created
+rexql_error_invalid_api_key = Invalid API key
+rexql_error_rate_limit_exceeded = Rate limit exceeded
+rexql_error_permission_denied = Permission denied
+rexql_error_query_too_deep = Query too deeply nested
+rexql_error_endpoint_disabled = GraphQL API is not enabled
+rexql_error_domain_not_allowed = Domain not allowed
+rexql_error_ip_not_allowed = IP address not allowed
+rexql_error_https_required = HTTPS required
+rexql_error_authentication_required = Authentication required
+
+# Dev Mode
+rexql_dev_mode_notice = Development mode active - API accessible without authentication
+rexql_dev_mode_warning = Warning: Authentication should be enabled in production
+
+# Playground
+rexql_playground_title = GraphQL Playground
+rexql_playground_desc = Test GraphQL queries interactively
+rexql_playground_query_examples = Example Queries
+rexql_playground_api_key_placeholder = Your API Key
+rexql_playground_execute = Execute Query
+
+# Public Headless CMS
+rexql_config_cors = CORS Configuration
+rexql_config_cors_allowed_origins = CORS: Allowed Origins (one per line)
+rexql_config_cors_allowed_methods = CORS: Allowed HTTP Methods
+rexql_config_cors_allowed_headers = CORS: Allowed Headers (one per line)
+rexql_config_public_headless_cms = Public Headless CMS
+rexql_config_public_headless_cms_desc = Optimized for public frontend apps without user authentication
+rexql_config_headless_security_notice = Security through domain/IP restrictions and CORS
+
+# API Key Management
+rexql_key_for_headless_cms = For Public Headless CMS
+rexql_key_for_headless_cms_desc = Domain-restricted key without user authentication
+rexql_key_generate_for_domain = Generate Key for Domain
+rexql_key_domain_placeholder = e.g. app.your-domain.com
+rexql_key_ip_placeholder = e.g. 192.168.1.100
+
+# Additional permission strings
+rexql_key_type = API Key Type
+rexql_permissions_allowed_domains_hint = Enter allowed domains (one per line)
+rexql_permissions_allowed_ips_hint = Enter allowed IP addresses (one per line)

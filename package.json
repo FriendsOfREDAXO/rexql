@@ -1,0 +1,25 @@
+{
+  "name": "rexql-assets",
+  "version": "0.0.8",
+  "description": "Asset build for rexQL Addon",
+  "scripts": {
+    "version:sync": "node scripts/sync-version.js",
+    "prebuild": "npm run version:sync",
+    "build": "vite build",
+    "build:css": "vite build --mode css",
+    "build:js": "vite build --mode js",
+    "watch": "vite build --watch",
+    "dev": "vite build --watch",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-legacy": "^5.0.0",
+    "autoprefixer": "^10.4.0",
+    "js-yaml": "^4.1.0",
+    "postcss": "^8.4.0",
+    "postcss-cli": "^10.0.0",
+    "terser": "^5.0.0",
+    "vite": "^5.0.0"
+  },
+  "private": true
+}
