@@ -1,41 +1,108 @@
 /* rexQL Addon Styles - Scoped to rexQL pages only */
-/* Uses REDAXO be_style theme variables for proper light/dark mode support */
+/* Uses REDAXO be_style theme variables + system preferences for comprehensive theming */
 
-/* Light theme (default) variables - scoped to rexQL pages */
+/* Base variables - scoped to rexQL pages */
 .rex-page-rexql {
   --rexql-font-mono: 'Monaco', 'Consolas', 'Courier New', monospace;
-  --rexql-bg-light: #202b35;
-  --rexql-bg-code: #26323f;
-  --rexql-border-color: #2e3b4a;
   --rexql-border-radius: 4px;
-  --rexql-text-color: rgba(255, 255, 255, 0.75);
-  --rexql-text-muted: rgba(255, 255, 255, 0.45);
-  --rexql-text-light: rgba(255, 255, 255, 0.75);
-  --rexql-status-success: #0d6a38;
-  --rexql-status-danger: #801919;
-  --rexql-primary: #4b9ad9;
-  --rexql-primary-light: #0b304d;
-  --rexql-warning: #78641e;
-  --rexql-warning-light: #1a3332;
 }
 
-/* Dark theme variables - scoped to rexQL pages */
-body.rex-theme-light {
+/* Light theme colors */
+.rex-page-rexql {
+  --rexql-light-bg-light: #f3f6fb;
+  --rexql-light-bg-code: #dfe3e9;
+  --rexql-light-border-color: #9ca5b2;
+  --rexql-light-text-color: #324050;
+  --rexql-light-text-muted: #9ca5b2;
+  --rexql-light-text-light: #324050;
+  --rexql-light-status-success: #5bb585;
+  --rexql-light-status-danger: #d9534f;
+  --rexql-light-primary: #4b9ad9;
+  --rexql-light-primary-light: #dbedf7;
+  --rexql-light-warning: #f0ad4e;
+  --rexql-light-warning-light: #fbffd6;
+}
+
+/* Dark theme colors */
+.rex-page-rexql {
+  --rexql-dark-bg-light: #202b35;
+  --rexql-dark-bg-code: #26323f;
+  --rexql-dark-border-color: #2e3b4a;
+  --rexql-dark-text-color: rgba(255, 255, 255, 0.75);
+  --rexql-dark-text-muted: rgba(255, 255, 255, 0.45);
+  --rexql-dark-text-light: rgba(255, 255, 255, 0.75);
+  --rexql-dark-status-success: #0d6a38;
+  --rexql-dark-status-danger: #801919;
+  --rexql-dark-primary: #4b9ad9;
+  --rexql-dark-primary-light: #0b304d;
+  --rexql-dark-warning: #78641e;
+  --rexql-dark-warning-light: #1a3332;
+}
+
+/* Apply theme based on system preference (default) */
+@media (prefers-color-scheme: light) {
   .rex-page-rexql {
-    --rexql-bg-light: #f3f6fb;
-    --rexql-bg-code: #dfe3e9;
-    --rexql-border-color: #9ca5b2;
-    --rexql-border-radius: 4px;
-    --rexql-text-color: #324050;
-    --rexql-text-muted: #9ca5b2;
-    --rexql-text-light: #324050;
-    --rexql-status-success: #5bb585;
-    --rexql-status-danger: #d9534f;
-    --rexql-primary: #4b9ad9;
-    --rexql-primary-light: #dbedf7;
-    --rexql-warning: #f0ad4e;
-    --rexql-warning-light: #fbffd6;
+    --rexql-bg-light: var(--rexql-light-bg-light);
+    --rexql-bg-code: var(--rexql-light-bg-code);
+    --rexql-border-color: var(--rexql-light-border-color);
+    --rexql-text-color: var(--rexql-light-text-color);
+    --rexql-text-muted: var(--rexql-light-text-muted);
+    --rexql-text-light: var(--rexql-light-text-light);
+    --rexql-status-success: var(--rexql-light-status-success);
+    --rexql-status-danger: var(--rexql-light-status-danger);
+    --rexql-primary: var(--rexql-light-primary);
+    --rexql-primary-light: var(--rexql-light-primary-light);
+    --rexql-warning: var(--rexql-light-warning);
+    --rexql-warning-light: var(--rexql-light-warning-light);
   }
+}
+
+@media (prefers-color-scheme: dark), (prefers-color-scheme: no-preference) {
+  .rex-page-rexql {
+    --rexql-bg-light: var(--rexql-dark-bg-light);
+    --rexql-bg-code: var(--rexql-dark-bg-code);
+    --rexql-border-color: var(--rexql-dark-border-color);
+    --rexql-text-color: var(--rexql-dark-text-color);
+    --rexql-text-muted: var(--rexql-dark-text-muted);
+    --rexql-text-light: var(--rexql-dark-text-light);
+    --rexql-status-success: var(--rexql-dark-status-success);
+    --rexql-status-danger: var(--rexql-dark-status-danger);
+    --rexql-primary: var(--rexql-dark-primary);
+    --rexql-primary-light: var(--rexql-dark-primary-light);
+    --rexql-warning: var(--rexql-dark-warning);
+    --rexql-warning-light: var(--rexql-dark-warning-light);
+  }
+}
+
+/* REDAXO explicit theme overrides - takes precedence over system preferences */
+body.rex-theme-light .rex-page-rexql {
+  --rexql-bg-light: var(--rexql-light-bg-light);
+  --rexql-bg-code: var(--rexql-light-bg-code);
+  --rexql-border-color: var(--rexql-light-border-color);
+  --rexql-text-color: var(--rexql-light-text-color);
+  --rexql-text-muted: var(--rexql-light-text-muted);
+  --rexql-text-light: var(--rexql-light-text-light);
+  --rexql-status-success: var(--rexql-light-status-success);
+  --rexql-status-danger: var(--rexql-light-status-danger);
+  --rexql-primary: var(--rexql-light-primary);
+  --rexql-primary-light: var(--rexql-light-primary-light);
+  --rexql-warning: var(--rexql-light-warning);
+  --rexql-warning-light: var(--rexql-light-warning-light);
+}
+
+body.rex-theme-dark .rex-page-rexql {
+  --rexql-bg-light: var(--rexql-dark-bg-light);
+  --rexql-bg-code: var(--rexql-dark-bg-code);
+  --rexql-border-color: var(--rexql-dark-border-color);
+  --rexql-text-color: var(--rexql-dark-text-color);
+  --rexql-text-muted: var(--rexql-dark-text-muted);
+  --rexql-text-light: var(--rexql-dark-text-light);
+  --rexql-status-success: var(--rexql-dark-status-success);
+  --rexql-status-danger: var(--rexql-dark-status-danger);
+  --rexql-primary: var(--rexql-dark-primary);
+  --rexql-primary-light: var(--rexql-dark-primary-light);
+  --rexql-warning: var(--rexql-dark-warning);
+  --rexql-warning-light: var(--rexql-dark-warning-light);
 }
 
 /* Playground Styles - scoped to rexQL pages */
@@ -75,9 +142,9 @@ body.rex-theme-light {
   margin-bottom: 15px;
   padding: 15px;
   text-align: center;
-  background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  background: var(--rexql-bg-light);
+  border: 1px solid var(--rexql-border-color);
+  border-radius: var(--rexql-border-radius);
 }
 
 .rex-page-rexql .rexql-stats .tile h5 {
@@ -89,17 +156,18 @@ body.rex-theme-light {
 }
 
 .rex-page-rexql .rexql-stats .tile .value {
-  color: #333;
+  color: var(--rexql-text-color);
   font-weight: bold;
   font-size: 24px;
 }
 
 .rex-page-rexql .rexql-api-key {
   padding: 4px 8px;
+  color: var(--rexql-text-color);
   font-size: 12px;
-  font-family: 'Monaco', 'Consolas', 'Courier New', monospace;
-  background-color: #f8f8f8;
-  border: 1px solid #ddd;
+  font-family: var(--rexql-font-mono);
+  background-color: var(--rexql-bg-code);
+  border: 1px solid var(--rexql-border-color);
   border-radius: 3px;
 }
 
@@ -110,38 +178,41 @@ body.rex-theme-light {
 }
 
 .rex-page-rexql .rexql-status-active {
-  color: #5cb85c;
+  color: var(--rexql-status-success);
   font-weight: bold;
 }
 
 .rex-page-rexql .rexql-status-inactive {
-  color: #d9534f;
+  color: var(--rexql-status-danger);
   font-weight: bold;
 }
 
 .rex-page-rexql .rexql-endpoint-url {
   padding: 10px;
+  color: var(--rexql-text-color);
   font-size: 13px;
-  font-family: 'Monaco', 'Consolas', 'Courier New', monospace;
+  font-family: var(--rexql-font-mono);
   word-break: break-all;
-  background-color: #f8f8f8;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  background-color: var(--rexql-bg-code);
+  border: 1px solid var(--rexql-border-color);
+  border-radius: var(--rexql-border-radius);
 }
 
 .rex-page-rexql .rexql-docs pre {
   padding: 12px;
   overflow-x: auto;
-  background-color: #f8f8f8;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  color: var(--rexql-text-color);
+  background-color: var(--rexql-bg-code);
+  border: 1px solid var(--rexql-border-color);
+  border-radius: var(--rexql-border-radius);
 }
 
 .rex-page-rexql .rexql-docs code {
   padding: 2px 4px;
+  color: var(--rexql-text-color);
   font-size: 12px;
-  font-family: 'Monaco', 'Consolas', 'Courier New', monospace;
-  background-color: #f8f8f8;
+  font-family: var(--rexql-font-mono);
+  background-color: var(--rexql-bg-code);
   border-radius: 3px;
 }
 
@@ -149,21 +220,21 @@ body.rex-theme-light {
   margin-top: 30px;
   margin-bottom: 15px;
   padding-bottom: 5px;
-  color: #333;
-  border-bottom: 1px solid #eee;
+  color: var(--rexql-text-color);
+  border-bottom: 1px solid var(--rexql-border-color);
 }
 
 .rex-page-rexql .rexql-docs h4 {
   margin-top: 25px;
   margin-bottom: 10px;
-  color: #555;
+  color: var(--rexql-text-muted);
 }
 
 .rex-page-rexql .rexql-config-table-list {
   max-height: 300px;
   overflow-y: auto;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  border: 1px solid var(--rexql-border-color);
+  border-radius: var(--rexql-border-radius);
 }
 
 .rex-page-rexql .rexql-config-table-list .checkbox {
