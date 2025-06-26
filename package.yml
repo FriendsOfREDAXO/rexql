@@ -31,10 +31,6 @@ requires:
   redaxo: '^5.17.0'
   php:
     version: '^8.1'
-  packages:
-    yform: '^4.0'
-    url: '^2'
-    yrewrite: '^2.7'
 
 installer_ignore:
   - .tools
