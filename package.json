@@ -13,13 +13,13 @@
     "preview": "vite preview"
   },
   "devDependencies": {
-    "@vitejs/plugin-legacy": "^5.0.0",
+    "@vitejs/plugin-legacy": "^7.0.0",
     "autoprefixer": "^10.4.0",
     "js-yaml": "^4.1.0",
     "postcss": "^8.4.0",
     "postcss-cli": "^10.0.0",
     "terser": "^5.0.0",
-    "vite": "^5.0.0"
+    "vite": "^7.0.0"
   },
   "private": true
 }
