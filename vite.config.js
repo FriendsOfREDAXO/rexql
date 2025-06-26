@@ -78,18 +78,7 @@ export default defineConfig({
 
   // CSS preprocessing
   css: {
-    postcss: {
-      plugins: [
-        require('autoprefixer')({
-          overrideBrowserslist: [
-            '> 1%',
-            'last 2 versions',
-            'Firefox ESR',
-            'not dead'
-          ]
-        })
-      ]
-    }
+    postcss: './postcss.config.js'
   },
 
   // Development server (if needed)

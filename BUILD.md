@@ -2,6 +2,16 @@
 
 This directory contains the Vite.js build configuration for rexQL addon assets.
 
+## Build System
+
+**Vite 6.x**: Modern, fast build system with:
+
+- ES modules support
+- Fast HMR (Hot Module Replacement)
+- Modern JavaScript & CSS processing
+- Automatic dependency bundling
+- PostCSS integration with Autoprefixer
+
 ## Structure
 
 ```
@@ -69,13 +79,17 @@ The build generates optimized assets in the `assets/` directory:
 - **postcss.config.js**: PostCSS configuration for CSS processing
 - **package.json**: npm scripts and dependencies
 
-## Notes
+## Dependencies
 
-- The build targets modern browsers (ES2017+)
-- CSS is processed with Autoprefixer for browser compatibility
-- External dependencies (jQuery, Bootstrap) are not bundled
-- Source maps are disabled for production builds
-- Files are minified using Terser
+Current build dependencies (latest stable versions):
+
+- **Vite 6.x**: Modern build system
+- **PostCSS 8.x**: CSS processing
+- **Autoprefixer**: Browser compatibility
+- **Terser**: JavaScript minification
+- **js-yaml**: YAML parsing for version sync
+
+All dependencies are maintained at their latest stable versions for security and performance.
 
 ## Version Management
 
