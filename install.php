@@ -13,15 +13,6 @@ if (!class_exists('GraphQL\\GraphQL')) {
   $error = 'Das Paket "webonyx/graphql-php" ist nicht installiert. Führen Sie "composer install" im Addon-Verzeichnis aus.';
 }
 
-// Überprüfen ob benötigte Addons verfügbar sind
-$requiredAddons = ['yform', 'url', 'yrewrite'];
-foreach ($requiredAddons as $addon) {
-  if (!rex_addon::get($addon)->isAvailable()) {
-    $error .= $error ? '<br>' : '';
-    $error .= 'Das Addon "' . $addon . '" ist nicht verfügbar, aber für rexQL erforderlich.';
-  }
-}
-
 // Datenbankstruktur erstellen
 if (!$error) {
   // API Keys Tabelle
