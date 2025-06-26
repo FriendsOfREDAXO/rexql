@@ -6,18 +6,42 @@ on:
       - published
 
 jobs:
-  redaxo_publish:
+  build-release-and-redaxo_publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - if: hashFiles('composer.json') != ''
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
-      - if: hashFiles('composer.json') != ''
-        uses: ramsey/composer-install@v2
+          tools: composer
+
+      - name: Install Composer dependencies
+        run: composer install --no-dev --optimize-autoloader --no-interaction
+
+      - name: Create release archive
+        run: |
+          # Create ZIP file directly, excluding unwanted files
+          zip -r release-with-vendors.zip . \
+            -x "*.git*" \
+            -x "*node_modules*" \
+            -x "*.env*" \
+            -x "*.log" \
+            -x "*phpunit.xml*" \
+            -x "*tests/*" \
+            -x "*.DS_Store" \
+            -x "*Thumbs.db" \
+            -x "*.editorconfig" \
+            -x "*docker-compose*"
+
+      - name: Upload release asset
+        uses: softprops/action-gh-release@v1
         with:
-          composer-options: '--no-dev'
+          files: release-with-vendors.zip
+          name: ${{ github.event.repository.name }}-${{ github.event.release.tag_name }}-with-vendors.zip
+
       - uses: FriendsOfREDAXO/installer-action@v1
         with:
           myredaxo-username: ${{ secrets.MYREDAXO_USERNAME }}
