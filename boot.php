@@ -7,6 +7,8 @@
  * @psalm-scope-this rex_addon
  */
 
+use FriendsOfRedaxo\RexQL\Cache;
+
 require_once __DIR__ . '/vendor/autoload.php';
 
 \rex_fragment::addDirectory(\rex_path::src('fragments'));
@@ -51,12 +53,12 @@ if (!$this->getConfig('endpoint_url')) {
 // Extensions registrieren
 rex_extension::register('PACKAGES_INCLUDED', function () {
   // Schema Cache löschen bei Strukturänderungen
-  rex_extension::register('ART_UPDATED', 'FriendsOfRedaxo\\RexQL\\Cache::invalidateSchema');
-  rex_extension::register('ART_DELETED', 'FriendsOfRedaxo\\RexQL\\Cache::invalidateSchema');
-  rex_extension::register('CAT_UPDATED', 'FriendsOfRedaxo\\RexQL\\Cache::invalidateSchema');
-  rex_extension::register('CAT_DELETED', 'FriendsOfRedaxo\\RexQL\\Cache::invalidateSchema');
-  rex_extension::register('YFORM_DATA_UPDATED', 'FriendsOfRedaxo\\RexQL\\Cache::invalidateSchema');
-  rex_extension::register('YFORM_DATA_DELETED', 'FriendsOfRedaxo\\RexQL\\Cache::invalidateSchema');
+  rex_extension::register('ART_UPDATED', Cache::invalidateSchema(...));
+  rex_extension::register('ART_DELETED', Cache::invalidateSchema(...));
+  rex_extension::register('CAT_UPDATED', Cache::invalidateSchema(...));
+  rex_extension::register('CAT_DELETED', Cache::invalidateSchema(...));
+  rex_extension::register('YFORM_DATA_UPDATED', Cache::invalidateSchema(...));
+  rex_extension::register('YFORM_DATA_DELETED', Cache::invalidateSchema(...));
 });
 
 // Backend-Assets nur im Backend laden
