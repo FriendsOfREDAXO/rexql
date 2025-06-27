@@ -5,7 +5,20 @@
  * 
  * Ermöglicht sichere Frontend-Integration ohne Exposition der API-Schlüssel
  */
-class rex_api_rexql_proxy extends rex_api_function
+
+namespace FriendsOfRedaxo\RexQL\Api;
+
+use Exception;
+use FriendsOfRedaxo\RexQL\ApiKey;
+use FriendsOfRedaxo\RexQL\Utility;
+use rex;
+use rex_addon;
+use rex_api_exception;
+use rex_api_function;
+use rex_api_result;
+use rex_response;
+
+class Proxy extends rex_api_function
 {
   protected $published = true;
 
@@ -32,23 +45,23 @@ class rex_api_rexql_proxy extends rex_api_function
       }
 
       // API Key anhand Public Key finden
-      $apiKey = FriendsOfRedaxo\RexQL\ApiKey::findByKey($publicKey);
+      $apiKey = ApiKey::findByKey($publicKey);
       if (!$apiKey || $apiKey->getKeyType() !== 'public_private') {
         throw new rex_api_exception('Ungültiger Public Key');
       }
 
       // Domain-Validierung
-      if (!FriendsOfRedaxo\RexQL\Utility::validateDomainRestrictions($apiKey)) {
+      if (!Utility::validateDomainRestrictions($apiKey)) {
         throw new rex_api_exception('Domain nicht erlaubt');
       }
 
       // IP-Validierung
-      if (!FriendsOfRedaxo\RexQL\Utility::validateIpRestrictions($apiKey)) {
+      if (!Utility::validateIpRestrictions($apiKey)) {
         throw new rex_api_exception('IP-Adresse nicht erlaubt');
       }
 
       // HTTPS-Validierung
-      if (!FriendsOfRedaxo\RexQL\Utility::validateHttpsRestrictions($apiKey)) {
+      if (!Utility::validateHttpsRestrictions($apiKey)) {
         throw new rex_api_exception('HTTPS erforderlich');
       }
 
@@ -98,7 +111,7 @@ class rex_api_rexql_proxy extends rex_api_function
   private function validateCustomSessionToken(string $token): bool
   {
     // Verwende das neue Auth-System
-    $sessionData = rex_api_rexql_auth::validateSessionToken($token);
+    $sessionData = Auth::validateSessionToken($token);
     return $sessionData !== null;
   }
 

@@ -3,7 +3,25 @@
 /**
  * GraphQL API Endpoint für rexQL
  */
-class rex_api_rexql_graphql extends rex_api_function
+
+namespace FriendsOfRedaxo\RexQL\Api;
+use Exception;
+use FriendsOfRedaxo\RexQL\ApiKey;
+use FriendsOfRedaxo\RexQL\Cache;
+use FriendsOfRedaxo\RexQL\QueryLogger;
+use FriendsOfRedaxo\RexQL\SchemaBuilder;
+use FriendsOfRedaxo\RexQL\Utility;
+use rex;
+use rex_addon;
+use rex_api_exception;
+use rex_api_function;
+use rex_api_result;
+use rex_clang;
+use rex_i18n;
+use rex_logger;
+use rex_response;
+
+class GraphQl extends rex_api_function
 {
   /**
    * API ist öffentlich zugänglich (Frontend)
@@ -81,15 +99,15 @@ class rex_api_rexql_graphql extends rex_api_function
       }
 
       // Schema erstellen
-      $schema = FriendsOfRedaxo\RexQL\Cache::getSchema(function () {
-        $builder = new FriendsOfRedaxo\RexQL\SchemaBuilder();
+      $schema = Cache::getSchema(function () {
+        $builder = new SchemaBuilder();
         return $builder->buildSchema();
       });
 
       // Sicherstellen, dass Schema ein GraphQL\Type\Schema Objekt ist
       if (!($schema instanceof \GraphQL\Type\Schema)) {
         // Wenn Schema ein Array ist, neu erstellen
-        $builder = new FriendsOfRedaxo\RexQL\SchemaBuilder();
+        $builder = new SchemaBuilder();
         $schema = $builder->buildSchema();
       }
 
@@ -102,7 +120,7 @@ class rex_api_rexql_graphql extends rex_api_function
 
       // Query ausführen
       $queryHash = md5($query . serialize($variables));
-      $result = FriendsOfRedaxo\RexQL\Cache::getQueryResult($queryHash, function () use ($schema, $query, $variables, $operationName, $context) {
+      $result = Cache::getQueryResult($queryHash, function () use ($schema, $query, $variables, $operationName, $context) {
         return \GraphQL\GraphQL::executeQuery(
           $schema,
           $query,
@@ -123,7 +141,7 @@ class rex_api_rexql_graphql extends rex_api_function
       $memoryUsage = memory_get_usage(true) - $startMemory;
 
       // Query protokollieren
-      FriendsOfRedaxo\RexQL\QueryLogger::log(
+      QueryLogger::log(
         $apiKeyId,
         $query,
         $variables,
@@ -158,7 +176,7 @@ class rex_api_rexql_graphql extends rex_api_function
       $memoryUsage = memory_get_usage(true) - $startMemory;
 
       // Fehler protokollieren
-      FriendsOfRedaxo\RexQL\QueryLogger::log(
+      QueryLogger::log(
         $apiKeyId,
         $_POST['query'] ?? $_GET['query'] ?? '',
         null,
@@ -187,7 +205,7 @@ class rex_api_rexql_graphql extends rex_api_function
   /**
    * Authentifizierung validieren
    */
-  private function validateAuthentication(): FriendsOfRedaxo\RexQL\ApiKey
+  private function validateAuthentication(): ApiKey
   {
     // API Key aus verschiedenen Quellen versuchen
     $apiKeyValue =
@@ -197,7 +215,7 @@ class rex_api_rexql_graphql extends rex_api_function
       throw new rex_api_exception('API-Schlüssel erforderlich');
     }
 
-    $apiKey = FriendsOfRedaxo\RexQL\ApiKey::findByKey($apiKeyValue);
+    $apiKey = ApiKey::findByKey($apiKeyValue);
     if (!$apiKey) {
       throw new rex_api_exception(rex_i18n::msg('rexql_error_invalid_api_key'));
     }
@@ -313,24 +331,24 @@ class rex_api_rexql_graphql extends rex_api_function
   /**
    * Domain-Restrictions validieren
    */
-  private function validateDomainRestrictions(?FriendsOfRedaxo\RexQL\ApiKey $apiKey): bool
+  private function validateDomainRestrictions(?ApiKey $apiKey): bool
   {
     if (!$apiKey) {
       return true; // Keine API Key = keine Restrictions
     }
 
     // Domain-Validierung
-    if (!FriendsOfRedaxo\RexQL\Utility::validateDomainRestrictions($apiKey)) {
+    if (!Utility::validateDomainRestrictions($apiKey)) {
       return false;
     }
 
     // IP-Validierung
-    if (!FriendsOfRedaxo\RexQL\Utility::validateIpRestrictions($apiKey)) {
+    if (!Utility::validateIpRestrictions($apiKey)) {
       return false;
     }
 
     // HTTPS-Validierung
-    if (!FriendsOfRedaxo\RexQL\Utility::validateHttpsRestrictions($apiKey)) {
+    if (!Utility::validateHttpsRestrictions($apiKey)) {
       return false;
     }
 

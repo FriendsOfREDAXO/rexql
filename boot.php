@@ -7,6 +7,10 @@
  * @psalm-scope-this rex_addon
  */
 
+use FriendsOfRedaxo\RexQL\Api\Auth;
+use FriendsOfRedaxo\RexQL\Api\GraphQl;
+use FriendsOfRedaxo\RexQL\Api\Proxy;
+
 require_once __DIR__ . '/vendor/autoload.php';
 
 \rex_fragment::addDirectory(\rex_path::src('fragments'));
@@ -17,9 +21,9 @@ rex_perm::register('rexql[graphql]', null, rex_perm::OPTIONS);
 rex_perm::register('rexql[admin]', 'rexql[graphql]');
 
 // API-Klassen registrieren
-rex_api_function::register('rexql_graphql', 'rex_api_rexql_graphql');
-rex_api_function::register('rexql_proxy', 'rex_api_rexql_proxy');
-rex_api_function::register('rexql_auth', 'rex_api_rexql_auth');
+rex_api_function::register('rexql_graphql', GraphQl::class);
+rex_api_function::register('rexql_proxy', Proxy::class);
+rex_api_function::register('rexql_auth', Auth::class);
 
 // Standardkonfiguration setzen
 if (!$this->hasConfig()) {
