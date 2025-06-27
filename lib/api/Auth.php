@@ -1,11 +1,21 @@
 <?php
 
+namespace FriendsOfRedaxo\RexQL\Api;
+
+use Exception;
+use rex_addon;
+use rex_api_exception;
+use rex_api_function;
+use rex_api_result;
+use rex_file;
+use rex_response;
+
 /**
  * Einfaches Session Token System für rexQL
  * 
  * Für Test-Apps und einfache Frontend-Anwendungen
  */
-class rex_api_rexql_auth extends rex_api_function
+class Auth extends rex_api_function
 {
   protected $published = true;
 
