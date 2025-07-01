@@ -135,7 +135,10 @@ class SchemaBuilder
         'type' => $type,
         'description' => $description,
         'resolve' => function ($root, $args, $context, $info) use ($column) {
-          return $root[$column] ?? null;
+          if (!is_array($root) || !isset($root[$column])) {
+            return null;
+          }
+          return $root[$column];
         }
       ];
 
@@ -466,6 +469,10 @@ class SchemaBuilder
   {
     $sqlType = strtolower($sqlType);
 
+    // Enum muss vor int geprüft werden, da enum-Werte 'int' enthalten können
+    if (str_contains($sqlType, 'enum(')) {
+      return Type::string(); // Enum als String zurückgeben
+    }
     if (str_contains($sqlType, 'int')) {
       return Type::int();
     }
