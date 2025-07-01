@@ -149,25 +149,8 @@ class rex_api_rexql_graphql extends rex_api_function
         $errorString
       );
 
-      // Response aufbereiten - Error-Handling für Response
-      $responseErrors = null;
-      if (!empty($result->errors)) {
-        $responseErrors = [];
-        foreach ($result->errors as $error) {
-          if (is_object($error) && method_exists($error, 'getMessage')) {
-            $responseErrors[] = ['message' => $error->getMessage()];
-          } elseif (is_array($error) && isset($error['message'])) {
-            $responseErrors[] = ['message' => $error['message']];
-          } else {
-            $responseErrors[] = ['message' => (string) $error];
-          }
-        }
-      }
-
-      $response = [
-        'errors' => $responseErrors,
-        ...$result->toArray()
-      ];
+      // Response aufbereiten - Original errors von GraphQL nutzen
+      $response = $result->toArray();
 
       // Debug-Informationen hinzufügen wenn aktiviert
       if ($addon->getConfig('debug_mode', false)) {
