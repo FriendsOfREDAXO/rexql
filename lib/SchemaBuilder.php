@@ -8,6 +8,7 @@ use GraphQL\Type\Schema;
 use rex_addon;
 use rex_sql;
 use rex_yform_manager_table;
+use rex_logger;
 
 /**
  * GraphQL Schema Builder für REDAXO
@@ -54,6 +55,9 @@ class SchemaBuilder
       }
 
       $typeName = $this->getTypeName($table);
+      if (rex_addon::get('rexql')->getConfig('debug_mode', false)) {
+        rex_logger::factory()->info("RexQL: Creating type '{$typeName}' for table '{$table}'");
+      }
       $this->types[$typeName] = $this->createTypeFromTable($table, $config);
       $this->queries[$this->getQueryName($table)] = $this->createQueryField($table, $typeName);
       $this->queries[$this->getListQueryName($table)] = $this->createListQueryField($table, $typeName);
@@ -113,19 +117,30 @@ class SchemaBuilder
     $fields = [];
     while ($sql->hasNext()) {
       $column = $sql->getValue('Field');
-      $type = $this->mapSqlTypeToGraphQL($sql->getValue('Type'));
+      $sqlType = $sql->getValue('Type');
+      $type = $this->mapSqlTypeToGraphQL($sqlType);
+
+      // Beschreibung aus Config holen, falls vorhanden
+      $description = $config['fields'][$column]['description'] ?? ucfirst(str_replace('_', ' ', $column));
 
       $fields[$column] = [
         'type' => $type,
-        'description' => $config['fields'][$column]['description'] ?? null
+        'description' => $description,
+        'resolve' => function ($root, $args, $context, $info) use ($column) {
+          return $root[$column] ?? null;
+        }
       ];
 
       $sql->next();
     }
 
+    if (empty($fields)) {
+      throw new \Exception("No fields found for table {$table}");
+    }
+
     return new ObjectType([
       'name' => $this->getTypeName($table),
-      'description' => $config['description'] ?? null,
+      'description' => $config['description'] ?? "Tabelle {$table}",
       'fields' => $fields
     ]);
   }
@@ -171,12 +186,29 @@ class SchemaBuilder
    */
   private function createQueryField(string $table, string $typeName): array
   {
+    $args = [];
+
+    // Spezielle Argumente für rex_config
+    if ($table === 'rex_config') {
+      $args = [
+        'namespace' => ['type' => Type::string()],
+        'key' => ['type' => Type::string()],
+        'where' => ['type' => Type::string()]
+      ];
+    } else {
+      // Standard-Argumente für andere Tabellen
+      $args = [
+        'id' => ['type' => Type::int()],
+        'status' => ['type' => Type::int(), 'defaultValue' => 1],
+        'clang_id' => ['type' => Type::int(), 'defaultValue' => 1],
+        'where' => ['type' => Type::string()],
+        'order_by' => ['type' => Type::string(), 'defaultValue' => 'id DESC']
+      ];
+    }
+
     return [
       'type' => $this->types[$typeName],
-      'args' => [
-        'id' => ['type' => Type::nonNull(Type::int())],
-        'clang_id' => ['type' => Type::int()]
-      ],
+      'args' => $args,
       'resolve' => function ($root, $args) use ($table) {
         return $this->resolveRecord($table, $args);
       }
@@ -188,14 +220,33 @@ class SchemaBuilder
    */
   private function createListQueryField(string $table, string $typeName): array
   {
-    return [
-      'type' => Type::listOf($this->types[$typeName]),
-      'args' => [
-        'limit' => ['type' => Type::int(), 'defaultValue' => 10],
+    $args = [];
+
+    // Spezielle Argumente für rex_config
+    if ($table === 'rex_config') {
+      $args = [
+        'namespace' => ['type' => Type::string()],
+        'key' => ['type' => Type::string()],
+        'limit' => ['type' => Type::int(), 'defaultValue' => 50],
+        'offset' => ['type' => Type::int(), 'defaultValue' => 0],
+        'where' => ['type' => Type::string()],
+        'order_by' => ['type' => Type::string(), 'defaultValue' => 'namespace ASC, `key` ASC']
+      ];
+    } else {
+      // Standard-Argumente für andere Tabellen
+      $args = [
+        'limit' => ['type' => Type::int()],
+        'status' => ['type' => Type::int()],
         'offset' => ['type' => Type::int(), 'defaultValue' => 0],
         'clang_id' => ['type' => Type::int()],
-        'where' => ['type' => Type::string()]
-      ],
+        'where' => ['type' => Type::string()],
+        'order_by' => ['type' => Type::string(), 'defaultValue' => 'id DESC']
+      ];
+    }
+
+    return [
+      'type' => Type::listOf($this->types[$typeName]),
+      'args' => $args,
       'resolve' => function ($root, $args) use ($table) {
         return $this->resolveRecords($table, $args);
       }
@@ -228,7 +279,8 @@ class SchemaBuilder
       'args' => [
         'limit' => ['type' => Type::int(), 'defaultValue' => 10],
         'offset' => ['type' => Type::int(), 'defaultValue' => 0],
-        'where' => ['type' => Type::string()]
+        'where' => ['type' => Type::string()],
+        'order_by' => ['type' => Type::string(), 'defaultValue' => 'id DESC']
       ],
       'resolve' => function ($root, $args) use ($table) {
         return $this->resolveYFormRecords($table, $args);
@@ -242,15 +294,42 @@ class SchemaBuilder
   private function resolveRecord(string $table, array $args): ?array
   {
     $sql = rex_sql::factory();
-    $where = 'id = :id';
-    $params = ['id' => $args['id']];
+    $where = 'WHERE 1=1';
+    $params = [];
 
-    if (isset($args['clang_id'])) {
-      $where .= ' AND clang_id = :clang_id';
-      $params['clang_id'] = $args['clang_id'];
+    // Spezielle Behandlung für rex_config
+    if ($table === 'rex_config') {
+      if (isset($args['namespace'])) {
+        $where .= ' AND namespace = :namespace';
+        $params['namespace'] = $args['namespace'];
+      }
+      if (isset($args['key'])) {
+        $where .= ' AND `key` = :key';
+        $params['key'] = $args['key'];
+      }
+    } else {
+      // Standard-Tabellen mit ID
+      if (isset($args['id'])) {
+        $where .= ' AND id = :id';
+        $params['id'] = $args['id'];
+      }
+
+      if (isset($args['clang_id'])) {
+        $where .= ' AND clang_id = :clang_id';
+        $params['clang_id'] = $args['clang_id'];
+      }
+
+      if (isset($args['status'])) {
+        $where .= ' AND status = :status';
+        $params['status'] = $args['status'];
+      }
     }
 
-    $sql->setQuery("SELECT * FROM $table WHERE $where", $params);
+    if (isset($args['where'])) {
+      $where .= ' AND (' . $args['where'] . ')';
+    }
+
+    $sql->setQuery("SELECT * FROM $table $where LIMIT 1", $params);
 
     return $sql->getRows() > 0 ? $sql->getArray()[0] : null;
   }
@@ -261,23 +340,82 @@ class SchemaBuilder
   private function resolveRecords(string $table, array $args): array
   {
     $sql = rex_sql::factory();
-    $where = '1=1';
+    $where = 'WHERE 1=1';
+    $order_by = 'id DESC';
     $params = [];
 
-    if (isset($args['clang_id'])) {
-      $where .= ' AND clang_id = :clang_id';
-      $params['clang_id'] = $args['clang_id'];
+    // Debug logging
+    if (rex_addon::get('rexql')->getConfig('debug_mode', false)) {
+      rex_logger::factory()->debug("RexQL: Resolving records for table '{$table}' with args: " . json_encode($args));
+    }
+
+    // Spezielle Behandlung für rex_config
+    if ($table === 'rex_config') {
+      if (isset($args['namespace'])) {
+        $where .= ' AND namespace = :namespace';
+        $params['namespace'] = $args['namespace'];
+      }
+      if (isset($args['key'])) {
+        $where .= ' AND `key` = :key';
+        $params['key'] = $args['key'];
+      }
+      $order_by = $args['order_by'] ?? 'namespace ASC, `key` ASC';
+    } else {
+      // Standard-Tabellen
+      if (isset($args['clang_id'])) {
+        $where .= ' AND clang_id = :clang_id';
+        $params['clang_id'] = $args['clang_id'];
+      }
+
+      if (isset($args['status'])) {
+        $where .= ' AND status = :status';
+        $params['status'] = $args['status'];
+      }
+
+      if (isset($args['order_by'])) {
+        $order_by = $args['order_by'];
+      }
     }
 
     if (isset($args['where'])) {
       $where .= ' AND (' . $args['where'] . ')';
     }
 
-    $limit = 'LIMIT ' . $args['offset'] . ', ' . $args['limit'];
+    $limit = '';
+    if (isset($args['limit'])) {
+      if (!isset($args['offset'])) {
+        $args['offset'] = 0; // Default offset if not provided
+      }
+      $limit = 'LIMIT ' . $args['offset'] . ', ' . $args['limit'];
+    } else {
+      // Set default limit for rex_config to prevent memory issues
+      if ($table === 'rex_config') {
+        $limit = 'LIMIT 0, 50'; // Default limit of 50 for rex_config
+      }
+    }
 
-    $sql->setQuery("SELECT * FROM $table WHERE $where ORDER BY id DESC $limit", $params);
+    $queryString = "SELECT * FROM $table $where ORDER BY $order_by $limit";
 
-    return $sql->getArray();
+    if (rex_addon::get('rexql')->getConfig('debug_mode', false)) {
+      rex_logger::factory()->debug("RexQL: Executing query: $queryString with params: " . json_encode($params));
+    }
+
+    $sql->setQuery($queryString, $params);
+
+    try {
+      $result = $sql->getArray();
+
+      if (rex_addon::get('rexql')->getConfig('debug_mode', false)) {
+        rex_logger::factory()->debug("RexQL: Successfully resolved " . count($result) . " records for table '{$table}'");
+      }
+
+      return $result;
+    } catch (\Exception $e) {
+      if (rex_addon::get('rexql')->getConfig('debug_mode', false)) {
+        rex_logger::factory()->error("RexQL: Error resolving records for table '{$table}': " . $e->getMessage());
+      }
+      throw $e;
+    }
   }
 
   /**
@@ -318,17 +456,25 @@ class SchemaBuilder
    */
   private function mapSqlTypeToGraphQL(string $sqlType): Type
   {
+    $sqlType = strtolower($sqlType);
+
     if (str_contains($sqlType, 'int')) {
       return Type::int();
     }
-    if (str_contains($sqlType, 'decimal') || str_contains($sqlType, 'float')) {
+    if (str_contains($sqlType, 'decimal') || str_contains($sqlType, 'float') || str_contains($sqlType, 'double')) {
       return Type::float();
     }
-    if (str_contains($sqlType, 'tinyint(1)')) {
+    if (str_contains($sqlType, 'tinyint(1)') || str_contains($sqlType, 'boolean') || str_contains($sqlType, 'bool')) {
       return Type::boolean();
     }
-    if (str_contains($sqlType, 'text') || str_contains($sqlType, 'varchar')) {
+    if (str_contains($sqlType, 'text') || str_contains($sqlType, 'varchar') || str_contains($sqlType, 'char')) {
       return Type::string();
+    }
+    if (str_contains($sqlType, 'datetime') || str_contains($sqlType, 'timestamp') || str_contains($sqlType, 'date') || str_contains($sqlType, 'time')) {
+      return Type::string();
+    }
+    if (str_contains($sqlType, 'json')) {
+      return Type::string(); // JSON als String zurückgeben
     }
 
     return Type::string(); // Fallback
@@ -381,7 +527,26 @@ class SchemaBuilder
    */
   private function getTypeName(string $table): string
   {
-    return str_replace(['rex_', '_'], ['', ''], ucwords($table, '_'));
+    // Spezielle Behandlung für Core-Tabellen
+    $coreTypeNames = [
+      'rex_config' => 'RexConfig',
+      'rex_article' => 'RexArticle',
+      'rex_article_slice' => 'RexArticleSlice',
+      'rex_clang' => 'RexClang',
+      'rex_media' => 'RexMedia'
+    ];
+
+    if (isset($coreTypeNames[$table])) {
+      return $coreTypeNames[$table];
+    }
+
+    // Fallback für andere Tabellen
+    $parts = explode('_', $table);
+    $name = '';
+    foreach ($parts as $part) {
+      $name .= ucfirst($part);
+    }
+    return $name;
   }
 
   /**
@@ -408,6 +573,14 @@ class SchemaBuilder
   private function getCoreTableConfig(): array
   {
     return [
+      'rex_config' => [
+        'description' => 'REDAXO Konfiguration',
+        'fields' => [
+          'namespace' => ['description' => 'Config-Namespace'],
+          'key' => ['description' => 'Schlüssel'],
+          'value' => ['description' => 'Wert']
+        ]
+      ],
       'rex_article' => [
         'description' => 'REDAXO Artikel',
         'fields' => [
