@@ -122,6 +122,22 @@ class rex_api_rexql_graphql extends rex_api_function
       $executionTime = (microtime(true) - $startTime) * 1000; // in ms
       $memoryUsage = memory_get_usage(true) - $startMemory;
 
+      // Error-Handling für das Logging
+      $errorString = null;
+      if (!empty($result->errors)) {
+        $errorMessages = [];
+        foreach ($result->errors as $error) {
+          if (is_object($error) && method_exists($error, 'getMessage')) {
+            $errorMessages[] = $error->getMessage();
+          } elseif (is_array($error) && isset($error['message'])) {
+            $errorMessages[] = $error['message'];
+          } else {
+            $errorMessages[] = (string) $error;
+          }
+        }
+        $errorString = implode('; ', $errorMessages);
+      }
+
       // Query protokollieren
       FriendsOfRedaxo\RexQL\QueryLogger::log(
         $apiKeyId,
@@ -130,12 +146,26 @@ class rex_api_rexql_graphql extends rex_api_function
         $executionTime,
         $memoryUsage,
         empty($result->errors),
-        !empty($result->errors) ? implode('; ', array_map(fn($e) => $e->getMessage(), $result->errors)) : null
+        $errorString
       );
 
-      // Response aufbereiten
+      // Response aufbereiten - Error-Handling für Response
+      $responseErrors = null;
+      if (!empty($result->errors)) {
+        $responseErrors = [];
+        foreach ($result->errors as $error) {
+          if (is_object($error) && method_exists($error, 'getMessage')) {
+            $responseErrors[] = ['message' => $error->getMessage()];
+          } elseif (is_array($error) && isset($error['message'])) {
+            $responseErrors[] = ['message' => $error['message']];
+          } else {
+            $responseErrors[] = ['message' => (string) $error];
+          }
+        }
+      }
+
       $response = [
-        'errors' => $result->errors ? array_map(fn($e) => ['message' => $e->getMessage()], $result->errors) : null,
+        'errors' => $responseErrors,
         ...$result->toArray()
       ];
 
