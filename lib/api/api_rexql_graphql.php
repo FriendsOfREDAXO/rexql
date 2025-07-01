@@ -285,10 +285,16 @@ class rex_api_rexql_graphql extends rex_api_function
    */
   private function formatBytes(int $bytes): string
   {
-    $units = ['B', 'KB', 'MB', 'GB'];
-    $factor = floor((strlen($bytes) - 1) / 3);
+    if ($bytes <= 0) {
+      return "0.00 B";
+    }
 
-    return sprintf("%.2f %s", $bytes / pow(1024, $factor), $units[$factor]);
+    $units = ['B', 'KB', 'MB', 'GB'];
+    $factor = floor(log($bytes, 1024));
+    $factor = min($factor, count($units) - 1); // Prevent index out of bounds
+
+    $formatted = number_format($bytes / pow(1024, $factor), 2, '.', '');
+    return $formatted . ' ' . $units[$factor];
   }
 
   /**
