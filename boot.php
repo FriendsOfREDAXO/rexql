@@ -24,6 +24,7 @@ rex_api_function::register('rexql_auth', 'rex_api_rexql_auth');
 // Standardkonfiguration setzen
 if (!$this->hasConfig()) {
   $this->setConfig([
+    'schema_version' => 1,
     'endpoint_enabled' => false,
     'proxy_enabled' => false,
     'require_authentication' => true,

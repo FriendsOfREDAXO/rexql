@@ -88,7 +88,24 @@ class Cache
       return $generator();
     }
 
-    return self::get(self::QUERY_CACHE_DIR, $queryHash, $generator, 300); // 5 Minuten Cache
+    // ExecutionResult Objekte können nicht direkt gecacht werden wegen Closures
+    // Stattdessen cacheen wir das Array-Resultat und erstellen ein neues ExecutionResult
+    $cachedArray = self::get(self::QUERY_CACHE_DIR, $queryHash, function () use ($generator) {
+      $result = $generator();
+      // Nur das Array cacheen, nicht das ExecutionResult Objekt
+      return $result->toArray();
+    }, 300); // 5 Minuten Cache
+
+    // Wenn wir ein Array aus dem Cache bekommen, erstellen wir ein neues ExecutionResult
+    if (is_array($cachedArray)) {
+      return new \GraphQL\Executor\ExecutionResult(
+        $cachedArray['data'] ?? null,
+        $cachedArray['errors'] ?? []
+      );
+    }
+
+    // Fallback: Direkt generieren falls Cache-Problem
+    return $generator();
   }
 
   /**
@@ -106,15 +123,18 @@ class Cache
 
     // Cache existiert und ist gültig
     if (file_exists($cachePath)) {
-      $cacheData = rex_file::getCache($cachePath);
+      $cacheData = rex_file::getCache($cachePath, null);
 
-      // Bei TTL prüfen ob abgelaufen
-      if ($ttl > 0 && isset($cacheData['time']) && (time() - $cacheData['time'] > $ttl)) {
-        // Cache ist abgelaufen
-        unlink($cachePath);
-      } else {
-        // Cache ist gültig
-        return $cacheData['data'];
+      // Wenn Cache-Daten vorhanden sind
+      if ($cacheData !== null) {
+        // Bei TTL prüfen ob abgelaufen
+        if ($ttl > 0 && isset($cacheData['time']) && (time() - $cacheData['time'] > $ttl)) {
+          // Cache ist abgelaufen
+          rex_file::delete($cachePath);
+        } else {
+          // Cache ist gültig
+          return $cacheData['data'];
+        }
       }
     }
 
@@ -174,7 +194,7 @@ class Cache
    */
   private static function getCacheDir(string $namespace): string
   {
-    return rex_path::addonCache('rexql', $namespace);
+    return rex_addon::get('rexql')->getCachePath($namespace);
   }
 
   /**
