@@ -9,9 +9,19 @@ $content = '<div class="rexql-config-section">';
 $buttons = '';
 $formElements = [];
 
+// Handle cache refresh action
+if (rex_post('action', 'string') === 'refresh_schema_cache') {
+    FriendsOfRedaxo\RexQL\Cache::invalidateSchema();
+    echo rex_view::success($addon->i18n('cache_refreshed', 'Schema cache successfully refreshed'));
+}
+
+if (rex_post('action', 'string') === 'refresh_all_cache') {
+    FriendsOfRedaxo\RexQL\Cache::invalidateAll();
+    echo rex_view::success($addon->i18n('cache_refreshed', 'All caches successfully refreshed'));
+}
+
 // Konfiguration speichern
 if (rex_post('formsubmit', 'string') == '1') {
-    $config = [];
     $postConfig = rex_post('config', 'array', []);
     $config['endpoint_enabled'] = isset($postConfig['endpoint_enabled']) ? 1 : 0;
     $config['require_authentication'] = isset($postConfig['require_authentication']) ? 1 : 0;
@@ -258,6 +268,35 @@ if (rex_addon::get('yform')->isAvailable()) {
 }
 
 $content .= '</div></div>';
+$content .= '</fieldset>';
+
+// Cache Management Section
+$cacheStatus = FriendsOfRedaxo\RexQL\Cache::getStatus();
+$content .= '<fieldset>';
+$content .= '<legend>' . $addon->i18n('cache_management', 'Cache Management') . '</legend>';
+$content .= '<div class="row">';
+$content .= '<div class="col-md-6">';
+$content .= '<h4>' . $addon->i18n('cache_status', 'Cache Status') . '</h4>';
+$content .= '<ul class="list-unstyled">';
+$content .= '<li><strong>' . $addon->i18n('schema_version', 'Schema Version') . ':</strong> ' . $cacheStatus['schema_version'] . '</li>';
+$content .= '<li><strong>' . $addon->i18n('query_caching', 'Query Caching') . ':</strong> ' . ($cacheStatus['query_caching_enabled'] ? $addon->i18n('enabled', 'Enabled') : $addon->i18n('disabled', 'Disabled')) . '</li>';
+$content .= '<li><strong>' . $addon->i18n('schema_cache_files', 'Schema Cache Files') . ':</strong> ' . $cacheStatus['schema_cache_files'] . '</li>';
+$content .= '<li><strong>' . $addon->i18n('query_cache_files', 'Query Cache Files') . ':</strong> ' . $cacheStatus['query_cache_files'] . '</li>';
+$content .= '</ul>';
+$content .= '</div>';
+$content .= '<div class="col-md-6">';
+$content .= '<h4>' . $addon->i18n('cache_actions', 'Cache Actions') . '</h4>';
+$content .= '<p><small>' . $addon->i18n('cache_help', 'Refresh the schema cache when you install/uninstall addons or modify YForm table structures.') . '</small></p>';
+$content .= '<div class="btn-group-vertical" style="width: 100%;">';
+$content .= '<button type="submit" name="action" value="refresh_schema_cache" class="btn btn-warning">';
+$content .= '<i class="fa fa-refresh"></i> ' . $addon->i18n('refresh_schema_cache', 'Refresh Schema Cache');
+$content .= '</button>';
+$content .= '<button type="submit" name="action" value="refresh_all_cache" class="btn btn-danger">';
+$content .= '<i class="fa fa-trash"></i> ' . $addon->i18n('refresh_all_cache', 'Clear All Caches');
+$content .= '</button>';
+$content .= '</div>';
+$content .= '</div>';
+$content .= '</div>';
 $content .= '</fieldset>';
 
 // Submit Button

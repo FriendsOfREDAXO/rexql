@@ -49,26 +49,15 @@ if (!$this->getConfig('endpoint_url')) {
   $this->setConfig('endpoint_url', '/index.php?rex-api-call=rexql_graphql');
 }
 
-// Extensions registrieren
+// Extensions registrieren - nur für existierende Extension Points
 rex_extension::register('PACKAGES_INCLUDED', function () {
-  // Schema Cache nur bei Strukturänderungen löschen (nicht bei Datenänderungen)
-
-  // Addon/Package-Änderungen
-  rex_extension::register('ADDON_INSTALLED', 'FriendsOfRedaxo\\RexQL\\Cache::invalidateSchema');
-  rex_extension::register('ADDON_UNINSTALLED', 'FriendsOfRedaxo\\RexQL\\Cache::invalidateSchema');
-  rex_extension::register('ADDON_ACTIVATED', 'FriendsOfRedaxo\\RexQL\\Cache::invalidateSchema');
-  rex_extension::register('ADDON_DEACTIVATED', 'FriendsOfRedaxo\\RexQL\\Cache::invalidateSchema');
-
-  // YForm-Manager Table-Struktur-Änderungen
-  rex_extension::register('YFORM_MANAGER_TABLE_UPDATED', 'FriendsOfRedaxo\\RexQL\\Cache::invalidateSchema');
-  rex_extension::register('YFORM_MANAGER_TABLE_DELETED', 'FriendsOfRedaxo\\RexQL\\Cache::invalidateSchema');
-  rex_extension::register('YFORM_MANAGER_FIELD_UPDATED', 'FriendsOfRedaxo\\RexQL\\Cache::invalidateSchema');
-  rex_extension::register('YFORM_MANAGER_FIELD_DELETED', 'FriendsOfRedaxo\\RexQL\\Cache::invalidateSchema');
-
   // Language-Änderungen (da sie die Schema-Cache-Key beeinflussen)
   rex_extension::register('CLANG_UPDATED', 'FriendsOfRedaxo\\RexQL\\Cache::invalidateSchema');
   rex_extension::register('CLANG_DELETED', 'FriendsOfRedaxo\\RexQL\\Cache::invalidateSchema');
   rex_extension::register('CLANG_ADDED', 'FriendsOfRedaxo\\RexQL\\Cache::invalidateSchema');
+
+  // Note: Addon installation/table structure changes require manual cache invalidation
+  // via the "Refresh Schema Cache" button in the rexQL backend
 });
 
 // Backend-Assets nur im Backend laden
