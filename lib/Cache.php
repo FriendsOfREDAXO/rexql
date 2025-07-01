@@ -28,6 +28,10 @@ class Cache
   public static function invalidateSchema(): void
   {
     self::cleanDirectory(self::SCHEMA_CACHE_DIR);
+
+    // Schema-Version erhöhen um In-Memory-Cache zu invalidieren
+    $currentVersion = rex_addon::get('rexql')->getConfig('schema_version', 1);
+    rex_addon::get('rexql')->setConfig('schema_version', $currentVersion + 1);
   }
 
   /**
@@ -207,5 +211,48 @@ class Cache
   private static function getCachePath(string $namespace, string $key): string
   {
     return self::getCacheDir($namespace) . '/' . $key . '.cache';
+  }
+
+  /**
+   * Schema-Version manuell setzen (für Entwicklung/Debugging)
+   *
+   * @param int $version Neue Schema-Version
+   */
+  public static function setSchemaVersion(int $version): void
+  {
+    rex_addon::get('rexql')->setConfig('schema_version', $version);
+  }
+
+  /**
+   * Aktuelle Schema-Version abrufen
+   *
+   * @return int
+   */
+  public static function getSchemaVersion(): int
+  {
+    return rex_addon::get('rexql')->getConfig('schema_version', 1);
+  }
+
+  /**
+   * Cache-Status abrufen
+   *
+   * @return array
+   */
+  public static function getStatus(): array
+  {
+    $schemaDir = self::getCacheDir(self::SCHEMA_CACHE_DIR);
+    $queryDir = self::getCacheDir(self::QUERY_CACHE_DIR);
+
+    $schemaCacheFiles = is_dir($schemaDir) ? count(glob($schemaDir . '/*.cache')) : 0;
+    $queryCacheFiles = is_dir($queryDir) ? count(glob($queryDir . '/*.cache')) : 0;
+
+    return [
+      'schema_version' => self::getSchemaVersion(),
+      'query_caching_enabled' => rex_addon::get('rexql')->getConfig('cache_queries', false),
+      'schema_cache_files' => $schemaCacheFiles,
+      'query_cache_files' => $queryCacheFiles,
+      'schema_cache_dir' => $schemaDir,
+      'query_cache_dir' => $queryDir
+    ];
   }
 }
