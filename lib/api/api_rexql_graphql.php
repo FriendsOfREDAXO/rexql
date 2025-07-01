@@ -135,8 +135,8 @@ class rex_api_rexql_graphql extends rex_api_function
 
       // Response aufbereiten
       $response = [
-        'data' => $result->data,
-        'errors' => $result->errors ? array_map(fn($e) => ['message' => $e->getMessage()], $result->errors) : null
+        'errors' => $result->errors ? array_map(fn($e) => ['message' => $e->getMessage()], $result->errors) : null,
+        ...$result->toArray()
       ];
 
       // Debug-Informationen hinzufügen wenn aktiviert
