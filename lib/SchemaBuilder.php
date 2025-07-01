@@ -95,6 +95,9 @@ class SchemaBuilder
    */
   private function buildCustomTypes(): void
   {
+    // System-Informationen hinzufügen
+    $this->buildSystemTypes();
+
     // URL-Addon Integration
     if (rex_addon::get('url')->isAvailable()) {
       $this->buildUrlTypes();
@@ -682,5 +685,99 @@ class SchemaBuilder
     $sql->setQuery('SELECT * FROM rex_yrewrite_domain WHERE domain = ?', [$args['host']]);
 
     return $sql->getRows() > 0 ? $sql->getArray()[0] : null;
+  }
+
+  /**
+   * System-Types erstellen
+   */
+  private function buildSystemTypes(): void
+  {
+    // RexSystem Type erstellen
+    $this->types['RexSystem'] = new ObjectType([
+      'name' => 'RexSystem',
+      'description' => 'REDAXO System-Informationen',
+      'fields' => [
+        'server' => [
+          'type' => Type::string(),
+          'description' => 'Server-URL',
+          'resolve' => function () {
+            try {
+              return \rex::getServer();
+            } catch (\Throwable $e) {
+              throw new \Exception('Error getting server: ' . $e->getMessage());
+            }
+          }
+        ],
+        'serverName' => [
+          'type' => Type::string(),
+          'description' => 'Server-Name',
+          'resolve' => function () {
+            try {
+              return \rex::getServerName();
+            } catch (\Throwable $e) {
+              throw new \Exception('Error getting server name: ' . $e->getMessage());
+            }
+          }
+        ],
+        'errorEmail' => [
+          'type' => Type::string(),
+          'description' => 'Fehler-E-Mail-Adresse',
+          'resolve' => function () {
+            try {
+              return \rex::getErrorEmail();
+            } catch (\Throwable $e) {
+              throw new \Exception('Error getting error email: ' . $e->getMessage());
+            }
+          }
+        ],
+        'version' => [
+          'type' => Type::string(),
+          'description' => 'REDAXO Version',
+          'resolve' => function () {
+            try {
+              return \rex::getVersion();
+            } catch (\Throwable $e) {
+              throw new \Exception('Error getting version: ' . $e->getMessage());
+            }
+          }
+        ],
+        'startArticleId' => [
+          'type' => Type::int(),
+          'description' => 'Start-Artikel ID',
+          'resolve' => function () {
+            try {
+              return \rex_addon::get('structure')->isAvailable()
+                ? (int) \rex_config::get('structure', 'start_article_id', 1)
+                : 1; // Return default value instead of null
+            } catch (\Throwable $e) {
+              throw new \Exception('Error getting start article ID: ' . $e->getMessage());
+            }
+          }
+        ],
+        'defaultTemplateId' => [
+          'type' => Type::int(),
+          'description' => 'Standard-Template ID',
+          'resolve' => function () {
+            try {
+              return \rex_addon::get('structure')->isAvailable()
+                ? (int) \rex_config::get('structure/content', 'default_template_id', 1)
+                : 1; // Return default value instead of null
+            } catch (\Throwable $e) {
+              throw new \Exception('Error getting default template ID: ' . $e->getMessage());
+            }
+          }
+        ]
+      ]
+    ]);
+
+    // rexSystem Query hinzufügen
+    $this->queries['rexSystem'] = [
+      'type' => $this->types['RexSystem'],
+      'description' => 'REDAXO System-Informationen abrufen',
+      'resolve' => function () {
+        // Dummy-Objekt zurückgeben, die eigentlichen Werte werden von den Feld-Resolvern geliefert
+        return ['dummy' => true];
+      }
+    ];
   }
 }
