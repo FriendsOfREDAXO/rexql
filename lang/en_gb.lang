@@ -137,3 +137,18 @@ rexql_key_ip_placeholder = e.g. 192.168.1.100
 rexql_key_type = API Key Type
 rexql_permissions_allowed_domains_hint = Enter allowed domains (one per line)
 rexql_permissions_allowed_ips_hint = Enter allowed IP addresses (one per line)
+
+# Cache Management
+rexql_cache_management = Cache Management
+rexql_cache_status = Cache Status
+rexql_cache_actions = Cache Actions
+rexql_cache_help = Refresh the schema cache when you install/uninstall addons or modify YForm table structures.
+rexql_cache_refreshed = Cache successfully refreshed
+rexql_schema_version = Schema Version
+rexql_query_caching = Query Caching
+rexql_schema_cache_files = Schema Cache Files
+rexql_query_cache_files = Query Cache Files
+rexql_refresh_schema_cache = Refresh Schema Cache
+rexql_refresh_all_cache = Clear All Caches
+rexql_enabled = Enabled
+rexql_disabled = Disabled

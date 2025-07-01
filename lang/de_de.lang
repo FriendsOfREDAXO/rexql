@@ -137,3 +137,18 @@ rexql_permissions_edit_key = API-Schlüssel bearbeiten
 rexql_key_type = API-Schlüssel Typ
 rexql_permissions_allowed_domains_hint = Geben Sie erlaubte Domains ein (eine pro Zeile)
 rexql_permissions_allowed_ips_hint = Geben Sie erlaubte IP-Adressen ein (eine pro Zeile)
+
+# Cache Management
+rexql_cache_management = Cache-Verwaltung
+rexql_cache_status = Cache-Status
+rexql_cache_actions = Cache-Aktionen
+rexql_cache_help = Aktualisieren Sie den Schema-Cache nach der Installation/Deinstallation von Addons oder bei Änderungen an YForm-Tabellen-Strukturen.
+rexql_cache_refreshed = Cache erfolgreich aktualisiert
+rexql_schema_version = Schema-Version
+rexql_query_caching = Query-Caching
+rexql_schema_cache_files = Schema-Cache-Dateien
+rexql_query_cache_files = Query-Cache-Dateien
+rexql_refresh_schema_cache = Schema-Cache aktualisieren
+rexql_refresh_all_cache = Alle Caches löschen
+rexql_enabled = Aktiviert
+rexql_disabled = Deaktiviert
