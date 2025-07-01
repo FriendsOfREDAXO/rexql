@@ -68,6 +68,10 @@ class Cache
       rex_addon::get('rexql')->getConfig('allowed_tables', []),
       rex_addon::get('rexql')->getConfig('schema_version', 1),
       \rex_clang::getAll(),
+      // Include relevant addon status to detect structure changes
+      self::getAddonStates(),
+      // Include YForm table structures if available
+      self::getYFormTableStructures(),
     ]));
 
     // Wenn Cache-Key sich geändert hat oder kein Schema gecacht ist
@@ -254,5 +258,61 @@ class Cache
       'schema_cache_dir' => $schemaDir,
       'query_cache_dir' => $queryDir
     ];
+  }
+
+  /**
+   * Status relevanter Addons für Cache-Key ermitteln
+   */
+  private static function getAddonStates(): array
+  {
+    $relevantAddons = ['yform', 'url', 'yrewrite', 'structure'];
+    $states = [];
+
+    foreach ($relevantAddons as $addonKey) {
+      $addon = rex_addon::get($addonKey);
+      $states[$addonKey] = [
+        'available' => $addon->isAvailable(),
+        'version' => $addon->getVersion()
+      ];
+    }
+
+    return $states;
+  }
+
+  /**
+   * YForm Tabellen-Strukturen für Cache-Key ermitteln
+   */
+  private static function getYFormTableStructures(): array
+  {
+    if (!rex_addon::get('yform')->isAvailable()) {
+      return [];
+    }
+
+    $structures = [];
+    $allowedTables = rex_addon::get('rexql')->getConfig('allowed_tables', []);
+
+    try {
+      $yformTables = \rex_yform_manager_table::getAll();
+      foreach ($yformTables as $table) {
+        $tableName = $table->getTableName();
+        if (in_array($tableName, $allowedTables)) {
+          $structures[$tableName] = [
+            'name' => $table->getName(),
+            'fields' => array_map(function ($field) {
+              return [
+                'name' => $field->getName(),
+                'type' => $field->getTypeName(),
+                'label' => $field->getLabel()
+              ];
+            }, $table->getFields())
+          ];
+        }
+      }
+    } catch (\Exception $e) {
+      // Fall back to empty array if YForm tables can't be read
+      return [];
+    }
+
+    return $structures;
   }
 }

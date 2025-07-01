@@ -24,6 +24,11 @@ class SchemaBuilder
    */
   public function buildSchema(): Schema
   {
+    // Debug logging für Schema-Building
+    if (rex_addon::get('rexql')->getConfig('debug_mode', false)) {
+      rex_logger::factory()->info('RexQL: Building fresh GraphQL schema');
+    }
+
     $this->buildCoreTypes();
     $this->buildYFormTypes();
     $this->buildCustomTypes();

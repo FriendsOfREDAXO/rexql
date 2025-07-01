@@ -51,13 +51,24 @@ if (!$this->getConfig('endpoint_url')) {
 
 // Extensions registrieren
 rex_extension::register('PACKAGES_INCLUDED', function () {
-  // Schema Cache löschen bei Strukturänderungen
-  rex_extension::register('ART_UPDATED', 'FriendsOfRedaxo\\RexQL\\Cache::invalidateSchema');
-  rex_extension::register('ART_DELETED', 'FriendsOfRedaxo\\RexQL\\Cache::invalidateSchema');
-  rex_extension::register('CAT_UPDATED', 'FriendsOfRedaxo\\RexQL\\Cache::invalidateSchema');
-  rex_extension::register('CAT_DELETED', 'FriendsOfRedaxo\\RexQL\\Cache::invalidateSchema');
-  rex_extension::register('YFORM_DATA_UPDATED', 'FriendsOfRedaxo\\RexQL\\Cache::invalidateSchema');
-  rex_extension::register('YFORM_DATA_DELETED', 'FriendsOfRedaxo\\RexQL\\Cache::invalidateSchema');
+  // Schema Cache nur bei Strukturänderungen löschen (nicht bei Datenänderungen)
+
+  // Addon/Package-Änderungen
+  rex_extension::register('ADDON_INSTALLED', 'FriendsOfRedaxo\\RexQL\\Cache::invalidateSchema');
+  rex_extension::register('ADDON_UNINSTALLED', 'FriendsOfRedaxo\\RexQL\\Cache::invalidateSchema');
+  rex_extension::register('ADDON_ACTIVATED', 'FriendsOfRedaxo\\RexQL\\Cache::invalidateSchema');
+  rex_extension::register('ADDON_DEACTIVATED', 'FriendsOfRedaxo\\RexQL\\Cache::invalidateSchema');
+
+  // YForm-Manager Table-Struktur-Änderungen
+  rex_extension::register('YFORM_MANAGER_TABLE_UPDATED', 'FriendsOfRedaxo\\RexQL\\Cache::invalidateSchema');
+  rex_extension::register('YFORM_MANAGER_TABLE_DELETED', 'FriendsOfRedaxo\\RexQL\\Cache::invalidateSchema');
+  rex_extension::register('YFORM_MANAGER_FIELD_UPDATED', 'FriendsOfRedaxo\\RexQL\\Cache::invalidateSchema');
+  rex_extension::register('YFORM_MANAGER_FIELD_DELETED', 'FriendsOfRedaxo\\RexQL\\Cache::invalidateSchema');
+
+  // Language-Änderungen (da sie die Schema-Cache-Key beeinflussen)
+  rex_extension::register('CLANG_UPDATED', 'FriendsOfRedaxo\\RexQL\\Cache::invalidateSchema');
+  rex_extension::register('CLANG_DELETED', 'FriendsOfRedaxo\\RexQL\\Cache::invalidateSchema');
+  rex_extension::register('CLANG_ADDED', 'FriendsOfRedaxo\\RexQL\\Cache::invalidateSchema');
 });
 
 // Backend-Assets nur im Backend laden
