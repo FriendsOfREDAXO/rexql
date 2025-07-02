@@ -654,14 +654,28 @@ class SchemaBuilder
    */
   private function buildYRewriteTypes(): void
   {
-    // Domain-spezifische Queries hinzufügen
-    $this->queries['domainByHost'] = [
-      'type' => $this->types['YrewriteDomain'] ?? Type::string(),
+    $table = 'rex_yrewrite_domain';
+    $typeName = $this->getTypeName($table);
+    $config = [
+      'description' => 'yrewrite Domain-Informationen',
+      'fields' => [
+        'domain' => ['description' => 'Domain'],
+        'mount_id' => ['description' => 'Mount-ID'],
+        'start_id' => ['description' => 'Start-ID'],
+        'notfound_id' => ['description' => 'Not Found-ID'],
+        'clang_start' => ['description' => 'Start-Sprache'],
+      ]
+    ];
+
+    $this->types[$typeName] = $this->createTypeFromTable($table, $config);
+    $this->queries[$this->getQueryName($table)] = [
+      'type' => $this->types[$typeName],
       'args' => [
-        'host' => ['type' => Type::nonNull(Type::string())]
+        'id' => ['type' => Type::int()],
+        'where' => ['type' => Type::string()],
       ],
-      'resolve' => function ($root, $args) {
-        return $this->resolveDomainByHost($args);
+      'resolve' => function ($root, $args) use ($table) {
+        return $this->resolveRecord($table, $args);
       }
     ];
   }
