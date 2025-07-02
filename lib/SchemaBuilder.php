@@ -208,6 +208,17 @@ class SchemaBuilder
         'key' => ['type' => Type::string()],
         'where' => ['type' => Type::string()]
       ];
+    } elseif ($table === 'rex_article_slice') {
+      // Spezielle Argumente für rex_article_slice
+      $args = [
+        'id' => ['type' => Type::int()],
+        'article_id' => ['type' => Type::int()],
+        'clang_id' => ['type' => Type::int(), 'defaultValue' => 1],
+        'module_id' => ['type' => Type::int()],
+        'ctype_id' => ['type' => Type::int()],
+        'where' => ['type' => Type::string()],
+        'order_by' => ['type' => Type::string(), 'defaultValue' => 'priority ASC']
+      ];
     } else {
       // Standard-Argumente für andere Tabellen
       $args = [
@@ -244,6 +255,18 @@ class SchemaBuilder
         'offset' => ['type' => Type::int(), 'defaultValue' => 0],
         'where' => ['type' => Type::string()],
         'order_by' => ['type' => Type::string(), 'defaultValue' => 'namespace ASC, `key` ASC']
+      ];
+    } elseif ($table === 'rex_article_slice') {
+      // Spezielle Argumente für rex_article_slice
+      $args = [
+        'article_id' => ['type' => Type::int()],
+        'clang_id' => ['type' => Type::int()],
+        'module_id' => ['type' => Type::int()],
+        'ctype_id' => ['type' => Type::int()],
+        'limit' => ['type' => Type::int()],
+        'offset' => ['type' => Type::int(), 'defaultValue' => 0],
+        'where' => ['type' => Type::string()],
+        'order_by' => ['type' => Type::string(), 'defaultValue' => 'priority ASC']
       ];
     } else {
       // Standard-Argumente für andere Tabellen
@@ -320,6 +343,28 @@ class SchemaBuilder
         $where .= ' AND `key` = :key';
         $params['key'] = $args['key'];
       }
+    } elseif ($table === 'rex_article_slice') {
+      // Spezielle Behandlung für rex_article_slice
+      if (isset($args['id'])) {
+        $where .= ' AND id = :id';
+        $params['id'] = $args['id'];
+      }
+      if (isset($args['article_id'])) {
+        $where .= ' AND article_id = :article_id';
+        $params['article_id'] = $args['article_id'];
+      }
+      if (isset($args['clang_id'])) {
+        $where .= ' AND clang_id = :clang_id';
+        $params['clang_id'] = $args['clang_id'];
+      }
+      if (isset($args['module_id'])) {
+        $where .= ' AND module_id = :module_id';
+        $params['module_id'] = $args['module_id'];
+      }
+      if (isset($args['ctype_id'])) {
+        $where .= ' AND ctype_id = :ctype_id';
+        $params['ctype_id'] = $args['ctype_id'];
+      }
     } else {
       // Standard-Tabellen mit ID
       if (isset($args['id'])) {
@@ -373,6 +418,25 @@ class SchemaBuilder
         $params['key'] = $args['key'];
       }
       $order_by = $args['order_by'] ?? 'namespace ASC, `key` ASC';
+    } elseif ($table === 'rex_article_slice') {
+      // Spezielle Behandlung für rex_article_slice
+      if (isset($args['article_id'])) {
+        $where .= ' AND article_id = :article_id';
+        $params['article_id'] = $args['article_id'];
+      }
+      if (isset($args['clang_id'])) {
+        $where .= ' AND clang_id = :clang_id';
+        $params['clang_id'] = $args['clang_id'];
+      }
+      if (isset($args['module_id'])) {
+        $where .= ' AND module_id = :module_id';
+        $params['module_id'] = $args['module_id'];
+      }
+      if (isset($args['ctype_id'])) {
+        $where .= ' AND ctype_id = :ctype_id';
+        $params['ctype_id'] = $args['ctype_id'];
+      }
+      $order_by = $args['order_by'] ?? 'priority ASC';
     } else {
       // Standard-Tabellen
       if (isset($args['clang_id'])) {
