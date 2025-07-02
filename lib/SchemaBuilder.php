@@ -22,6 +22,135 @@ class SchemaBuilder
   private array $mutations = [];
 
   /**
+   * Tabellen-Konfigurationen für Argumente und spezielle Behandlung
+   */
+  private function getTableConfigurations(): array
+  {
+    return [
+      'rex_config' => [
+        'description' => 'REDAXO Konfiguration',
+        'single_args' => [
+          'namespace' => ['type' => 'string'],
+          'key' => ['type' => 'string'],
+          'where' => ['type' => 'string']
+        ],
+        'list_args' => [
+          'namespace' => ['type' => 'string'],
+          'key' => ['type' => 'string'],
+          'limit' => ['type' => 'int', 'defaultValue' => 50],
+          'offset' => ['type' => 'int', 'defaultValue' => 0],
+          'where' => ['type' => 'string'],
+          'order_by' => ['type' => 'string', 'defaultValue' => 'namespace ASC, `key` ASC']
+        ],
+        'fields' => [
+          'namespace' => ['description' => 'Configuration namespace'],
+          'key' => ['description' => 'Configuration key'],
+          'value' => ['description' => 'Configuration value']
+        ]
+      ],
+      'rex_article_slice' => [
+        'description' => 'REDAXO Artikel-Slices',
+        'single_args' => [
+          'id' => ['type' => 'int'],
+          'article_id' => ['type' => 'int'],
+          'clang_id' => ['type' => 'int', 'defaultValue' => 1],
+          'module_id' => ['type' => 'int'],
+          'ctype_id' => ['type' => 'int'],
+          'where' => ['type' => 'string'],
+          'order_by' => ['type' => 'string', 'defaultValue' => 'priority ASC']
+        ],
+        'list_args' => [
+          'article_id' => ['type' => 'int'],
+          'clang_id' => ['type' => 'int'],
+          'module_id' => ['type' => 'int'],
+          'ctype_id' => ['type' => 'int'],
+          'limit' => ['type' => 'int'],
+          'offset' => ['type' => 'int', 'defaultValue' => 0],
+          'where' => ['type' => 'string'],
+          'order_by' => ['type' => 'string', 'defaultValue' => 'priority ASC']
+        ],
+        'fields' => [
+          'article_id' => ['description' => 'Article ID'],
+          'clang_id' => ['description' => 'Language ID'],
+          'module_id' => ['description' => 'Module ID'],
+          'ctype_id' => ['description' => 'Content type ID'],
+          'priority' => ['description' => 'Priority/order'],
+          'value1' => ['description' => 'Module value 1'],
+          'value2' => ['description' => 'Module value 2']
+        ]
+      ],
+      'rex_article' => [
+        'description' => 'REDAXO Artikel',
+        'single_args' => [
+          'id' => ['type' => 'int'],
+          'status' => ['type' => 'int', 'defaultValue' => 1],
+          'clang_id' => ['type' => 'int', 'defaultValue' => 1],
+          'where' => ['type' => 'string'],
+          'order_by' => ['type' => 'string', 'defaultValue' => 'id DESC']
+        ],
+        'list_args' => [
+          'limit' => ['type' => 'int'],
+          'status' => ['type' => 'int'],
+          'offset' => ['type' => 'int', 'defaultValue' => 0],
+          'clang_id' => ['type' => 'int'],
+          'where' => ['type' => 'string'],
+          'order_by' => ['type' => 'string', 'defaultValue' => 'id DESC']
+        ],
+        'fields' => [
+          'name' => ['description' => 'Article name'],
+          'status' => ['description' => 'Article status'],
+          'clang_id' => ['description' => 'Language ID'],
+          'parent_id' => ['description' => 'Parent article ID']
+        ]
+      ],
+      'rex_structure' => [
+        'description' => 'REDAXO Struktur',
+        'single_args' => [
+          'id' => ['type' => 'int'],
+          'status' => ['type' => 'int', 'defaultValue' => 1],
+          'clang_id' => ['type' => 'int', 'defaultValue' => 1],
+          'where' => ['type' => 'string'],
+          'order_by' => ['type' => 'string', 'defaultValue' => 'id DESC']
+        ],
+        'list_args' => [
+          'limit' => ['type' => 'int'],
+          'status' => ['type' => 'int'],
+          'offset' => ['type' => 'int', 'defaultValue' => 0],
+          'clang_id' => ['type' => 'int'],
+          'where' => ['type' => 'string'],
+          'order_by' => ['type' => 'string', 'defaultValue' => 'id DESC']
+        ],
+        'fields' => [
+          'name' => ['description' => 'Structure name'],
+          'status' => ['description' => 'Structure status'],
+          'clang_id' => ['description' => 'Language ID'],
+          'parent_id' => ['description' => 'Parent structure ID']
+        ]
+      ],
+      // Default configuration for other tables
+      '_default' => [
+        'description' => 'Database table',
+        'single_args' => [
+          'id' => ['type' => 'int'],
+          'status' => ['type' => 'int', 'defaultValue' => 1],
+          'clang_id' => ['type' => 'int', 'defaultValue' => 1],
+          'where' => ['type' => 'string'],
+          'order_by' => ['type' => 'string', 'defaultValue' => 'id DESC']
+        ],
+        'list_args' => [
+          'limit' => ['type' => 'int'],
+          'status' => ['type' => 'int'],
+          'offset' => ['type' => 'int', 'defaultValue' => 0],
+          'clang_id' => ['type' => 'int'],
+          'where' => ['type' => 'string'],
+          'order_by' => ['type' => 'string', 'defaultValue' => 'id DESC']
+        ],
+        'fields' => []
+      ]
+    ];
+  }
+
+  /**
    * Vollständiges GraphQL Schema erstellen
    */
   public function buildSchema(): Schema
@@ -124,14 +253,19 @@ class SchemaBuilder
     $sql = rex_sql::factory();
     $sql->setQuery('DESCRIBE ' . $table);
 
+    $configurations = $this->getTableConfigurations();
+    $tableConfig = $configurations[$table] ?? $configurations['_default'];
+
     $fields = [];
     while ($sql->hasNext()) {
       $column = $sql->getValue('Field');
       $sqlType = $sql->getValue('Type');
       $type = $this->mapSqlTypeToGraphQL($sqlType);
 
-      // Beschreibung aus Config holen, falls vorhanden
-      $description = $config['fields'][$column]['description'] ?? ucfirst(str_replace('_', ' ', $column));
+      // Beschreibung aus Konfiguration holen
+      $description = $tableConfig['fields'][$column]['description'] ??
+        $config['fields'][$column]['description'] ??
+        ucfirst(str_replace('_', ' ', $column));
 
       $fields[$column] = [
         'type' => $type,
@@ -153,7 +287,7 @@ class SchemaBuilder
 
     return new ObjectType([
       'name' => $this->getTypeName($table),
-      'description' => $config['description'] ?? "Tabelle {$table}",
+      'description' => $tableConfig['description'] ?? $config['description'] ?? "Tabelle {$table}",
       'fields' => $fields
     ]);
   }
@@ -199,40 +333,24 @@ class SchemaBuilder
    */
   private function createQueryField(string $table, string $typeName): array
   {
-    $args = [];
+    $configurations = $this->getTableConfigurations();
+    $config = $configurations[$table] ?? $configurations['_default'];
+    $args = $config['single_args'] ?? [];
 
-    // Spezielle Argumente für rex_config
-    if ($table === 'rex_config') {
-      $args = [
-        'namespace' => ['type' => Type::string()],
-        'key' => ['type' => Type::string()],
-        'where' => ['type' => Type::string()]
+    // GraphQL Typen zu den Argumenten hinzufügen
+    $graphqlArgs = [];
+    foreach ($args as $key => $arg) {
+      $graphqlArgs[$key] = [
+        'type' => $this->mapStringToGraphQLType($arg['type'])
       ];
-    } elseif ($table === 'rex_article_slice') {
-      // Spezielle Argumente für rex_article_slice
-      $args = [
-        'id' => ['type' => Type::int()],
-        'article_id' => ['type' => Type::int()],
-        'clang_id' => ['type' => Type::int(), 'defaultValue' => 1],
-        'module_id' => ['type' => Type::int()],
-        'ctype_id' => ['type' => Type::int()],
-        'where' => ['type' => Type::string()],
-        'order_by' => ['type' => Type::string(), 'defaultValue' => 'priority ASC']
-      ];
-    } else {
-      // Standard-Argumente für andere Tabellen
-      $args = [
-        'id' => ['type' => Type::int()],
-        'status' => ['type' => Type::int(), 'defaultValue' => 1],
-        'clang_id' => ['type' => Type::int(), 'defaultValue' => 1],
-        'where' => ['type' => Type::string()],
-        'order_by' => ['type' => Type::string(), 'defaultValue' => 'id DESC']
-      ];
+      if (isset($arg['defaultValue'])) {
+        $graphqlArgs[$key]['defaultValue'] = $arg['defaultValue'];
+      }
     }
 
     return [
       'type' => $this->types[$typeName],
-      'args' => $args,
+      'args' => $graphqlArgs,
       'resolve' => function ($root, $args) use ($table) {
         return $this->resolveRecord($table, $args);
       }
@@ -244,45 +362,24 @@ class SchemaBuilder
    */
   private function createListQueryField(string $table, string $typeName): array
   {
-    $args = [];
+    $configurations = $this->getTableConfigurations();
+    $config = $configurations[$table] ?? $configurations['_default'];
+    $args = $config['list_args'] ?? [];
 
-    // Spezielle Argumente für rex_config
-    if ($table === 'rex_config') {
-      $args = [
-        'namespace' => ['type' => Type::string()],
-        'key' => ['type' => Type::string()],
-        'limit' => ['type' => Type::int(), 'defaultValue' => 50],
-        'offset' => ['type' => Type::int(), 'defaultValue' => 0],
-        'where' => ['type' => Type::string()],
-        'order_by' => ['type' => Type::string(), 'defaultValue' => 'namespace ASC, `key` ASC']
+    // GraphQL Typen zu den Argumenten hinzufügen
+    $graphqlArgs = [];
+    foreach ($args as $key => $arg) {
+      $graphqlArgs[$key] = [
+        'type' => $this->mapStringToGraphQLType($arg['type'])
       ];
-    } elseif ($table === 'rex_article_slice') {
-      // Spezielle Argumente für rex_article_slice
-      $args = [
-        'article_id' => ['type' => Type::int()],
-        'clang_id' => ['type' => Type::int()],
-        'module_id' => ['type' => Type::int()],
-        'ctype_id' => ['type' => Type::int()],
-        'limit' => ['type' => Type::int()],
-        'offset' => ['type' => Type::int(), 'defaultValue' => 0],
-        'where' => ['type' => Type::string()],
-        'order_by' => ['type' => Type::string(), 'defaultValue' => 'priority ASC']
-      ];
-    } else {
-      // Standard-Argumente für andere Tabellen
-      $args = [
-        'limit' => ['type' => Type::int()],
-        'status' => ['type' => Type::int()],
-        'offset' => ['type' => Type::int(), 'defaultValue' => 0],
-        'clang_id' => ['type' => Type::int()],
-        'where' => ['type' => Type::string()],
-        'order_by' => ['type' => Type::string(), 'defaultValue' => 'id DESC']
-      ];
+      if (isset($arg['defaultValue'])) {
+        $graphqlArgs[$key]['defaultValue'] = $arg['defaultValue'];
+      }
     }
 
     return [
       'type' => Type::listOf($this->types[$typeName]),
-      'args' => $args,
+      'args' => $graphqlArgs,
       'resolve' => function ($root, $args) use ($table) {
         return $this->resolveRecords($table, $args);
       }
@@ -765,21 +862,6 @@ class SchemaBuilder
   }
 
   /**
-   * Domain anhand Host auflösen
-   */
-  private function resolveDomainByHost(array $args): ?array
-  {
-    if (!rex_addon::get('yrewrite')->isAvailable()) {
-      return null;
-    }
-
-    $sql = rex_sql::factory();
-    $sql->setQuery('SELECT * FROM rex_yrewrite_domain WHERE domain = ?', [$args['host']]);
-
-    return $sql->getRows() > 0 ? $sql->getArray()[0] : null;
-  }
-
-  /**
    * System-Types erstellen
    */
   private function buildSystemTypes(): void
@@ -792,218 +874,221 @@ class SchemaBuilder
     }
 
     // RexSystem Type erstellen
-    $this->types['RexSystem'] = new ObjectType([
-      'name' => 'RexSystem',
-      'description' => 'REDAXO System-Informationen',
-      'fields' => [
-        'server' => [
-          'type' => Type::string(),
-          'description' => 'Server-URL',
-          'resolve' => function () {
-            try {
-              return \rex::getServer();
-            } catch (\Throwable $e) {
-              throw new \Exception('Error getting server: ' . $e->getMessage());
-            }
+    $fields = [
+      'server' => [
+        'type' => Type::string(),
+        'description' => 'Server-URL',
+        'resolve' => function () {
+          try {
+            return \rex::getServer();
+          } catch (\Throwable $e) {
+            throw new \Exception('Error getting server: ' . $e->getMessage());
           }
-        ],
-        'serverName' => [
-          'type' => Type::string(),
-          'description' => 'Server-Name',
-          'resolve' => function () {
-            try {
-              return \rex::getServerName();
-            } catch (\Throwable $e) {
-              throw new \Exception('Error getting server name: ' . $e->getMessage());
-            }
+        }
+      ],
+      'serverName' => [
+        'type' => Type::string(),
+        'description' => 'Server-Name',
+        'resolve' => function () {
+          try {
+            return \rex::getServerName();
+          } catch (\Throwable $e) {
+            throw new \Exception('Error getting server name: ' . $e->getMessage());
           }
-        ],
-        'errorEmail' => [
-          'type' => Type::string(),
-          'description' => 'Fehler-E-Mail-Adresse',
-          'resolve' => function () {
-            try {
-              return \rex::getErrorEmail();
-            } catch (\Throwable $e) {
-              throw new \Exception('Error getting error email: ' . $e->getMessage());
-            }
+        }
+      ],
+      'errorEmail' => [
+        'type' => Type::string(),
+        'description' => 'Fehler-E-Mail-Adresse',
+        'resolve' => function () {
+          try {
+            return \rex::getErrorEmail();
+          } catch (\Throwable $e) {
+            throw new \Exception('Error getting error email: ' . $e->getMessage());
           }
-        ],
-        'version' => [
-          'type' => Type::string(),
-          'description' => 'REDAXO Version',
-          'resolve' => function () {
-            try {
-              return \rex::getVersion();
-            } catch (\Throwable $e) {
-              throw new \Exception('Error getting version: ' . $e->getMessage());
-            }
+        }
+      ],
+      'version' => [
+        'type' => Type::string(),
+        'description' => 'REDAXO Version',
+        'resolve' => function () {
+          try {
+            return \rex::getVersion();
+          } catch (\Throwable $e) {
+            throw new \Exception('Error getting version: ' . $e->getMessage());
           }
-        ],
-        'startArticleId' => [
-          'type' => Type::int(),
-          'description' => 'Start-Artikel ID',
-          'resolve' => function () {
-            try {
-              return \rex_addon::get('structure')->isAvailable()
-                ? (int) \rex_config::get('structure', 'start_article_id', 1)
-                : 1; // Return default value instead of null
-            } catch (\Throwable $e) {
-              throw new \Exception('Error getting start article ID: ' . $e->getMessage());
-            }
+        }
+      ],
+      'startArticleId' => [
+        'type' => Type::int(),
+        'description' => 'Start-Artikel ID',
+        'resolve' => function () {
+          try {
+            return \rex_addon::get('structure')->isAvailable()
+              ? (int) \rex_config::get('structure', 'start_article_id', 1)
+              : 1; // Return default value instead of null
+          } catch (\Throwable $e) {
+            throw new \Exception('Error getting start article ID: ' . $e->getMessage());
           }
-        ],
-        'notFoundArticleId' => [
-          'type' => Type::int(),
-          'description' => 'Not-Found-Artikel ID',
-          'resolve' => function () {
-            try {
-              return \rex_addon::get('structure')->isAvailable()
-                ? (int) \rex_config::get('structure', 'notfound_article_id', 1)
-                : 1; // Return default value instead of null
-            } catch (\Throwable $e) {
-              throw new \Exception('Error getting not found article ID: ' . $e->getMessage());
-            }
+        }
+      ],
+      'notFoundArticleId' => [
+        'type' => Type::int(),
+        'description' => 'Not-Found-Artikel ID',
+        'resolve' => function () {
+          try {
+            return \rex_addon::get('structure')->isAvailable()
+              ? (int) \rex_config::get('structure', 'notfound_article_id', 1)
+              : 1; // Return default value instead of null
+          } catch (\Throwable $e) {
+            throw new \Exception('Error getting not found article ID: ' . $e->getMessage());
           }
-        ],
-        'defaultTemplateId' => [
-          'type' => Type::int(),
-          'description' => 'Standard-Template ID',
-          'resolve' => function () {
-            try {
-              return \rex_addon::get('structure')->isAvailable()
-                ? (int) \rex_config::get('structure/content', 'default_template_id', 1)
-                : 1; // Return default value instead of null
-            } catch (\Throwable $e) {
-              throw new \Exception('Error getting default template ID: ' . $e->getMessage());
-            }
+        }
+      ],
+      'defaultTemplateId' => [
+        'type' => Type::int(),
+        'description' => 'Standard-Template ID',
+        'resolve' => function () {
+          try {
+            return \rex_addon::get('structure')->isAvailable()
+              ? (int) \rex_config::get('structure/content', 'default_template_id', 1)
+              : 1; // Return default value instead of null
+          } catch (\Throwable $e) {
+            throw new \Exception('Error getting default template ID: ' . $e->getMessage());
           }
-        ],
-        'domainHost' => [
-          'type' => Type::string(),
-          'description' => 'Domain Host',
-          'resolve' => function () use ($yrewrite_domain_data) {
-            try {
-              return $yrewrite_domain_data ? $yrewrite_domain_data->getHost() : "";
-            } catch (\Throwable $e) {
-              throw new \Exception('Error getting domain host: ' . $e->getMessage());
-            }
+        }
+      ],
+      'domainHost' => [
+        'type' => Type::string(),
+        'description' => 'Domain Host',
+        'resolve' => function () use ($yrewrite_domain_data) {
+          try {
+            return $yrewrite_domain_data ? $yrewrite_domain_data->getHost() : "";
+          } catch (\Throwable $e) {
+            throw new \Exception('Error getting domain host: ' . $e->getMessage());
           }
-        ],
-        'domainUrl' => [
-          'type' => Type::string(),
-          'description' => 'Domain URL',
-          'resolve' => function () use ($yrewrite_domain_data) {
-            try {
-              return $yrewrite_domain_data ? $yrewrite_domain_data->getUrl() : "";
-            } catch (\Throwable $e) {
-              throw new \Exception('Error getting domain url: ' . $e->getMessage());
-            }
+        }
+      ],
+      'domainUrl' => [
+        'type' => Type::string(),
+        'description' => 'Domain URL',
+        'resolve' => function () use ($yrewrite_domain_data) {
+          try {
+            return $yrewrite_domain_data ? $yrewrite_domain_data->getUrl() : "";
+          } catch (\Throwable $e) {
+            throw new \Exception('Error getting domain url: ' . $e->getMessage());
           }
-        ],
-        'domainStartId' => [
-          'type' => Type::int(),
-          'description' => 'Domain Start-Artikel-ID',
-          'resolve' => function () use ($yrewrite_domain_data) {
-            try {
-              return $yrewrite_domain_data ? $yrewrite_domain_data->getStartId() : "";
-            } catch (\Throwable $e) {
-              throw new \Exception('Error getting domain start article ID: ' . $e->getMessage());
-            }
+        }
+      ],
+      'domainStartId' => [
+        'type' => Type::int(),
+        'description' => 'Domain Start-Artikel-ID',
+        'resolve' => function () use ($yrewrite_domain_data) {
+          try {
+            return $yrewrite_domain_data ? $yrewrite_domain_data->getStartId() : "";
+          } catch (\Throwable $e) {
+            throw new \Exception('Error getting domain start article ID: ' . $e->getMessage());
           }
-        ],
-        'domainNotfoundId' => [
-          'type' => Type::int(),
-          'description' => 'Domain Not Found-Artikel-ID',
-          'resolve' => function () use ($yrewrite_domain_data) {
-            try {
-              return $yrewrite_domain_data ? $yrewrite_domain_data->getNotfoundId() : "";
-            } catch (\Throwable $e) {
-              throw new \Exception('Error getting domain not found article ID' . $e->getMessage());
-            }
+        }
+      ],
+      'domainNotfoundId' => [
+        'type' => Type::int(),
+        'description' => 'Domain Not Found-Artikel-ID',
+        'resolve' => function () use ($yrewrite_domain_data) {
+          try {
+            return $yrewrite_domain_data ? $yrewrite_domain_data->getNotfoundId() : "";
+          } catch (\Throwable $e) {
+            throw new \Exception('Error getting domain not found article ID' . $e->getMessage());
           }
-        ],
-        'domainLanguages' => [
-          'type' => Type::string(),
-          'description' => 'Domain Sprachen',
-          'resolve' => function () use ($yrewrite_domain_data) {
-            try {
-              if ($yrewrite_domain_data === null) {
-                return [];
-              }
+        }
+      ],
+      'domainLanguages' => [
+        'type' => Type::string(),
+        'description' => 'Domain Sprachen',
+        'resolve' => function () use ($yrewrite_domain_data) {
+          try {
+            if ($yrewrite_domain_data === null) {
+              return [];
+            }
 
-              $allLanguages = $yrewrite_domain_data->getClangs();
-              if (!count($allLanguages)) {
-                $allLanguages = rex_clang::getAllIds();
-              }
-              $langs = [];
-              foreach ($allLanguages as $clang) {
-                $rex_clang = rex_clang::get($clang);
-                $langs[] = [
-                  'id' => $rex_clang->getId(),
-                  'name' => $rex_clang->getName(),
-                  'code' => $rex_clang->getCode(),
-                ];
-              }
-              return \json_encode($langs);
-            } catch (\Throwable $e) {
-              throw new \Exception('Error getting domain languages' . $e->getMessage());
+            $allLanguages = $yrewrite_domain_data->getClangs();
+            if (!count($allLanguages)) {
+              $allLanguages = rex_clang::getAllIds();
             }
-          }
-        ],
-        'domainDefaultLanguage' => [
-          'type' => Type::string(),
-          'description' => 'Domain Standard-Sprache',
-          'resolve' => function () use ($yrewrite_domain_data) {
-            try {
-              if ($yrewrite_domain_data === null) {
-                return [];
-              }
-              $rex_clang = rex_clang::get($yrewrite_domain_data->getStartClang());
-              return \json_encode([
+            $langs = [];
+            foreach ($allLanguages as $clang) {
+              $rex_clang = rex_clang::get($clang);
+              $langs[] = [
                 'id' => $rex_clang->getId(),
                 'name' => $rex_clang->getName(),
                 'code' => $rex_clang->getCode(),
-              ]);
-            } catch (\Throwable $e) {
-              throw new \Exception('Error getting domain default lang ID' . $e->getMessage());
+              ];
             }
+            return \json_encode($langs);
+          } catch (\Throwable $e) {
+            throw new \Exception('Error getting domain languages' . $e->getMessage());
           }
-        ],
-        'addressData' => [
-          'type' => Type::string(),
-          'description' => 'Stammdaten',
-          'resolve' => function () {
-            try {
-              return \json_encode([
-                'company' => rex_config::get('massif_settings', 'address_firma', ''),
-                'companyCo' => rex_config::get('massif_settings', 'address_firma_zusatz', ''),
-                'street' => rex_config::get('massif_settings', 'address_strasse', ''),
-                'postalCode' => rex_config::get('massif_settings', 'address_plz', ''),
-                'city' => rex_config::get('massif_settings', 'address_ort', ''),
-                'region' => rex_config::get('massif_settings', 'address_kanton_code', ''),
-                'country' => rex_config::get('massif_settings', 'address_land', ''),
-                'countryCode' => rex_config::get('massif_settings', 'address_land_code', ''),
-                'email' => rex_config::get('massif_settings', 'address_e-mail', ''),
-                'phone' => rex_config::get('massif_settings', 'address_phone', ''),
-                'lat' => rex_config::get('massif_settings', 'google_geo lat.', ''),
-                'lng' => rex_config::get('massif_settings', 'google_geo lat.', ''),
-                'maps_link' => rex_config::get('massif_settings', 'google_google_maps_link', ''),
-                'instagram' => rex_config::get('massif_settings', 'social_instagram', ''),
-                'facebook' => rex_config::get('massif_settings', 'social_facebook', ''),
-                'twitter' => rex_config::get('massif_settings', 'social_twitter', ''),
-                'youtube' => rex_config::get('massif_settings', 'social_youtube', ''),
-                'linkedin' => rex_config::get('massif_settings', 'social_linkedin', ''),
-                'xing' => rex_config::get('massif_settings', 'social_xing', ''),
-              ]);
-            } catch (\Throwable $e) {
-              throw new \Exception('Error getting address data' . $e->getMessage());
+        }
+      ],
+      'domainDefaultLanguage' => [
+        'type' => Type::string(),
+        'description' => 'Domain Standard-Sprache',
+        'resolve' => function () use ($yrewrite_domain_data) {
+          try {
+            if ($yrewrite_domain_data === null) {
+              return [];
             }
+            $rex_clang = rex_clang::get($yrewrite_domain_data->getStartClang());
+            return \json_encode([
+              'id' => $rex_clang->getId(),
+              'name' => $rex_clang->getName(),
+              'code' => $rex_clang->getCode(),
+            ]);
+          } catch (\Throwable $e) {
+            throw new \Exception('Error getting domain default lang ID' . $e->getMessage());
           }
-        ],
+        }
       ]
-    ]);
+    ];
 
+    if (rex_addon::get('massif_settings')->isAvailable()) {
+      $fields['addressData'] = [
+        'type' => Type::string(),
+        'description' => 'Stammdaten',
+        'resolve' => function () {
+          try {
+            return \json_encode([
+              'company' => rex_config::get('massif_settings', 'address_firma', ''),
+              'companyCo' => rex_config::get('massif_settings', 'address_firma_zusatz', ''),
+              'street' => rex_config::get('massif_settings', 'address_strasse', ''),
+              'postalCode' => rex_config::get('massif_settings', 'address_plz', ''),
+              'city' => rex_config::get('massif_settings', 'address_ort', ''),
+              'region' => rex_config::get('massif_settings', 'address_kanton_code', ''),
+              'country' => rex_config::get('massif_settings', 'address_land', ''),
+              'countryCode' => rex_config::get('massif_settings', 'address_land_code', ''),
+              'email' => rex_config::get('massif_settings', 'address_e-mail', ''),
+              'phone' => rex_config::get('massif_settings', 'address_phone', ''),
+              'lat' => rex_config::get('massif_settings', 'google_geo lat.', ''),
+              'lng' => rex_config::get('massif_settings', 'google_geo lat.', ''),
+              'maps_link' => rex_config::get('massif_settings', 'google_google_maps_link', ''),
+              'instagram' => rex_config::get('massif_settings', 'social_instagram', ''),
+              'facebook' => rex_config::get('massif_settings', 'social_facebook', ''),
+              'twitter' => rex_config::get('massif_settings', 'social_twitter', ''),
+              'youtube' => rex_config::get('massif_settings', 'social_youtube', ''),
+              'linkedin' => rex_config::get('massif_settings', 'social_linkedin', ''),
+              'xing' => rex_config::get('massif_settings', 'social_xing', ''),
+            ]);
+          } catch (\Throwable $e) {
+            throw new \Exception('Error getting address data' . $e->getMessage());
+          }
+        }
+      ];
+    }
+    $this->types['RexSystem'] = new ObjectType([
+      'name' => 'RexSystem',
+      'description' => 'REDAXO System-Informationen',
+      'fields' => $fields
+    ]);
     // rexSystem Query hinzufügen
     $this->queries['rexSystem'] = [
       'type' => $this->types['RexSystem'],
@@ -1013,5 +1098,28 @@ class SchemaBuilder
         return ['dummy' => true];
       }
     ];
+  }
+
+  /**
+   * String-Typen in GraphQL-Typen umwandeln
+   */
+  private function mapStringToGraphQLType(string $type): Type
+  {
+    switch ($type) {
+      case 'string':
+        return Type::string();
+      case 'int':
+        return Type::int();
+      case 'float':
+        return Type::float();
+      case 'boolean':
+        return Type::boolean();
+      case 'nonNull(string)':
+        return Type::nonNull(Type::string());
+      case 'nonNull(int)':
+        return Type::nonNull(Type::int());
+      default:
+        return Type::string();
+    }
   }
 }
