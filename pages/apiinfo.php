@@ -18,6 +18,7 @@ $content = '';
 // Endpoint-Informationen
 $infoContent = '
 <p><strong>Endpoint URL:</strong> <code>' . $endpointUrl . '</code></p>
+<p><strong>Schema URL:</strong> <code>' . $endpointUrl . '&schema=1</code></p>
 <p><strong>Unterstützte HTTP-Methoden:</strong> GET, POST</p>
 <p><strong>Content-Type:</strong> application/json oder application/x-www-form-urlencoded</p>
 

@@ -30,6 +30,11 @@ class rex_api_rexql_graphql extends rex_api_function
       return new rex_api_result(true);
     }
 
+    // Schema-Introspection Request prüfen
+    if (rex_request('schema', 'bool', false) || isset($_GET['schema']) || isset($_POST['schema'])) {
+      return $this->handleSchemaIntrospection($addon);
+    }
+
     $startTime = microtime(true);
     $startMemory = memory_get_usage(true);
 
@@ -362,5 +367,88 @@ class rex_api_rexql_graphql extends rex_api_function
   protected function requiresCsrfProtection()
   {
     return false;
+  }
+
+  /**
+   * Schema-Introspection Request behandeln
+   */
+  private function handleSchemaIntrospection(rex_addon $addon): rex_api_result
+  {
+    try {
+      // Dev-Modus prüfen (weniger Restrictions in Development)
+      $isDevMode = $this->isDevMode();
+
+      // Authentifizierung prüfen (gleiche Logik wie Hauptendpoint)
+      $apiKey = null;
+      if ($addon->getConfig('require_authentication', true) && !$isDevMode) {
+        $apiKey = $this->validateAuthentication();
+
+        // Domain/IP Restrictions prüfen (außer in Dev-Modus)
+        if (!$this->validateDomainRestrictions($apiKey)) {
+          throw new rex_api_exception(rex_i18n::msg('rexql_error_domain_not_allowed'));
+        }
+      } elseif ($isDevMode) {
+        rex_logger::factory()->debug('rexQL: Schema introspection access in dev mode without authentication', []);
+      }
+
+      // Schema erstellen
+      $schema = FriendsOfRedaxo\RexQL\Cache::getSchema(function () {
+        $builder = new FriendsOfRedaxo\RexQL\SchemaBuilder();
+        return $builder->buildSchema();
+      });
+
+      // Sicherstellen, dass Schema ein GraphQL\Type\Schema Objekt ist
+      if (!($schema instanceof \GraphQL\Type\Schema)) {
+        $builder = new FriendsOfRedaxo\RexQL\SchemaBuilder();
+        $schema = $builder->buildSchema();
+      }
+
+      // Standard GraphQL Introspection Query ausführen
+      $introspectionQuery = \GraphQL\Type\Introspection::getIntrospectionQuery();
+
+      $result = \GraphQL\GraphQL::executeQuery(
+        $schema,
+        $introspectionQuery
+      );
+
+      // API Key Usage protokollieren
+      if ($apiKey) {
+        $apiKey->logUsage();
+      }
+
+      // Response aufbereiten
+      $response = $result->toArray();
+
+      // Debug-Informationen hinzufügen wenn aktiviert
+      if ($addon->getConfig('debug_mode', false)) {
+        $response['extensions'] = [
+          'type' => 'schema_introspection',
+          'timestamp' => date('c')
+        ];
+      }
+
+      // JSON Response senden
+      rex_response::cleanOutputBuffers();
+      rex_response::setStatus(rex_response::HTTP_OK);
+      rex_response::sendJson($response);
+      exit;
+    } catch (Exception $e) {
+      // Error Response
+      $response = [
+        'data' => null,
+        'errors' => [['message' => $e->getMessage()]]
+      ];
+
+      rex_response::cleanOutputBuffers();
+      rex_response::setStatus(
+        $e instanceof rex_api_exception
+          ? rex_response::HTTP_BAD_REQUEST
+          : rex_response::HTTP_INTERNAL_ERROR
+      );
+      rex_response::sendJson($response);
+      exit;
+    }
+
+    return new rex_api_result(true);
   }
 }
