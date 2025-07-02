@@ -9,6 +9,8 @@ use rex_addon;
 use rex_sql;
 use rex_yform_manager_table;
 use rex_logger;
+use rex_config;
+use rex_clang;
 
 /**
  * GraphQL Schema Builder für REDAXO
@@ -718,6 +720,13 @@ class SchemaBuilder
    */
   private function buildSystemTypes(): void
   {
+
+    $yrewrite_domain_data = null;
+    if (rex_addon::get('yrewrite')->isAvailable()) {
+      \rex_yrewrite::init();
+      $yrewrite_domain_data = \rex_yrewrite::getDefaultDomain();
+    }
+
     // RexSystem Type erstellen
     $this->types['RexSystem'] = new ObjectType([
       'name' => 'RexSystem',
@@ -780,6 +789,19 @@ class SchemaBuilder
             }
           }
         ],
+        'notFoundArticleId' => [
+          'type' => Type::int(),
+          'description' => 'Not-Found-Artikel ID',
+          'resolve' => function () {
+            try {
+              return \rex_addon::get('structure')->isAvailable()
+                ? (int) \rex_config::get('structure', 'notfound_article_id', 1)
+                : 1; // Return default value instead of null
+            } catch (\Throwable $e) {
+              throw new \Exception('Error getting not found article ID: ' . $e->getMessage());
+            }
+          }
+        ],
         'defaultTemplateId' => [
           'type' => Type::int(),
           'description' => 'Standard-Template ID',
@@ -792,7 +814,129 @@ class SchemaBuilder
               throw new \Exception('Error getting default template ID: ' . $e->getMessage());
             }
           }
-        ]
+        ],
+        'domainHost' => [
+          'type' => Type::string(),
+          'description' => 'Domain Host',
+          'resolve' => function () use ($yrewrite_domain_data) {
+            try {
+              return $yrewrite_domain_data ? $yrewrite_domain_data->getHost() : "";
+            } catch (\Throwable $e) {
+              throw new \Exception('Error getting domain host: ' . $e->getMessage());
+            }
+          }
+        ],
+        'domainUrl' => [
+          'type' => Type::string(),
+          'description' => 'Domain URL',
+          'resolve' => function () use ($yrewrite_domain_data) {
+            try {
+              return $yrewrite_domain_data ? $yrewrite_domain_data->getUrl() : "";
+            } catch (\Throwable $e) {
+              throw new \Exception('Error getting domain url: ' . $e->getMessage());
+            }
+          }
+        ],
+        'domainStartId' => [
+          'type' => Type::int(),
+          'description' => 'Domain Start-Artikel-ID',
+          'resolve' => function () use ($yrewrite_domain_data) {
+            try {
+              return $yrewrite_domain_data ? $yrewrite_domain_data->getStartId() : "";
+            } catch (\Throwable $e) {
+              throw new \Exception('Error getting domain start article ID: ' . $e->getMessage());
+            }
+          }
+        ],
+        'domainNotfoundId' => [
+          'type' => Type::int(),
+          'description' => 'Domain Not Found-Artikel-ID',
+          'resolve' => function () use ($yrewrite_domain_data) {
+            try {
+              return $yrewrite_domain_data ? $yrewrite_domain_data->getNotfoundId() : "";
+            } catch (\Throwable $e) {
+              throw new \Exception('Error getting domain not found article ID' . $e->getMessage());
+            }
+          }
+        ],
+        'domainLanguages' => [
+          'type' => Type::string(),
+          'description' => 'Domain Sprachen',
+          'resolve' => function () use ($yrewrite_domain_data) {
+            try {
+              if ($yrewrite_domain_data === null) {
+                return [];
+              }
+
+              $allLanguages = $yrewrite_domain_data->getClangs();
+              if (!count($allLanguages)) {
+                $allLanguages = rex_clang::getAllIds();
+              }
+              $langs = [];
+              foreach ($allLanguages as $clang) {
+                $rex_clang = rex_clang::get($clang);
+                $langs[] = [
+                  'id' => $rex_clang->getId(),
+                  'name' => $rex_clang->getName(),
+                  'code' => $rex_clang->getCode(),
+                ];
+              }
+              return \json_encode($langs);
+            } catch (\Throwable $e) {
+              throw new \Exception('Error getting domain languages' . $e->getMessage());
+            }
+          }
+        ],
+        'domainDefaultLanguage' => [
+          'type' => Type::string(),
+          'description' => 'Domain Standard-Sprache',
+          'resolve' => function () use ($yrewrite_domain_data) {
+            try {
+              if ($yrewrite_domain_data === null) {
+                return [];
+              }
+              $rex_clang = rex_clang::get($yrewrite_domain_data->getStartClang());
+              return \json_encode([
+                'id' => $rex_clang->getId(),
+                'name' => $rex_clang->getName(),
+                'code' => $rex_clang->getCode(),
+              ]);
+            } catch (\Throwable $e) {
+              throw new \Exception('Error getting domain default lang ID' . $e->getMessage());
+            }
+          }
+        ],
+        'addressData' => [
+          'type' => Type::string(),
+          'description' => 'Stammdaten',
+          'resolve' => function () {
+            try {
+              return \json_encode([
+                'company' => rex_config::get('massif_settings', 'address_firma', ''),
+                'companyCo' => rex_config::get('massif_settings', 'address_firma_zusatz', ''),
+                'street' => rex_config::get('massif_settings', 'address_strasse', ''),
+                'postalCode' => rex_config::get('massif_settings', 'address_plz', ''),
+                'city' => rex_config::get('massif_settings', 'address_ort', ''),
+                'region' => rex_config::get('massif_settings', 'address_kanton_code', ''),
+                'country' => rex_config::get('massif_settings', 'address_land', ''),
+                'countryCode' => rex_config::get('massif_settings', 'address_land_code', ''),
+                'email' => rex_config::get('massif_settings', 'address_e-mail', ''),
+                'phone' => rex_config::get('massif_settings', 'address_phone', ''),
+                'lat' => rex_config::get('massif_settings', 'google_geo lat.', ''),
+                'lng' => rex_config::get('massif_settings', 'google_geo lat.', ''),
+                'maps_link' => rex_config::get('massif_settings', 'google_google_maps_link', ''),
+                'instagram' => rex_config::get('massif_settings', 'social_instagram', ''),
+                'facebook' => rex_config::get('massif_settings', 'social_facebook', ''),
+                'twitter' => rex_config::get('massif_settings', 'social_twitter', ''),
+                'youtube' => rex_config::get('massif_settings', 'social_youtube', ''),
+                'linkedin' => rex_config::get('massif_settings', 'social_linkedin', ''),
+                'xing' => rex_config::get('massif_settings', 'social_xing', ''),
+              ]);
+            } catch (\Throwable $e) {
+              throw new \Exception('Error getting address data' . $e->getMessage());
+            }
+          }
+        ],
       ]
     ]);
 
