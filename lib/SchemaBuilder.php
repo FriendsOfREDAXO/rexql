@@ -409,7 +409,10 @@ class SchemaBuilder
     // Add 1:n and n:1 relations
     if (!empty($tableConfig['relations'])) {
       foreach ($tableConfig['relations'] as $relationTable => $relationConfig) {
-        $fields[$relationTable] = [
+        $relationTypeName = $this->getTypeName($relationTable);
+        $fieldName = lcfirst($relationTypeName); // Use camelCase GraphQL type name as field name
+        
+        $fields[$fieldName] = [
           'type' => function () use ($relationTable, $relationConfig) {
             $relationTypeName = $this->getTypeName($relationTable);
             switch ($relationConfig['type']) {
