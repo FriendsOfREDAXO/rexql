@@ -13,7 +13,7 @@
     'https_only' => false,
   ];
 
-  // Verfügbare Berechtigungen
+  // Permissions array
   $permissions = [
     'read:all' => 'Alle Tabellen lesen',
     'read:core' => 'Core-Tabellen lesen',

@@ -6,7 +6,7 @@ use rex_sql;
 use rex_sql_exception;
 
 /**
- * API-Schlüssel Verwaltung
+ * API key management class
  */
 class ApiKey
 {
@@ -31,7 +31,7 @@ class ApiKey
   private string $keyType; // 'standard', 'public_private', 'domain_restricted'
 
   /**
-   * API-Schlüssel anhand des Keys finden
+   * Find API key by key string
    */
   public static function findByKey(string $apiKey): ?self
   {
@@ -49,7 +49,7 @@ class ApiKey
   }
 
   /**
-   * Alle API-Schlüssel abrufen
+   * Get all active API keys
    * 
    * @return self[]
    */
@@ -68,7 +68,7 @@ class ApiKey
   }
 
   /**
-   * Neuen API-Schlüssel erstellen
+   * Create a new API key
    */
   public static function create(string $name, array $permissions = [], int $rateLimit = 100): self
   {
@@ -94,7 +94,7 @@ class ApiKey
   }
 
   /**
-   * API-Schlüssel generieren
+   * Generate a unique API key
    */
   private static function generateApiKey(): string
   {
@@ -119,7 +119,7 @@ class ApiKey
   }
 
   /**
-   * Überprüfen ob eine bestimmte Berechtigung vorhanden ist
+   * Check if a specific permission is granted
    */
   public function hasPermission(string $permission): bool
   {
@@ -127,7 +127,7 @@ class ApiKey
   }
 
   /**
-   * Überprüfen ob Rate Limit erreicht ist
+   * Check if the API key has reached its rate-limit
    */
   public function isRateLimited(): bool
   {
@@ -142,7 +142,7 @@ class ApiKey
   }
 
   /**
-   * Instanz aus Datenbank-Resultat erstellen
+   * Create an instance from a database result
    */
   private static function fromDbResult(\rex_sql $sql): self
   {
@@ -200,7 +200,7 @@ class ApiKey
   }
 
   /**
-   * Erweiterten API-Schlüssel mit Public/Private Keys erstellen
+   * Extended API key with Public/Private keys
    */
   public static function createPublicPrivateKey(
     string $name,
@@ -240,7 +240,7 @@ class ApiKey
   }
 
   /**
-   * Öffentlichen Schlüssel generieren
+   * Generates a public key for frontend use
    */
   private static function generatePublicKey(): string
   {
@@ -248,7 +248,7 @@ class ApiKey
   }
 
   /**
-   * Privaten Schlüssel generieren
+   * Generates a private key for backend use
    */
   private static function generatePrivateKey(): string
   {
@@ -256,7 +256,7 @@ class ApiKey
   }
 
   /**
-   * Domain-beschränkten API-Schlüssel erstellen
+   * Generates a domain-restricted API key
    */
   public static function createDomainRestrictedKey(
     string $name,

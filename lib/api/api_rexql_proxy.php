@@ -25,37 +25,37 @@ class rex_api_rexql_proxy extends rex_api_function
       // Session-based authentication
       $sessionToken = $this->validateSession();
 
-      // Public Key aus Request
+      // Public Key from request
       $publicKey = $this->getPublicKey();
       if (!$publicKey) {
         throw new rex_api_exception('Public Key erforderlich');
       }
 
-      // API Key anhand Public Key finden
+      // Find API Key by Public Private Key
       $apiKey = FriendsOfRedaxo\RexQL\ApiKey::findByKey($publicKey);
       if (!$apiKey || $apiKey->getKeyType() !== 'public_private') {
         throw new rex_api_exception('Ungültiger Public Key');
       }
 
-      // Domain-Validierung
+      // Validate domain restrictions
       if (!FriendsOfRedaxo\RexQL\Utility::validateDomainRestrictions($apiKey)) {
         throw new rex_api_exception('Domain nicht erlaubt');
       }
 
-      // IP-Validierung
+      // Validate IP restrictions
       if (!FriendsOfRedaxo\RexQL\Utility::validateIpRestrictions($apiKey)) {
         throw new rex_api_exception('IP-Adresse nicht erlaubt');
       }
 
-      // HTTPS-Validierung
+      // Validate HTTPS restrictions
       if (!FriendsOfRedaxo\RexQL\Utility::validateHttpsRestrictions($apiKey)) {
         throw new rex_api_exception('HTTPS erforderlich');
       }
 
-      // GraphQL Input parsen
+      // parse GraphQL input
       $input = $this->getGraphQLInput();
 
-      // Request an rexQL weiterleiten mit Private Key
+      // Redirect request to rexQL with Private Key
       $response = $this->forwardToRexQL($input, $apiKey->getPrivateKey());
 
       // Return response
@@ -72,11 +72,11 @@ class rex_api_rexql_proxy extends rex_api_function
   }
 
   /**
-   * Session validieren (nur Custom Session Tokens)
+   * Validate session token (only for Custom Session Tokens)
    */
   private function validateSession(): string
   {
-    // Custom Session Token (z.B. Frontend Login)
+    // Custom Session Token (ex. frontend login)
     $sessionToken = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
     $sessionToken = str_replace('Bearer ', '', $sessionToken);
 
@@ -93,7 +93,7 @@ class rex_api_rexql_proxy extends rex_api_function
     return $sessionToken;
   }
   /**
-   * Custom Session Token validieren
+   * Validate custom session token
    */
   private function validateCustomSessionToken(string $token): bool
   {
@@ -103,7 +103,7 @@ class rex_api_rexql_proxy extends rex_api_function
   }
 
   /**
-   * Public Key aus Request ermitteln
+   * Get Public Key from request
    */
   private function getPublicKey(): ?string
   {
@@ -111,7 +111,7 @@ class rex_api_rexql_proxy extends rex_api_function
   }
 
   /**
-   * GraphQL Input aus Request parsen
+   * Parse GraphQL input from request body
    */
   private function getGraphQLInput(): array
   {
@@ -133,7 +133,7 @@ class rex_api_rexql_proxy extends rex_api_function
   }
 
   /**
-   * Request an rexQL weiterleiten
+   * Forward request to rexQL GraphQL API
    */
   private function forwardToRexQL(array $input, string $privateKey): string
   {
