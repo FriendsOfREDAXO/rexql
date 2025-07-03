@@ -91,7 +91,7 @@ rexQL.playground = {
         .querySelector('[data-endpoint-url]')
         ?.getAttribute('data-endpoint-url') ||
       window.rexQLEndpointUrl ||
-      '/api/graphql'
+      '/index.php?rex-api-call=rexql_graphql'
 
     fetch(endpointUrl, {
       method: 'POST',
