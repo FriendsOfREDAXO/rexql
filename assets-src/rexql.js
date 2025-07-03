@@ -10,6 +10,7 @@ window.rexQL = window.rexQL || {}
  */
 rexQL.playground = {
   init: function () {
+    console.log('rexQL.playground.init()')
     const queryTextarea = document.getElementById('graphql-query')
     const apiKeyInput = document.getElementById('api-key-input')
     const executeButton = document.getElementById('execute-query')
@@ -277,44 +278,6 @@ rexQL.validateGraphQL = function (query) {
 }
 
 /**
- * Query-Statistiken aktualisieren
- */
-rexQL.updateStats = function () {
-  // AJAX-Request zu einer Stats-API (falls implementiert)
-  var xhr = new XMLHttpRequest()
-  xhr.open('GET', window.location.href + '&ajax=stats', true)
-  xhr.onreadystatechange = function () {
-    if (xhr.readyState === 4 && xhr.status === 200) {
-      try {
-        var stats = JSON.parse(xhr.responseText)
-        rexQL.displayStats(stats)
-      } catch (e) {
-        console.error('Error parsing stats:', e)
-      }
-    }
-  }
-  xhr.send()
-}
-
-/**
- * Statistiken anzeigen
- */
-rexQL.displayStats = function (stats) {
-  var containers = {
-    total_queries: document.getElementById('stat-total-queries'),
-    success_rate: document.getElementById('stat-success-rate'),
-    avg_execution_time: document.getElementById('stat-avg-time'),
-    avg_memory_usage: document.getElementById('stat-avg-memory')
-  }
-
-  for (var key in containers) {
-    if (containers[key] && stats[key] !== undefined) {
-      containers[key].textContent = stats[key]
-    }
-  }
-}
-
-/**
  * Konfiguration: Table Selection funktionalität
  */
 rexQL.config = {
@@ -396,10 +359,38 @@ rexQL.config = {
   }
 }
 
-/**
- * Initialisierung nach DOM-Load
- */
-document.addEventListener('DOMContentLoaded', function () {
+$(document).on('rex:ready', function () {
+  if (window.location.href.indexOf('page=rexql') === -1) return
+
+  console.log('rexQL Addon rex:ready')
+
+  if (typeof copyToClipboard === 'undefined') {
+    window.copyToClipboard = function (text) {
+      if (navigator.clipboard) {
+        navigator.clipboard
+          .writeText(text)
+          .then(function () {
+            // Success feedback could be added here
+          })
+          .catch(function (err) {
+            console.error('Failed to copy text: ', err)
+          })
+      } else {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea')
+        textArea.value = text
+        document.body.appendChild(textArea)
+        textArea.select()
+        try {
+          document.execCommand('copy')
+        } catch (err) {
+          console.error('Failed to copy text: ', err)
+        }
+        document.body.removeChild(textArea)
+      }
+    }
+  }
+
   // Syntax-Highlighting für Code-Blöcke (einfach)
   var codeBlocks = document.querySelectorAll('pre code')
   codeBlocks.forEach(function (block) {
@@ -407,11 +398,6 @@ document.addEventListener('DOMContentLoaded', function () {
       block.classList.add('language-graphql')
     }
   })
-
-  // Automatische Stats-Aktualisierung alle 30 Sekunden auf der Config-Seite
-  if (window.location.href.indexOf('page=rexql/config') !== -1) {
-    setInterval(rexQL.updateStats, 30000)
-  }
 
   // API-Schlüssel Copy-Buttons initialisieren
   var copyButtons = document.querySelectorAll('[data-copy-api-key]')
@@ -428,21 +414,8 @@ document.addEventListener('DOMContentLoaded', function () {
     rexQL.playground.init()
   }
 
-  // Konfiguration initialisieren (falls vorhanden)
+  // Konfiguration initialisieren (falls vorhanden) 
   if (window.location.href.indexOf('page=rexql/config') !== -1) {
     rexQL.config.init()
   }
 })
-
-/**
- * jQuery Integration (falls jQuery verfügbar ist)
- */
-if (typeof jQuery !== 'undefined') {
-  jQuery(document).ready(function ($) {
-    // Rex:ready Event für REDAXO-spezifische Initialisierung
-    $(document).on('rex:ready', function () {
-      // Custom REDAXO-spezifische Initialisierung hier
-      console.log('rexQL: REDAXO backend ready')
-    })
-  })
-}
