@@ -5,6 +5,42 @@
  */
 
 $addon = rex_addon::get('rexql');
+
+// Core-Tabellen
+
+$coreTables = [
+    'rex_article' => 'Artikel',
+    'rex_article_slice' => 'Artikel-Slices',
+    'rex_clang' => 'Sprachen',
+    'rex_media' => 'Medien',
+    'rex_media_category' => 'Medienkategorien',
+    'rex_module' => 'Module',
+    'rex_template' => 'Templates',
+];
+
+// Werte aus der Konfiguration laden mit Standardwerten
+$values = array_merge([
+    'endpoint_enabled' => 0,
+    'require_authentication' => 1,
+    'rate_limit' => 100,
+    'max_query_depth' => 10,
+    'introspection_enabled' => 0,
+    'debug_mode' => 0,
+    'cache_queries' => 0,
+    'allowed_tables' => [],
+    'proxy_enabled' => 0,
+    'allow_public_dev' => 0,
+    'cors_allowed_origins' => ['*'],
+    'cors_allowed_methods' => ['GET', 'POST', 'OPTIONS'],
+    'cors_allowed_headers' => []
+], $addon->getConfig());
+
+// Development mode notice
+$isDevMode = FriendsOfRedaxo\RexQL\Utility::isDevMode() || false;
+
+$allowedTables = is_array($values['allowed_tables']) ? $values['allowed_tables'] : [];
+
+
 $content = '<div class="rexql-config-section">';
 $buttons = '';
 $formElements = [];
@@ -45,25 +81,6 @@ if (rex_post('formsubmit', 'string') == '1') {
     echo rex_view::success($addon->i18n('config_saved'));
 }
 
-// Werte aus der Konfiguration laden mit Standardwerten
-$values = array_merge([
-    'endpoint_enabled' => 0,
-    'require_authentication' => 1,
-    'rate_limit' => 100,
-    'max_query_depth' => 10,
-    'introspection_enabled' => 0,
-    'debug_mode' => 0,
-    'cache_queries' => 0,
-    'allowed_tables' => [],
-    'proxy_enabled' => 0,
-    'allow_public_dev' => 0,
-    'cors_allowed_origins' => ['*'],
-    'cors_allowed_methods' => ['GET', 'POST', 'OPTIONS'],
-    'cors_allowed_headers' => []
-], $addon->getConfig());
-
-// Development mode notice
-$isDevMode = FriendsOfRedaxo\RexQL\Utility::isDevMode() || false;
 
 if (!$isDevMode) {
     $isDevMode = (method_exists('rex', 'isDebugMode') && rex::isDebugMode()) ||
@@ -209,18 +226,6 @@ $content .= '<div class="form-group">
     <label class="control-label">' . $addon->i18n('config_allowed_tables') . '</label>
     <div class="rex-form-panel-content">';
 
-// Core-Tabellen
-$allowedTables = is_array($values['allowed_tables']) ? $values['allowed_tables'] : [];
-$coreTables = [
-    'rex_action' => 'Aktionen',
-    'rex_article' => 'Artikel',
-    'rex_article_slice' => 'Artikel-Slices',
-    'rex_clang' => 'Sprachen',
-    'rex_media' => 'Medien',
-    'rex_media_category' => 'Medienkategorien',
-    'rex_module' => 'Module',
-    'rex_template' => 'Templates',
-];
 
 $content .= '<h5>' . $addon->i18n('config_core_tables') . '</h5>';
 $content .= '
