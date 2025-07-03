@@ -5,6 +5,7 @@ namespace FriendsOfRedaxo\RexQL;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\Type;
 use GraphQL\Type\Schema;
+use rex;
 use rex_addon;
 use rex_sql;
 use rex_yform_manager_table;
@@ -26,27 +27,50 @@ class SchemaBuilder
    */
   private function getTableConfigurations(): array
   {
+
     return [
+      'rex_article' => [
+        'description' => 'REDAXO Artikel',
+        'args' => [
+          'id' => ['type' => 'int'],
+          'status' => ['type' => 'int', 'defaultValue' => 1],
+          'clang_id' => ['type' => 'int', 'defaultValue' => 1],
+          'where' => ['type' => 'string'],
+          'order_by' => ['type' => 'string', 'defaultValue' => 'priority ASC'],
+          'offset' => ['type' => 'int', 'defaultValue' => 0],
+          'limit' => ['type' => 'int'],
+        ],
+        'fields' => [
+          'name' => ['description' => 'Article name'],
+          'status' => ['description' => 'Article status'],
+          'clang_id' => ['description' => 'Language ID'],
+          'parent_id' => ['description' => 'Parent article ID']
+        ],
+        'joins' => [
+          'rex_article_slice' => [
+            'type' => 'LEFT JOIN',
+            'on' => 'rex_article.id = rex_article_slice.article_id',
+            'alias' => 'rex_article_slice',
+            'fields' => [
+              'rex_article_slice_id' => 'rex_article_slice.id',
+            ]
+          ]
+        ]
+
+      ],
       'rex_article_slice' => [
         'description' => 'REDAXO Artikel-Slices',
-        'single_args' => [
+        'args' => [
           'id' => ['type' => 'int'],
+          'status' => ['type' => 'int', 'defaultValue' => 1],
           'article_id' => ['type' => 'int'],
           'clang_id' => ['type' => 'int', 'defaultValue' => 1],
-          'module_id' => ['type' => 'int'],
-          'ctype_id' => ['type' => 'int'],
-          'where' => ['type' => 'string'],
-          'order_by' => ['type' => 'string', 'defaultValue' => 'priority ASC']
-        ],
-        'list_args' => [
-          'article_id' => ['type' => 'int'],
-          'clang_id' => ['type' => 'int'],
           'module_id' => ['type' => 'int'],
           'ctype_id' => ['type' => 'int'],
           'limit' => ['type' => 'int'],
           'offset' => ['type' => 'int', 'defaultValue' => 0],
           'where' => ['type' => 'string'],
-          'order_by' => ['type' => 'string', 'defaultValue' => 'priority ASC']
+          'order_by' => ['type' => 'string', 'defaultValue' => 'priority ASC'],
         ],
         'fields' => [
           'article_id' => ['description' => 'Article ID'],
@@ -56,76 +80,86 @@ class SchemaBuilder
           'priority' => ['description' => 'Priority/order'],
           'value1' => ['description' => 'Module value 1'],
           'value2' => ['description' => 'Module value 2']
+        ],
+        'joins' => [
+          'rex_module' => [
+            'type' => 'LEFT JOIN',
+            'on' => 'rex_article_slice.module_id = rex_module.id',
+            'alias' => 'rex_module',
+            'fields' => [
+              'module_id' => 'rex_module.id',
+              'module_name' => 'rex_module.name',
+              'module_key' => 'rex_module.key',
+              'module_input' => 'rex_module.input',
+              'module_output' => 'rex_module.output'
+            ]
+          ]
         ]
       ],
-      'rex_article' => [
-        'description' => 'REDAXO Artikel',
-        'single_args' => [
+      'rex_clang' => [
+        'description' => 'REDAXO Sprachen',
+        'args' => [
           'id' => ['type' => 'int'],
           'status' => ['type' => 'int', 'defaultValue' => 1],
-          'clang_id' => ['type' => 'int', 'defaultValue' => 1],
-          'where' => ['type' => 'string'],
-          'order_by' => ['type' => 'string', 'defaultValue' => 'id DESC']
-        ],
-        'list_args' => [
+          'code' => ['type' => 'string'],
           'limit' => ['type' => 'int'],
-          'status' => ['type' => 'int'],
           'offset' => ['type' => 'int', 'defaultValue' => 0],
-          'clang_id' => ['type' => 'int'],
           'where' => ['type' => 'string'],
-          'order_by' => ['type' => 'string', 'defaultValue' => 'id DESC']
+          'order_by' => ['type' => 'string', 'defaultValue' => 'priority ASC'],
         ],
         'fields' => [
-          'name' => ['description' => 'Article name'],
-          'status' => ['description' => 'Article status'],
-          'clang_id' => ['description' => 'Language ID'],
-          'parent_id' => ['description' => 'Parent article ID']
+          'id' => ['description' => 'Sprach-ID'],
+          'name' => ['description' => 'Sprach-Name'],
+          'code' => ['description' => 'Sprach-Code']
         ]
       ],
-      'rex_structure' => [
-        'description' => 'REDAXO Struktur',
-        'single_args' => [
-          'id' => ['type' => 'int'],
-          'status' => ['type' => 'int', 'defaultValue' => 1],
-          'clang_id' => ['type' => 'int', 'defaultValue' => 1],
-          'where' => ['type' => 'string'],
-          'order_by' => ['type' => 'string', 'defaultValue' => 'id DESC']
-        ],
-        'list_args' => [
-          'limit' => ['type' => 'int'],
-          'status' => ['type' => 'int'],
-          'offset' => ['type' => 'int', 'defaultValue' => 0],
-          'clang_id' => ['type' => 'int'],
-          'where' => ['type' => 'string'],
-          'order_by' => ['type' => 'string', 'defaultValue' => 'id DESC']
-        ],
+      'rex_media' => [
+        'description' => 'REDAXO Medien',
         'fields' => [
-          'name' => ['description' => 'Structure name'],
-          'status' => ['description' => 'Structure status'],
-          'clang_id' => ['description' => 'Language ID'],
-          'parent_id' => ['description' => 'Parent structure ID']
+          'id' => ['description' => 'Media-ID'],
+          'filename' => ['description' => 'Dateiname'],
+          'title' => ['description' => 'Titel']
         ]
       ],
-      // Default configuration for other tables
-      '_default' => [
-        'description' => 'Database table',
-        'single_args' => [
-          'id' => ['type' => 'int'],
-          'status' => ['type' => 'int', 'defaultValue' => 1],
-          'clang_id' => ['type' => 'int', 'defaultValue' => 1],
-          'where' => ['type' => 'string'],
-          'order_by' => ['type' => 'string', 'defaultValue' => 'id DESC']
-        ],
-        'list_args' => [
-          'limit' => ['type' => 'int'],
-          'status' => ['type' => 'int'],
-          'offset' => ['type' => 'int', 'defaultValue' => 0],
-          'clang_id' => ['type' => 'int'],
-          'where' => ['type' => 'string'],
-          'order_by' => ['type' => 'string', 'defaultValue' => 'id DESC']
-        ],
-        'fields' => []
+      'rex_media_category' => [
+        'description' => 'REDAXO Medien-Kategorien',
+        'fields' => [
+          'id' => ['description' => 'Media-Category-ID'],
+          'name' => ['description' => 'Name'],
+          'parent_id' => ['description' => 'Eltern-ID der Kategorie']
+        ]
+      ],
+      'rex_module' => [
+        'description' => 'REDAXO Module',
+        'fields' => [
+          'id' => ['description' => 'Module-ID'],
+          'key' => ['description' => 'Key'],
+          'name' => ['description' => 'Name'],
+        ]
+      ],
+      'rex_template' => [
+        'description' => 'REDAXO Templates',
+        'fields' => [
+          'id' => ['description' => 'Template-ID'],
+          'key' => ['description' => 'Key'],
+          'name' => ['description' => 'Name'],
+        ]
       ]
+    ];
+  }
+
+  private function getDefaultConfiguration(): array
+  {
+    return  [
+      'description' => 'Database table',
+      'args' => [
+        'id' => ['type' => 'int'],
+        'limit' => ['type' => 'int'],
+        'offset' => ['type' => 'int', 'defaultValue' => 0],
+        'where' => ['type' => 'string'],
+        'order_by' => ['type' => 'string', 'defaultValue' => 'id DESC']
+      ],
+      'fields' => []
     ];
   }
 
@@ -162,7 +196,7 @@ class SchemaBuilder
   private function buildCoreTypes(): void
   {
     $allowedTables = rex_addon::get('rexql')->getConfig('allowed_tables', []);
-    $coreTables = $this->getCoreTableConfig();
+    $coreTables = $this->getTableConfigurations();
 
     foreach ($coreTables as $table => $config) {
       if (!in_array($table, $allowedTables)) {
@@ -174,8 +208,8 @@ class SchemaBuilder
         rex_logger::factory()->info("RexQL: Creating type '{$typeName}' for table '{$table}'");
       }
       $this->types[$typeName] = $this->createTypeFromTable($table, $config);
-      $this->queries[$this->getQueryName($table)] = $this->createQueryField($table, $typeName);
-      $this->queries[$this->getListQueryName($table)] = $this->createListQueryField($table, $typeName);
+      $this->queries[$this->getQueryName($table)] = $this->createQueryField($table, $config, $typeName, false);
+      $this->queries[$this->getListQueryName($table)] = $this->createQueryField($table, $config, $typeName);
     }
   }
 
@@ -227,13 +261,11 @@ class SchemaBuilder
   /**
    * ObjectType aus Tabellen-Definition erstellen
    */
-  private function createTypeFromTable(string $table, array $config): ObjectType
+  private function createTypeFromTable(string $table, array $tableConfig): ObjectType
   {
+
     $sql = rex_sql::factory();
     $sql->setQuery('DESCRIBE ' . $table);
-
-    $configurations = $this->getTableConfigurations();
-    $tableConfig = $configurations[$table] ?? $configurations['_default'];
 
     $fields = [];
     while ($sql->hasNext()) {
@@ -243,7 +275,6 @@ class SchemaBuilder
 
       // Beschreibung aus Konfiguration holen
       $description = $tableConfig['fields'][$column]['description'] ??
-        $config['fields'][$column]['description'] ??
         ucfirst(str_replace('_', ' ', $column));
 
       $fields[$column] = [
@@ -260,13 +291,34 @@ class SchemaBuilder
       $sql->next();
     }
 
+    // Add joined fields to GraphQL type
+    if (!empty($tableConfig['joins'])) {
+      foreach ($tableConfig['joins'] as $joinTable => $joinConfig) {
+        if (!empty($joinConfig['fields'])) {
+          foreach ($joinConfig['fields'] as $fieldAlias => $fieldExpression) {
+            $fields[$fieldAlias] = [
+              'type' => Type::string(), // Default to string, could be made more sophisticated
+              'description' => "Joined field from {$joinTable}",
+              'resolve' => function ($root, $args, $context) use ($fieldAlias) {
+                try {
+                  return isset($root[$fieldAlias]) ? (string) $root[$fieldAlias] : null;
+                } catch (\Throwable $e) {
+                  return null;
+                }
+              }
+            ];
+          }
+        }
+      }
+    }
+
     if (empty($fields)) {
       throw new \Exception("No fields found for table {$table}");
     }
 
     return new ObjectType([
       'name' => $this->getTypeName($table),
-      'description' => $tableConfig['description'] ?? $config['description'] ?? "Tabelle {$table}",
+      'description' => $tableConfig['description'] ?? "Tabelle {$table}",
       'fields' => $fields
     ]);
   }
@@ -310,11 +362,10 @@ class SchemaBuilder
   /**
    * Query-Field für Einzeleintrag erstellen
    */
-  private function createQueryField(string $table, string $typeName): array
+  private function createQueryField(string $table, array $tableConfig, string $typeName, bool $list = true): array
   {
-    $configurations = $this->getTableConfigurations();
-    $config = $configurations[$table] ?? $configurations['_default'];
-    $args = $config['single_args'] ?? [];
+    $defaultConfig = $this->getDefaultConfiguration();
+    $args = $tableConfig['args'] ?? $defaultConfig['args'];
 
     // GraphQL Typen zu den Argumenten hinzufügen
     $graphqlArgs = [];
@@ -328,39 +379,10 @@ class SchemaBuilder
     }
 
     return [
-      'type' => $this->types[$typeName],
+      'type' => $list ? Type::listOf($this->types[$typeName]) : $this->types[$typeName],
       'args' => $graphqlArgs,
-      'resolve' => function ($root, $args) use ($table) {
-        return $this->resolveRecord($table, $args);
-      }
-    ];
-  }
-
-  /**
-   * Query-Field für Liste erstellen
-   */
-  private function createListQueryField(string $table, string $typeName): array
-  {
-    $configurations = $this->getTableConfigurations();
-    $config = $configurations[$table] ?? $configurations['_default'];
-    $args = $config['list_args'] ?? [];
-
-    // GraphQL Typen zu den Argumenten hinzufügen
-    $graphqlArgs = [];
-    foreach ($args as $key => $arg) {
-      $graphqlArgs[$key] = [
-        'type' => $this->mapStringToGraphQLType($arg['type'])
-      ];
-      if (isset($arg['defaultValue'])) {
-        $graphqlArgs[$key]['defaultValue'] = $arg['defaultValue'];
-      }
-    }
-
-    return [
-      'type' => Type::listOf($this->types[$typeName]),
-      'args' => $graphqlArgs,
-      'resolve' => function ($root, $args) use ($table) {
-        return $this->resolveRecords($table, $args);
+      'resolve' => function ($root, $args) use ($table, $list) {
+        return $this->resolveRecords($table, $args, $list);
       }
     ];
   }
@@ -409,54 +431,33 @@ class SchemaBuilder
     $where = 'WHERE 1=1';
     $params = [];
 
-    // Spezielle Behandlung für rex_config
-    if ($table === 'rex_config') {
-      if (isset($args['namespace'])) {
-        $where .= ' AND namespace = :namespace';
-        $params['namespace'] = $args['namespace'];
-      }
-      if (isset($args['key'])) {
-        $where .= ' AND `key` = :key';
-        $params['key'] = $args['key'];
-      }
-    } elseif ($table === 'rex_article_slice') {
-      // Spezielle Behandlung für rex_article_slice
-      if (isset($args['id'])) {
-        $where .= ' AND id = :id';
-        $params['id'] = $args['id'];
-      }
-      if (isset($args['article_id'])) {
-        $where .= ' AND article_id = :article_id';
-        $params['article_id'] = $args['article_id'];
-      }
-      if (isset($args['clang_id'])) {
-        $where .= ' AND clang_id = :clang_id';
-        $params['clang_id'] = $args['clang_id'];
-      }
-      if (isset($args['module_id'])) {
-        $where .= ' AND module_id = :module_id';
-        $params['module_id'] = $args['module_id'];
-      }
-      if (isset($args['ctype_id'])) {
-        $where .= ' AND ctype_id = :ctype_id';
-        $params['ctype_id'] = $args['ctype_id'];
-      }
-    } else {
-      // Standard-Tabellen mit ID
-      if (isset($args['id'])) {
-        $where .= ' AND id = :id';
-        $params['id'] = $args['id'];
-      }
-
-      if (isset($args['clang_id'])) {
-        $where .= ' AND clang_id = :clang_id';
-        $params['clang_id'] = $args['clang_id'];
-      }
-
-      if (isset($args['status'])) {
-        $where .= ' AND status = :status';
-        $params['status'] = $args['status'];
-      }
+    if (isset($args['id'])) {
+      $where .= ' AND id = :id';
+      $params['id'] = $args['id'];
+    }
+    if (isset($args['article_id'])) {
+      $where .= ' AND article_id = :article_id';
+      $params['article_id'] = $args['article_id'];
+    }
+    if (isset($args['clang_id'])) {
+      $where .= ' AND clang_id = :clang_id';
+      $params['clang_id'] = $args['clang_id'];
+    }
+    if (isset($args['module_id'])) {
+      $where .= ' AND module_id = :module_id';
+      $params['module_id'] = $args['module_id'];
+    }
+    if (isset($args['ctype_id'])) {
+      $where .= ' AND ctype_id = :ctype_id';
+      $params['ctype_id'] = $args['ctype_id'];
+    }
+    if (isset($args['id'])) {
+      $where .= ' AND id = :id';
+      $params['id'] = $args['id'];
+    }
+    if (isset($args['status'])) {
+      $where .= ' AND status = :status';
+      $params['status'] = $args['status'];
     }
 
     if (isset($args['where'])) {
@@ -471,92 +472,100 @@ class SchemaBuilder
   /**
    * Liste von Datensätzen auflösen
    */
-  private function resolveRecords(string $table, array $args): array
+  private function resolveRecords(string $table, array $args, bool $list = true): array
   {
-    $sql = rex_sql::factory();
-    $where = 'WHERE 1=1';
-    $order_by = 'id DESC';
-    $params = [];
+    $config = $this->getTableConfigurations()[$table] ?? [];
 
     // Debug logging
     if (rex_addon::get('rexql')->getConfig('debug_mode', false)) {
       rex_logger::factory()->debug("RexQL: Resolving records for table '{$table}' with args: " . json_encode($args));
     }
 
-    // Spezielle Behandlung für rex_config
-    if ($table === 'rex_config') {
-      if (isset($args['namespace'])) {
-        $where .= ' AND namespace = :namespace';
-        $params['namespace'] = $args['namespace'];
-      }
-      if (isset($args['key'])) {
-        $where .= ' AND `key` = :key';
-        $params['key'] = $args['key'];
-      }
-      $order_by = $args['order_by'] ?? 'namespace ASC, `key` ASC';
-    } elseif ($table === 'rex_article_slice') {
-      // Spezielle Behandlung für rex_article_slice
-      if (isset($args['article_id'])) {
-        $where .= ' AND article_id = :article_id';
-        $params['article_id'] = $args['article_id'];
-      }
-      if (isset($args['clang_id'])) {
-        $where .= ' AND clang_id = :clang_id';
-        $params['clang_id'] = $args['clang_id'];
-      }
-      if (isset($args['module_id'])) {
-        $where .= ' AND module_id = :module_id';
-        $params['module_id'] = $args['module_id'];
-      }
-      if (isset($args['ctype_id'])) {
-        $where .= ' AND ctype_id = :ctype_id';
-        $params['ctype_id'] = $args['ctype_id'];
-      }
-      $order_by = $args['order_by'] ?? 'priority ASC';
-    } else {
-      // Standard-Tabellen
-      if (isset($args['clang_id'])) {
-        $where .= ' AND clang_id = :clang_id';
-        $params['clang_id'] = $args['clang_id'];
-      }
+    $sql = rex_sql::factory();
+    $params = [];
+    $where = '1=1';
+    $order_by = $config['default_order'] ?? 'id DESC';
 
-      if (isset($args['status'])) {
-        $where .= ' AND status = :status';
-        $params['status'] = $args['status'];
-      }
+    // Build SELECT clause with joins
+    $selectFields = [$table . '.*'];
+    $joins = '';
 
-      if (isset($args['order_by'])) {
-        $order_by = $args['order_by'];
+    if (!empty($config['joins'])) {
+      foreach ($config['joins'] as $joinTable => $joinConfig) {
+        $joinType = $joinConfig['type'] ?? 'LEFT JOIN';
+        $joinAlias = $joinConfig['alias'] ?? $joinTable;
+        $joinOn = $joinConfig['on'];
+
+        $joins .= " {$joinType} {$joinTable} AS {$joinAlias} ON {$joinOn}";
+
+        // Add joined fields to SELECT
+        if (!empty($joinConfig['fields'])) {
+          foreach ($joinConfig['fields'] as $fieldAlias => $fieldExpression) {
+            $selectFields[] = "{$fieldExpression} AS {$fieldAlias}";
+          }
+        }
       }
     }
 
-    if (isset($args['where'])) {
-      $where .= ' AND (' . $args['where'] . ')';
-    }
+    $selectClause = implode(', ', $selectFields);
 
-    $limit = '';
-    if (isset($args['limit'])) {
-      if (!isset($args['offset'])) {
-        $args['offset'] = 0; // Default offset if not provided
-      }
-      $limit = 'LIMIT ' . $args['offset'] . ', ' . $args['limit'];
-    } else {
-      // Set default limit for rex_config to prevent memory issues
-      if ($table === 'rex_config') {
-        $limit = 'LIMIT 0, 50'; // Default limit of 50 for rex_config
+    $argFields = ['id', 'article_id', 'clang_id', 'module_id', 'ctype_id', 'status', 'where'];
+    foreach ($argFields as $field) {
+      if (isset($args[$field])) {
+        $where .= " AND {$table}.{$field} = :{$field}";
+        $params[$field] = $args[$field];
       }
     }
+    // if (isset($args['id'])) {
+    //   $where .= ' AND ' . $table . '.id = :id';
+    //   $params['id'] = $args['id'];
+    // }
+    // if (isset($args['article_id'])) {
+    //   $where .= ' AND article_id = :article_id';
+    //   $params['article_id'] = $args['article_id'];
+    // }
+    // if (isset($args['clang_id'])) {
+    //   $where .= ' AND clang_id = :clang_id';
+    //   $params['clang_id'] = $args['clang_id'];
+    // }
+    // if (isset($args['module_id'])) {
+    //   $where .= ' AND module_id = :module_id';
+    //   $params['module_id'] = $args['module_id'];
+    // }
+    // if (isset($args['ctype_id'])) {
+    //   $where .= ' AND ctype_id = :ctype_id';
+    //   $params['ctype_id'] = $args['ctype_id'];
+    // }
+    // if (isset($args['status'])) {
+    //   $where .= ' AND status = :status';
+    //   $params['status'] = $args['status'];
+    // }
+    // if (isset($args['where'])) {
+    //   $where .= ' AND (' . $args['where'] . ')';
+    // }
+    if (isset($args['order_by'])) {
+      $order_by = $args['order_by'];
+    }
 
-    $queryString = "SELECT * FROM $table $where ORDER BY $order_by $limit";
+    // // Pagination
+    $limit = isset($args['limit']) ? (int) $args['limit'] : 100;
+    $offset = isset($args['offset']) ? (int) $args['offset'] : 0;
+
+    // Build and execute query
+    $query = "SELECT {$selectClause} FROM " . $table . $joins;
+    $query .= " WHERE {$where}";
+    $query .= " ORDER BY {$order_by}";
+    $query .= " LIMIT {$limit} OFFSET {$offset}";
 
     if (rex_addon::get('rexql')->getConfig('debug_mode', false)) {
-      rex_logger::factory()->debug("RexQL: Executing query: $queryString with params: " . json_encode($params));
+      rex_logger::factory()->debug("RexQL: Executing query: $query with params: " . json_encode($params));
     }
 
-    $sql->setQuery($queryString, $params);
 
     try {
-      $result = $sql->getArray();
+      $sql->setQuery($query, $params);
+      $resultArray = $sql->getArray();
+      $result = $list ? $resultArray : $resultArray[0];
 
       if (rex_addon::get('rexql')->getConfig('debug_mode', false)) {
         rex_logger::factory()->debug("RexQL: Successfully resolved " . count($result) . " records for table '{$table}'");
@@ -724,72 +733,6 @@ class SchemaBuilder
     return $baseName . 'List';
   }
 
-  /**
-   * Core-Tabellen-Konfiguration
-   */
-  private function getCoreTableConfig(): array
-  {
-    return [
-      'rex_article' => [
-        'description' => 'REDAXO Artikel',
-        'fields' => [
-          'id' => ['description' => 'Artikel-ID'],
-          'name' => ['description' => 'Artikel-Name'],
-          'clang_id' => ['description' => 'Sprach-ID']
-        ]
-      ],
-      'rex_article_slice' => [
-        'description' => 'REDAXO Artikel-Inhalte',
-        'fields' => [
-          'id' => ['description' => 'Slice-ID'],
-          'article_id' => ['description' => 'Artikel-ID'],
-          'module_id' => ['description' => 'Modul-ID']
-        ]
-      ],
-      'rex_clang' => [
-        'description' => 'REDAXO Sprachen',
-        'fields' => [
-          'id' => ['description' => 'Sprach-ID'],
-          'name' => ['description' => 'Sprach-Name'],
-          'code' => ['description' => 'Sprach-Code']
-        ]
-      ],
-      'rex_media' => [
-        'description' => 'REDAXO Medien',
-        'fields' => [
-          'id' => ['description' => 'Media-ID'],
-          'filename' => ['description' => 'Dateiname'],
-          'title' => ['description' => 'Titel']
-        ]
-      ],
-      'rex_media_category' => [
-        'description' => 'REDAXO Medien-Kategorien',
-        'fields' => [
-          'id' => ['description' => 'Media-Category-ID'],
-          'name' => ['description' => 'Name'],
-          'parent_id' => ['description' => 'Eltern-ID der Kategorie']
-        ]
-      ],
-      'rex_module' => [
-        'description' => 'REDAXO Module',
-        'fields' => [
-          'id' => ['description' => 'Module-ID'],
-          'key' => ['description' => 'Key'],
-          'name' => ['description' => 'Name'],
-        ]
-      ],
-      'rex_template' => [
-        'description' => 'REDAXO Templates',
-        'fields' => [
-          'id' => ['description' => 'Template-ID'],
-          'key' => ['description' => 'Key'],
-          'name' => ['description' => 'Name'],
-        ]
-      ]
-
-
-    ];
-  }
 
   /**
    * URL-Types erstellen
