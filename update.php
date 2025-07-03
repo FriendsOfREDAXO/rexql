@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Update-Script für rexQL Addon
+ * Update script for rexQL Addon
  * 
  * @var rex_addon $this
  */

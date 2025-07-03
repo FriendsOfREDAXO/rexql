@@ -1,9 +1,9 @@
 <?php
 
 /**
- * Einfaches Session Token System für rexQL
+ * Simple session token system for rexQL
  * 
- * Für Test-Apps und einfache Frontend-Anwendungen
+ * For test apps and simple frontend applications
  */
 class rex_api_rexql_auth extends rex_api_function
 {
@@ -38,15 +38,15 @@ class rex_api_rexql_auth extends rex_api_function
   }
 
   /**
-   * Einfacher Login - generiert Session Token
+   * Simple login - generates session token
    */
   private function handleLogin()
   {
     $username = rex_request('username', 'string');
     $password = rex_request('password', 'string');
 
-    // Beispiel: Einfache Benutzer-Validierung
-    // In einer echten App würden Sie hier Ihre Datenbank abfragen
+    // Example: Simple user validation
+    // In a real app you would query your database here
     $validUsers = rex_addon::get('rexql')->getConfig('test_users', [
       'testuser' => 'testpass',
       'demo' => 'demo123'
@@ -56,10 +56,10 @@ class rex_api_rexql_auth extends rex_api_function
       throw new rex_api_exception('Invalid credentials');
     }
 
-    // Session Token generieren
+    // Generate session token
     $sessionToken = $this->generateSessionToken($username);
 
-    // Token speichern
+    // Save session token in cache
     $this->storeSessionToken($sessionToken, $username);
 
     rex_response::sendContent(json_encode([
@@ -71,7 +71,7 @@ class rex_api_rexql_auth extends rex_api_function
   }
 
   /**
-   * Session Token validieren
+   * Validate session token
    */
   private function handleValidate()
   {
@@ -95,7 +95,7 @@ class rex_api_rexql_auth extends rex_api_function
   }
 
   /**
-   * Logout - Token invalidieren
+   * Invalidate session token (logout)
    */
   private function handleLogout()
   {
@@ -112,7 +112,7 @@ class rex_api_rexql_auth extends rex_api_function
   }
 
   /**
-   * Session Token generieren
+   * Generate a unique session token
    */
   private function generateSessionToken(string $username): string
   {
@@ -137,7 +137,7 @@ class rex_api_rexql_auth extends rex_api_function
   }
 
   /**
-   * Session Daten abrufen
+   * Get Session Data by Token
    */
   private function getSessionData(string $token): ?array
   {
@@ -149,7 +149,7 @@ class rex_api_rexql_auth extends rex_api_function
       return null;
     }
 
-    // Prüfen ob Token abgelaufen
+    // Check if token is expired
     if ($sessionData['expires_at'] < time()) {
       $this->deleteSessionToken($token);
       return null;
@@ -159,7 +159,7 @@ class rex_api_rexql_auth extends rex_api_function
   }
 
   /**
-   * Session Token löschen
+   * Delete Session Token
    */
   private function deleteSessionToken(string $token): void
   {
@@ -169,7 +169,7 @@ class rex_api_rexql_auth extends rex_api_function
   }
 
   /**
-   * Öffentliche Methode zur Token-Validierung (für Proxy)
+   * Public method to validate session token (for Proxy)
    */
   public static function validateSessionToken(string $token): ?array
   {

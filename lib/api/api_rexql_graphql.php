@@ -15,22 +15,22 @@ class rex_api_rexql_graphql extends rex_api_function
    */
   public function execute()
   {
-    // Verhindern, dass der normale REDAXO Response-Zyklus ausgeführt wird
+    // Prevent normal REDAXO response cycle from executing
     rex_response::cleanOutputBuffers();
 
     $addon = rex_addon::get('rexql');
 
-    // CORS Headers setzen
+    // Set CORS headers
     $this->setCorsHeaders($addon);
 
-    // Preflight Request (OPTIONS) behandeln
+    // Handle preflight request (OPTIONS)
     if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
       rex_response::setStatus(rex_response::HTTP_OK);
       rex_response::sendContent('', 'text/plain');
       return new rex_api_result(true);
     }
 
-    // Schema-Introspection Request prüfen
+    // Check for schema introspection request
     if (rex_request('schema', 'bool', false) || isset($_GET['schema']) || isset($_POST['schema'])) {
       return $this->handleSchemaIntrospection($addon);
     }
@@ -42,51 +42,51 @@ class rex_api_rexql_graphql extends rex_api_function
     $apiKeyId = null;
 
     try {
-      // Konfiguration prüfen
+      // Check configuration
       if (!$addon->getConfig('endpoint_enabled', false)) {
         throw new rex_api_exception(rex_i18n::msg('rexql_error_endpoint_disabled'));
       }
 
-      // Dev-Modus prüfen (weniger Restrictions in Development)
+      // Check dev mode (fewer restrictions in development)
       $isDevMode = $this->isDevMode();
 
-      // Authentifizierung prüfen
+      // Check authentication
       if ($addon->getConfig('require_authentication', true) && !$isDevMode) {
         $apiKey = $this->validateAuthentication();
         $apiKeyId = $apiKey->getId();
 
-        // Domain/IP Restrictions prüfen (außer in Dev-Modus)
+        // Check domain/IP restrictions (except in dev mode)
         if (!$this->validateDomainRestrictions($apiKey)) {
           throw new rex_api_exception(rex_i18n::msg('rexql_error_domain_not_allowed'));
         }
 
-        // Rate Limiting prüfen
+        // Check rate limiting
         if ($apiKey->isRateLimited()) {
           throw new rex_api_exception(rex_i18n::msg('rexql_error_rate_limit_exceeded'));
         }
       } elseif ($isDevMode) {
-        // Dev-Modus: Log für Transparenz  
+        // Dev mode: Log for transparency
         rex_logger::factory()->debug('rexQL: API access in dev mode without authentication', []);
       }
 
-      // GraphQL Input parsen
+      // Parse GraphQL input
       $input = $this->getGraphQLInput();
       $query = $input['query'] ?? '';
       $variables = $input['variables'] ?? null;
       $operationName = $input['operationName'] ?? null;
 
       if (empty($query)) {
-        throw new rex_api_exception('Keine GraphQL Query angegeben');
+        throw new rex_api_exception('No GraphQL query provided');
       }
 
-      // Query Syntax vorab prüfen
+      // Check query syntax in advance
       try {
         \GraphQL\Language\Parser::parse($query);
       } catch (\GraphQL\Error\SyntaxError $e) {
         throw new rex_api_exception('GraphQL Syntax Error: ' . $e->getMessage());
       }
 
-      // Query-Tiefe prüfen
+      // Check query depth
       $maxDepth = $addon->getConfig('max_query_depth', 10);
       if ($this->getQueryDepth($query) > $maxDepth) {
         throw new rex_api_exception(rex_i18n::msg('rexql_error_query_too_deep'));
@@ -105,20 +105,20 @@ class rex_api_rexql_graphql extends rex_api_function
         $schema = $builder->buildSchema();
       }
 
-      // Kontext für Resolver erstellen
+      // Create context for resolvers
       $context = [
         'api_key' => $apiKey,
         'user' => rex::getUser(),
         'clang_id' => rex_request('clang_id', 'int', rex_clang::getCurrentId())
       ];
 
-      // Query validieren und ausführen (temporär ohne Caching für bessere Fehlermeldungen)
+      // Validate and execute query (temporarily without caching for better error messages)
       try {
-        // GraphQL Query validieren
+        // Validate GraphQL query
         $document = \GraphQL\Language\Parser::parse($query);
         $validationErrors = \GraphQL\Validator\DocumentValidator::validate($schema, $document);
         if (!empty($validationErrors)) {
-          // Validation Errors in GraphQL Result Format zurückgeben
+          // Return validation errors in GraphQL result format
           $result = new \GraphQL\Executor\ExecutionResult(null, $validationErrors);
         } else {
           $result = \GraphQL\GraphQL::executeQuery(
@@ -131,23 +131,23 @@ class rex_api_rexql_graphql extends rex_api_function
           );
         }
       } catch (\GraphQL\Error\SyntaxError $e) {
-        // Syntax-Fehler in GraphQL Query
+        // Syntax errors in GraphQL query
         $result = new \GraphQL\Executor\ExecutionResult(null, [$e]);
       } catch (\Exception $e) {
-        // Andere Ausführungsfehler
+        // Other execution errors
         $result = new \GraphQL\Executor\ExecutionResult(null, [new \GraphQL\Error\Error($e->getMessage())]);
       }
 
-      // API Key Usage protokollieren
+      // Log API key usage
       if ($apiKey) {
         $apiKey->logUsage();
       }
 
-      // Execution Details
+      // Execution details
       $executionTime = (microtime(true) - $startTime) * 1000; // in ms
       $memoryUsage = memory_get_usage(true) - $startMemory;
 
-      // Error-Handling für das Logging
+      // Error handling for logging
       $errorString = null;
       if (!empty($result->errors)) {
         $errorMessages = [];
@@ -177,7 +177,7 @@ class rex_api_rexql_graphql extends rex_api_function
       // Response aufbereiten - Original errors von GraphQL nutzen
       $response = $result->toArray();
 
-      // Debug-Informationen hinzufügen wenn aktiviert
+      // Add debug information if enabled
       if ($addon->getConfig('debug_mode', false)) {
         $response['extensions'] = [
           'executionTime' => round($executionTime, 2) . 'ms',
@@ -186,11 +186,11 @@ class rex_api_rexql_graphql extends rex_api_function
         ];
       }
 
-      // JSON Response senden
+      // Send JSON response
       rex_response::cleanOutputBuffers();
       rex_response::setStatus(rex_response::HTTP_OK);
       rex_response::sendJson($response);
-      exit; // Verhindern weiterer Template-Verarbeitung
+      exit; // Prevent further template processing
     } catch (Exception $e) {
       $executionTime = (microtime(true) - $startTime) * 1000;
       $memoryUsage = memory_get_usage(true) - $startMemory;
@@ -268,7 +268,7 @@ class rex_api_rexql_graphql extends rex_api_function
       ];
     }
 
-    // GET Request (für einfache Queries)
+    // GET Request (for simple queries)
     return [
       'query' => rex_get('query', 'string'),
       'variables' => rex_get('variables', 'string') ? json_decode(rex_get('variables', 'string'), true) : null,
@@ -277,11 +277,11 @@ class rex_api_rexql_graphql extends rex_api_function
   }
 
   /**
-   * Query-Tiefe berechnen (vereinfacht)
+   * Calculate query depth (simplified)
    */
   private function getQueryDepth(string $query): int
   {
-    // Vereinfachte Berechnung durch Zählen der geschweiften Klammern
+    // Simplified calculation by counting curly braces
     $openBraces = substr_count($query, '{');
     $closeBraces = substr_count($query, '}');
 
@@ -341,7 +341,7 @@ class rex_api_rexql_graphql extends rex_api_function
       }
     }
 
-    // Fallback: Check für lokale Development-Umgebung
+    // Fallback: Check for local development environment
     $devIndicators = [
       rex_server('SERVER_NAME') === 'localhost',
       str_contains(rex_server('HTTP_HOST', ''), 'localhost'),
@@ -355,12 +355,12 @@ class rex_api_rexql_graphql extends rex_api_function
   }
 
   /**
-   * Domain-Restrictions validieren
+   * Validate domain restrictions
    */
   private function validateDomainRestrictions(?FriendsOfRedaxo\RexQL\ApiKey $apiKey): bool
   {
     if (!$apiKey) {
-      return true; // Keine API Key = keine Restrictions
+      return true; // No API key = no restrictions
     }
 
     // Domain-Validierung
@@ -390,20 +390,20 @@ class rex_api_rexql_graphql extends rex_api_function
   }
 
   /**
-   * Schema-Introspection Request behandeln
+   * Handle schema introspection request
    */
   private function handleSchemaIntrospection(rex_addon $addon): rex_api_result
   {
     try {
-      // Dev-Modus prüfen (weniger Restrictions in Development)
+      // Check dev mode (fewer restrictions in development)
       $isDevMode = $this->isDevMode();
 
-      // Authentifizierung prüfen (gleiche Logik wie Hauptendpoint)
+      // Check authentication (same logic as main endpoint)
       $apiKey = null;
       if ($addon->getConfig('require_authentication', true) && !$isDevMode) {
         $apiKey = $this->validateAuthentication();
 
-        // Domain/IP Restrictions prüfen (außer in Dev-Modus)
+        // Check domain/IP restrictions (except in dev mode)
         if (!$this->validateDomainRestrictions($apiKey)) {
           throw new rex_api_exception(rex_i18n::msg('rexql_error_domain_not_allowed'));
         }
@@ -417,13 +417,13 @@ class rex_api_rexql_graphql extends rex_api_function
         return $builder->buildSchema();
       });
 
-      // Sicherstellen, dass Schema ein GraphQL\Type\Schema Objekt ist
+      // Make sure schema is a GraphQL\Type\Schema object
       if (!($schema instanceof \GraphQL\Type\Schema)) {
         $builder = new FriendsOfRedaxo\RexQL\SchemaBuilder();
         $schema = $builder->buildSchema();
       }
 
-      // Standard GraphQL Introspection Query ausführen
+      // Execute standard GraphQL introspection query
       $introspectionQuery = \GraphQL\Type\Introspection::getIntrospectionQuery();
 
       $result = \GraphQL\GraphQL::executeQuery(
@@ -431,15 +431,15 @@ class rex_api_rexql_graphql extends rex_api_function
         $introspectionQuery
       );
 
-      // API Key Usage protokollieren
+      // Log API key usage
       if ($apiKey) {
         $apiKey->logUsage();
       }
 
-      // Response aufbereiten
+      // Prepare response
       $response = $result->toArray();
 
-      // Debug-Informationen hinzufügen wenn aktiviert
+      // Add debug information if enabled
       if ($addon->getConfig('debug_mode', false)) {
         $response['extensions'] = [
           'type' => 'schema_introspection',

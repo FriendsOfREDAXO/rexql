@@ -12,16 +12,16 @@ require_once __DIR__ . '/vendor/autoload.php';
 \rex_fragment::addDirectory(\rex_path::src('fragments'));
 
 
-// Permissions registrieren
+// Register permissions
 rex_perm::register('rexql[graphql]', null, rex_perm::OPTIONS);
 rex_perm::register('rexql[admin]', 'rexql[graphql]');
 
-// API-Klassen registrieren
+// Register API classes
 rex_api_function::register('rexql_graphql', 'rex_api_rexql_graphql');
 rex_api_function::register('rexql_proxy', 'rex_api_rexql_proxy');
 rex_api_function::register('rexql_auth', 'rex_api_rexql_auth');
 
-// Standardkonfiguration setzen
+// Set default configuration
 if (!$this->hasConfig()) {
   $this->setConfig([
     'schema_version' => 1,
@@ -36,22 +36,22 @@ if (!$this->hasConfig()) {
     'cors_allowed_origins' => ['*'],          // CORS Origins
     'cors_allowed_methods' => ['GET', 'POST', 'OPTIONS'],
     'cors_allowed_headers' => ['Content-Type', 'Authorization', 'X-API-KEY', 'X-Public-Key'],
-    'valid_session_tokens' => [],             // Für einfache Session-Token
-    'test_users' => [                         // Für Test-Authentifizierung
+    'valid_session_tokens' => [],             // For simple session tokens
+    'test_users' => [                         // For test authentication
       'testuser' => 'testpass',
       'demo' => 'demo123'
     ],
     'debug_mode' => false,
   ]);
 }
-// endpunkt URL setzen, falls nicht konfiguriert
+// Set endpoint URL if not configured
 if (!$this->getConfig('endpoint_url')) {
   $this->setConfig('endpoint_url', '/index.php?rex-api-call=rexql_graphql');
 }
 
-// Extensions registrieren - nur für existierende Extension Points
+// Register extensions - only for existing extension points
 rex_extension::register('PACKAGES_INCLUDED', function () {
-  // Language-Änderungen (da sie die Schema-Cache-Key beeinflussen)
+  // Language changes (as they affect the schema cache key)
   rex_extension::register('CLANG_UPDATED', 'FriendsOfRedaxo\\RexQL\\Cache::invalidateSchema');
   rex_extension::register('CLANG_DELETED', 'FriendsOfRedaxo\\RexQL\\Cache::invalidateSchema');
   rex_extension::register('CLANG_ADDED', 'FriendsOfRedaxo\\RexQL\\Cache::invalidateSchema');
@@ -60,7 +60,7 @@ rex_extension::register('PACKAGES_INCLUDED', function () {
   // via the "Refresh Schema Cache" button in the rexQL backend
 });
 
-// Backend-Assets nur im Backend laden
+// Load backend assets only in backend
 if (rex::isBackend() && rex::getUser()) {
   rex_view::addCssFile($this->getAssetsUrl('rexql.css'));
   rex_view::addJsFile($this->getAssetsUrl('rexql.js'));

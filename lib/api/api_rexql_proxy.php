@@ -1,9 +1,9 @@
 <?php
 
 /**
- * Backend Proxy für rexQL GraphQL API
+ * Backend proxy for rexQL GraphQL API
  * 
- * Ermöglicht sichere Frontend-Integration ohne Exposition der API-Schlüssel
+ * Enables secure frontend integration without exposing API keys
  */
 class rex_api_rexql_proxy extends rex_api_function
 {
@@ -11,18 +11,18 @@ class rex_api_rexql_proxy extends rex_api_function
 
   public function execute()
   {
-    // Verhindern, dass der normale REDAXO Response-Zyklus ausgeführt wird
+    // Prevent normal REDAXO response cycle from executing
     rex_response::cleanOutputBuffers();
 
     try {
       $addon = rex_addon::get('rexql');
 
-      // Proxy nur aktivieren wenn explizit erlaubt
+      // Only enable proxy if explicitly allowed
       if (!$addon->getConfig('proxy_enabled', false)) {
-        throw new rex_api_exception('GraphQL Proxy ist nicht aktiviert');
+        throw new rex_api_exception('GraphQL Proxy is not enabled');
       }
 
-      // Session-basierte Authentifizierung
+      // Session-based authentication
       $sessionToken = $this->validateSession();
 
       // Public Key aus Request
@@ -58,7 +58,7 @@ class rex_api_rexql_proxy extends rex_api_function
       // Request an rexQL weiterleiten mit Private Key
       $response = $this->forwardToRexQL($input, $apiKey->getPrivateKey());
 
-      // Response zurückgeben
+      // Return response
       rex_response::setStatus(rex_response::HTTP_OK);
       rex_response::sendContent($response, 'application/json');
     } catch (Exception $e) {
@@ -81,13 +81,13 @@ class rex_api_rexql_proxy extends rex_api_function
     $sessionToken = str_replace('Bearer ', '', $sessionToken);
 
     if (empty($sessionToken)) {
-      throw new rex_api_exception('Session Token erforderlich');
+      throw new rex_api_exception('Session token required');
     }
 
-    // Hier würden Sie Ihre eigene Session-Validierung implementieren
-    // z.B. JWT Token validieren oder eigenes Session-System
+    // Here you would implement your own session validation
+    // e.g. validate JWT token or your own session system
     if (!$this->validateCustomSessionToken($sessionToken)) {
-      throw new rex_api_exception('Ungültiger Session Token');
+      throw new rex_api_exception('Invalid session token');
     }
 
     return $sessionToken;

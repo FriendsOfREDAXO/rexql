@@ -103,8 +103,8 @@ class EnhancedApiKey extends ApiKey
 
   private function encodeToken(array $payload): string
   {
-    // Implementierung eines sicheren Token-Systems
-    // Könnte JWT verwenden oder eigenes System
+    // Implementation of a secure token system
+    // Could use JWT or custom system
     return base64_encode(json_encode($payload));
   }
 }

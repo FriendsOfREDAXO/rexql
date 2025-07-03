@@ -14,7 +14,7 @@ use rex_config;
 use rex_clang;
 
 /**
- * GraphQL Schema Builder für REDAXO
+ * GraphQL Schema Builder for REDAXO
  */
 class SchemaBuilder
 {
@@ -23,14 +23,14 @@ class SchemaBuilder
   private array $mutations = [];
 
   /**
-   * Tabellen-Konfigurationen für Argumente und spezielle Behandlung
+   * Table configurations for arguments and special handling
    */
   private function getTableConfigurations(): array
   {
 
     return [
       'rex_article' => [
-        'description' => 'REDAXO Artikel',
+        'description' => 'REDAXO Articles',
         'args' => [
           'id' => ['type' => 'int'],
           'status' => ['type' => 'int', 'defaultValue' => 1],
@@ -56,7 +56,7 @@ class SchemaBuilder
         ]
       ],
       'rex_article_slice' => [
-        'description' => 'REDAXO Artikel-Slices',
+        'description' => 'REDAXO Article Slices',
         'args' => [
           'id' => ['type' => 'int'],
           'status' => ['type' => 'int', 'defaultValue' => 1],
@@ -101,7 +101,7 @@ class SchemaBuilder
         // ]
       ],
       'rex_clang' => [
-        'description' => 'REDAXO Sprachen',
+        'description' => 'REDAXO Languages',
         'args' => [
           'id' => ['type' => 'int'],
           'status' => ['type' => 'int', 'defaultValue' => 1],
@@ -112,29 +112,29 @@ class SchemaBuilder
           'order_by' => ['type' => 'string', 'defaultValue' => 'priority ASC'],
         ],
         'fields' => [
-          'id' => ['description' => 'Sprach-ID'],
-          'name' => ['description' => 'Sprach-Name'],
-          'code' => ['description' => 'Sprach-Code']
+          'id' => ['description' => 'Language ID'],
+          'name' => ['description' => 'Language Name'],
+          'code' => ['description' => 'Language Code']
         ]
       ],
       'rex_media' => [
-        'description' => 'REDAXO Medien',
+        'description' => 'REDAXO Media',
         'fields' => [
-          'id' => ['description' => 'Media-ID'],
-          'filename' => ['description' => 'Dateiname'],
-          'title' => ['description' => 'Titel']
+          'id' => ['description' => 'Media ID'],
+          'filename' => ['description' => 'Filename'],
+          'title' => ['description' => 'Title']
         ]
       ],
       'rex_media_category' => [
-        'description' => 'REDAXO Medien-Kategorien',
+        'description' => 'REDAXO Media Categories',
         'fields' => [
-          'id' => ['description' => 'Media-Category-ID'],
+          'id' => ['description' => 'Media Category ID'],
           'name' => ['description' => 'Name'],
-          'parent_id' => ['description' => 'Eltern-ID der Kategorie']
+          'parent_id' => ['description' => 'Parent Category ID']
         ]
       ],
       'rex_module' => [
-        'description' => 'REDAXO Module',
+        'description' => 'REDAXO Modules',
         'args' => [
           'id' => ['type' => 'int'],
           'key' => ['type' => 'string'],
@@ -145,17 +145,17 @@ class SchemaBuilder
           'order_by' => ['type' => 'string', 'defaultValue' => 'id ASC'],
         ],
         'fields' => [
-          'id' => ['description' => 'Module-ID'],
+          'id' => ['description' => 'Module ID'],
           'key' => ['description' => 'Key'],
           'name' => ['description' => 'Name'],
-          'input' => ['description' => 'Input-Code'],
-          'output' => ['description' => 'Output-Code'],
+          'input' => ['description' => 'Input Code'],
+          'output' => ['description' => 'Output Code'],
         ]
       ],
       'rex_template' => [
         'description' => 'REDAXO Templates',
         'fields' => [
-          'id' => ['description' => 'Template-ID'],
+          'id' => ['description' => 'Template ID'],
           'key' => ['description' => 'Key'],
           'name' => ['description' => 'Name'],
         ]
@@ -179,11 +179,11 @@ class SchemaBuilder
   }
 
   /**
-   * Vollständiges GraphQL Schema erstellen
+   * Create complete GraphQL schema
    */
   public function buildSchema(): Schema
   {
-    // Debug logging für Schema-Building
+    // Debug logging for schema building
     if (rex_addon::get('rexql')->getConfig('debug_mode', false)) {
       rex_logger::factory()->info('RexQL: Building fresh GraphQL schema');
     }
@@ -206,7 +206,7 @@ class SchemaBuilder
   }
 
   /**
-   * Core-Tabellen-Types erstellen
+   * Create core table types
    */
 
   private function buildCoreTypes(): void
@@ -214,13 +214,13 @@ class SchemaBuilder
     $allowedTables = rex_addon::get('rexql')->getConfig('allowed_tables', []);
     $coreTables = $this->getTableConfigurations();
 
-    // Debug: Ausgabe der erlaubten Tabellen
+    // Debug: Output allowed tables
     if (rex_addon::get('rexql')->getConfig('debug_mode', false)) {
       rex_logger::factory()->debug("RexQL: Allowed tables: " . implode(', ', $allowedTables));
       rex_logger::factory()->debug("RexQL: Available configurations: " . implode(', ', array_keys($coreTables)));
     }
 
-    // Erste Phase: Alle Types erstellen (ohne Relations)
+    // First phase: Create all types (without relations)
     foreach ($coreTables as $table => $config) {
       if (!in_array($table, $allowedTables)) {
         if (rex_addon::get('rexql')->getConfig('debug_mode', false)) {
@@ -234,7 +234,7 @@ class SchemaBuilder
         rex_logger::factory()->info("RexQL: Creating type '{$typeName}' for table '{$table}' (Phase 1)");
       }
 
-      // Erstelle erstmal ohne Relations
+      // Create first without relations
       $configWithoutRelations = $config;
       unset($configWithoutRelations['relations']);
 
@@ -248,7 +248,7 @@ class SchemaBuilder
       }
     }
 
-    // Zweite Phase: Types mit Relations aktualisieren
+    // Second phase: Update types with relations
     foreach ($coreTables as $table => $config) {
       if (!in_array($table, $allowedTables) || empty($config['relations'])) {
         continue;
@@ -259,7 +259,7 @@ class SchemaBuilder
         rex_logger::factory()->info("RexQL: Updating type '{$typeName}' with relations (Phase 2)");
       }
 
-      // Prüfen, ob alle referenzierten Types existieren
+      // Check if all referenced types exist
       foreach ($config['relations'] as $relationTable => $relationConfig) {
         $relationTypeName = $this->getTypeName($relationTable);
         if (!isset($this->types[$relationTypeName])) {
@@ -284,7 +284,7 @@ class SchemaBuilder
       }
     }
 
-    // Dritte Phase: Queries erstellen
+    // Third phase: Create queries
     foreach ($coreTables as $table => $config) {
       if (!in_array($table, $allowedTables)) {
         continue;
@@ -308,7 +308,7 @@ class SchemaBuilder
   }
 
   /**
-   * YForm-Tabellen-Types erstellen
+   * Create YForm table types
    */
   private function buildYFormTypes(): void
   {
@@ -334,11 +334,11 @@ class SchemaBuilder
   }
 
   /**
-   * Benutzerdefinierte Types erstellen
+   * Create custom types
    */
   private function buildCustomTypes(): void
   {
-    // System-Informationen hinzufügen
+    // Add system information
     $this->buildSystemTypes();
 
     // URL-Addon Integration
@@ -353,7 +353,7 @@ class SchemaBuilder
   }
 
   /**
-   * ObjectType aus Tabellen-Definition erstellen
+   * Create ObjectType from table definition
    */
   private function createTypeFromTable(string $table, array $tableConfig): ObjectType
   {
@@ -367,7 +367,7 @@ class SchemaBuilder
       $sqlType = $sql->getValue('Type');
       $type = $this->mapSqlTypeToGraphQL($sqlType);
 
-      // Beschreibung aus Konfiguration holen
+      // Get description from configuration
       $description = $tableConfig['fields'][$column]['description'] ??
         ucfirst(str_replace('_', ' ', $column));
 
@@ -411,7 +411,7 @@ class SchemaBuilder
       foreach ($tableConfig['relations'] as $relationTable => $relationConfig) {
         $relationTypeName = $this->getTypeName($relationTable);
         $fieldName = lcfirst($relationTypeName); // Use camelCase GraphQL type name as field name
-        
+
         $fields[$fieldName] = [
           'type' => function () use ($relationTable, $relationConfig) {
             $relationTypeName = $this->getTypeName($relationTable);
@@ -446,7 +446,7 @@ class SchemaBuilder
   }
 
   /**
-   * Beziehung auflösen
+   * Resolve relationship
    */
   private function resolveRelation(array $parentRecord, string $relationTable, array $relationConfig): array
   {
@@ -456,7 +456,7 @@ class SchemaBuilder
 
     $isOneToMany = $relationConfig['type'] == '1:n';
 
-    // Prüfen, ob der Parent-Record den Local Key hat
+    // Check if parent record has local key
     $localKey = $relationConfig['local_key'] ?? 'id';
     if (!isset($parentRecord[$localKey])) {
       return $isOneToMany ? [] : null;
@@ -499,22 +499,22 @@ class SchemaBuilder
   }
 
   /**
-   * YForm ObjectType erstellen
+   * Create YForm ObjectType
    */
   private function createYFormType(rex_yform_manager_table $table): ObjectType
   {
     $fields = [];
 
-    // ID-Feld immer hinzufügen (Standard-Primärschlüssel)
+    // Always add ID field (standard primary key)
     $fields['id'] = [
       'type' => Type::int(),
-      'description' => 'Primärschlüssel'
+      'description' => 'Primary key'
     ];
 
     foreach ($table->getFields() as $field) {
       $fieldName = $field->getName();
 
-      // ID-Feld überspringen, da es bereits hinzugefügt wurde
+      // Skip ID field as it was already added
       if ($fieldName === 'id') {
         continue;
       }
@@ -535,14 +535,14 @@ class SchemaBuilder
   }
 
   /**
-   * Query-Field für Einzeleintrag erstellen
+   * Create query field for single entry
    */
   private function createQueryField(string $table, array $tableConfig, string $typeName, bool $list = true): array
   {
     $defaultConfig = $this->getDefaultConfiguration();
     $args = $tableConfig['args'] ?? $defaultConfig['args'];
 
-    // GraphQL Typen zu den Argumenten hinzufügen
+    // Add GraphQL types to arguments
     $graphqlArgs = [];
     foreach ($args as $key => $arg) {
       $graphqlArgs[$key] = [
@@ -563,7 +563,7 @@ class SchemaBuilder
   }
 
   /**
-   * YForm Query-Field für Einzeleintrag erstellen
+   * Create YForm query field for single entry
    */
   private function createYFormQueryField(rex_yform_manager_table $table, string $typeName): array
   {
@@ -579,7 +579,7 @@ class SchemaBuilder
   }
 
   /**
-   * YForm Query-Field für Liste erstellen
+   * Create YForm query field for list
    */
   private function createYFormListQueryField(rex_yform_manager_table $table, string $typeName): array
   {
@@ -598,7 +598,7 @@ class SchemaBuilder
   }
 
   /**
-   * Liste von Datensätzen auflösen
+   * Resolve list of records
    */
   private function resolveRecords(string $table, array $args, bool $list = true): array
   {
@@ -688,7 +688,7 @@ class SchemaBuilder
   }
 
   /**
-   * Einzelnen YForm-Datensatz auflösen
+   * Resolve single YForm record
    */
   private function resolveYFormRecord(rex_yform_manager_table $table, array $args): ?array
   {
@@ -697,7 +697,7 @@ class SchemaBuilder
   }
 
   /**
-   * Liste von YForm-Datensätzen auflösen
+   * Resolve list of YForm records
    */
   private function resolveYFormRecords(rex_yform_manager_table $table, array $args): array
   {
@@ -721,15 +721,15 @@ class SchemaBuilder
   }
 
   /**
-   * SQL-Type zu GraphQL-Type mappen
+   * Map SQL type to GraphQL type
    */
   private function mapSqlTypeToGraphQL(string $sqlType): Type
   {
     $sqlType = strtolower($sqlType);
 
-    // Enum muss vor int geprüft werden, da enum-Werte 'int' enthalten können
+    // Enum must be checked before int, as enum values can contain 'int'
     if (str_contains($sqlType, 'enum(')) {
-      return Type::string(); // Enum als String zurückgeben
+      return Type::string(); // Return enum as string
     }
     if (str_contains($sqlType, 'int')) {
       return Type::int();
@@ -747,14 +747,14 @@ class SchemaBuilder
       return Type::string();
     }
     if (str_contains($sqlType, 'json')) {
-      return Type::string(); // JSON als String zurückgeben
+      return Type::string(); // Return JSON as string
     }
 
     return Type::string(); // Fallback
   }
 
   /**
-   * YForm-Field-Type zu GraphQL-Type mappen
+   * Map YForm field type to GraphQL type
    */
   private function mapYFormTypeToGraphQL(\rex_yform_manager_field $field): Type
   {
@@ -785,10 +785,10 @@ class SchemaBuilder
             return Type::string();
         }
       case 'validate':
-        // Validierungsfelder geben meist String zurück
+        // Validation fields usually return string
         return Type::string();
       case 'action':
-        // Action-Felder sind meist nicht relevant für GraphQL
+        // Action fields are usually not relevant for GraphQL
         return Type::string();
       default:
         return Type::string();
@@ -796,11 +796,11 @@ class SchemaBuilder
   }
 
   /**
-   * Type-Name aus Tabellennamen generieren
+   * Generate type name from table name
    */
   private function getTypeName(string $table): string
   {
-    // Spezielle Behandlung für Core-Tabellen
+    // Special handling for core tables
     $coreTypeNames = [
       'rex_config' => 'RexConfig',
       'rex_article' => 'RexArticle',
@@ -813,7 +813,7 @@ class SchemaBuilder
       return $coreTypeNames[$table];
     }
 
-    // Fallback für andere Tabellen
+    // Fallback for other tables
     $parts = explode('_', $table);
     $name = '';
     foreach ($parts as $part) {
@@ -823,7 +823,7 @@ class SchemaBuilder
   }
 
   /**
-   * Query-Name generieren
+   * Generate query name
    */
   private function getQueryName(string $table): string
   {
@@ -831,22 +831,22 @@ class SchemaBuilder
   }
 
   /**
-   * List-Query-Name generieren
+   * Generate list query name
    */
   private function getListQueryName(string $table): string
   {
-    // Konsistente Namensgebung: immer "List" für Listen-Queries
+    // Consistent naming: always "List" for list queries
     $baseName = lcfirst($this->getTypeName($table));
     return $baseName . 'List';
   }
 
 
   /**
-   * URL-Types erstellen
+   * Create URL types
    */
   private function buildUrlTypes(): void
   {
-    // URL-Generator Types hinzufügen
+    // Add URL generator types
     $this->queries['urlByDataId'] = [
       'type' => Type::string(),
       'args' => [
@@ -860,7 +860,7 @@ class SchemaBuilder
   }
 
   /**
-   * YRewrite-Types erstellen
+   * Create YRewrite types
    */
   private function buildYRewriteTypes(): void
   {
@@ -891,7 +891,7 @@ class SchemaBuilder
   }
 
   /**
-   * URL anhand Data-ID auflösen
+   * Resolve URL by Data-ID
    */
   private function resolveUrlByDataId(array $args): ?string
   {
@@ -909,7 +909,7 @@ class SchemaBuilder
   }
 
   /**
-   * System-Types erstellen
+   * Create system types
    */
   private function buildSystemTypes(): void
   {
@@ -1136,12 +1136,12 @@ class SchemaBuilder
       'description' => 'REDAXO System-Informationen',
       'fields' => $fields
     ]);
-    // rexSystem Query hinzufügen
+    // Add rexSystem query
     $this->queries['rexSystem'] = [
       'type' => $this->types['RexSystem'],
       'description' => 'REDAXO System-Informationen abrufen',
       'resolve' => function () {
-        // Dummy-Objekt zurückgeben, die eigentlichen Werte werden von den Feld-Resolvern geliefert
+        // Return dummy object, the actual values are provided by the field resolvers
         return ['dummy' => true];
       }
     ];

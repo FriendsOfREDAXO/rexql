@@ -1,21 +1,21 @@
 <?php
 
 /**
- * Installation des rexQL Addons
+ * Installation of the rexQL addon
  * 
  * @var rex_addon $this
  */
 
 $error = '';
 
-// Überprüfen ob graphql-php verfügbar ist
+// Check if graphql-php is available
 if (!class_exists('GraphQL\\GraphQL')) {
-  $error = 'Das Paket "webonyx/graphql-php" ist nicht installiert. Führen Sie "composer install" im Addon-Verzeichnis aus.';
+  $error = 'The package "webonyx/graphql-php" is not installed. Run "composer install" in the addon directory.';
 }
 
-// Datenbankstruktur erstellen
+// Create database structure
 if (!$error) {
-  // API Keys Tabelle
+  // API Keys table
   rex_sql_table::get(rex::getTable('rexql_api_keys'))
     ->ensurePrimaryIdColumn()
     ->ensureColumn(new rex_sql_column('name', 'varchar(255)', false))
@@ -28,10 +28,10 @@ if (!$error) {
     ->ensureColumn(new rex_sql_column('created_by', 'varchar(255)', false))
     ->ensureColumn(new rex_sql_column('createdate', 'datetime', false))
     ->ensureColumn(new rex_sql_column('updatedate', 'datetime', false))
-    // Public/Private Key Felder
+    // Public/Private Key fields
     ->ensureColumn(new rex_sql_column('public_key', 'varchar(64)'))
     ->ensureColumn(new rex_sql_column('private_key', 'varchar(64)'))
-    // Domain/IP Restriction Felder
+    // Domain/IP Restriction fields
     ->ensureColumn(new rex_sql_column('allowed_domains', 'text'))
     ->ensureColumn(new rex_sql_column('allowed_ips', 'text'))
     ->ensureColumn(new rex_sql_column('https_only', 'tinyint(1)', false, 0))
@@ -40,7 +40,7 @@ if (!$error) {
     ->ensureIndex(new rex_sql_index('active', ['active']))
     ->ensure();
 
-  // Query Logs Tabelle
+  // Query Logs table
   rex_sql_table::get(rex::getTable('rexql_query_log'))
     ->ensurePrimaryIdColumn()
     ->ensureColumn(new rex_sql_column('api_key_id', 'int(10) unsigned', true)) // nullable for SET_NULL foreign key

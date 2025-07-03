@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Deinstallation des rexQL Addons
+ * Uninstallation of the rexQL Addon
  * 
  * @var rex_addon $this
  */
@@ -16,8 +16,8 @@ foreach ($tables as $table) {
   rex_sql_table::get($tableName)->drop();
 }
 
-// Konfiguration zurücksetzen
+// Reset configuration
 $this->setConfig([]);
 
-// Cache löschen
+// Delete cache
 rex_dir::delete(rex_path::addonCache('rexql'));

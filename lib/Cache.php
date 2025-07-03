@@ -52,15 +52,15 @@ class Cache
   }
 
   /**
-   * Schema aus dem Cache holen oder erstellen
+   * Get schema from cache or create it
    * 
-   * @param callable $generator Funktion die das Schema erstellt
+   * @param callable $generator Function that creates the schema
    * @return \GraphQL\Type\Schema
    */
   public static function getSchema(callable $generator)
   {
-    // GraphQL Schema caching ist komplex wegen Object-References
-    // Für bessere Performance verwenden wir eine einfache statische Variable
+    // GraphQL schema caching is complex due to object references
+    // For better performance we use a simple static variable
     static $cachedSchema = null;
     static $cacheKey = null;
 
@@ -74,7 +74,7 @@ class Cache
       self::getYFormTableStructures(),
     ]));
 
-    // Wenn Cache-Key sich geändert hat oder kein Schema gecacht ist
+    // If cache key has changed or no schema is cached
     if ($cacheKey !== $currentCacheKey || $cachedSchema === null) {
       $cachedSchema = $generator();
       $cacheKey = $currentCacheKey;
@@ -96,8 +96,8 @@ class Cache
       return $generator();
     }
 
-    // ExecutionResult Objekte können nicht direkt gecacht werden wegen Closures
-    // Stattdessen cacheen wir das Array-Resultat und erstellen ein neues ExecutionResult
+    // ExecutionResult objects cannot be cached directly due to closures
+    // Instead, we cache the array result and create a new ExecutionResult
     $cachedArray = self::get(self::QUERY_CACHE_DIR, $queryHash, function () use ($generator) {
       $result = $generator();
       // Nur das Array cacheen, nicht das ExecutionResult Objekt
@@ -117,30 +117,30 @@ class Cache
   }
 
   /**
-   * Wert aus dem Cache holen oder generieren
+   * Get value from cache or generate it
    *
-   * @param string $namespace Cache-Namespace
-   * @param string $key Cache-Schlüssel
-   * @param callable $generator Funktion die den Wert generiert
-   * @param int $ttl Gültigkeit in Sekunden (0 = unbegrenzt)
+   * @param string $namespace Cache namespace
+   * @param string $key Cache key
+   * @param callable $generator Function that generates the value
+   * @param int $ttl Validity in seconds (0 = unlimited)
    * @return mixed
    */
   private static function get(string $namespace, string $key, callable $generator, int $ttl = 0)
   {
     $cachePath = self::getCachePath($namespace, $key);
 
-    // Cache existiert und ist gültig
+    // Cache exists and is valid
     if (file_exists($cachePath)) {
       $cacheData = rex_file::getCache($cachePath, null);
 
-      // Wenn Cache-Daten vorhanden sind
+      // If cache data exists
       if ($cacheData !== null) {
-        // Bei TTL prüfen ob abgelaufen
+        // Check TTL if expired
         if ($ttl > 0 && isset($cacheData['time']) && (time() - $cacheData['time'] > $ttl)) {
-          // Cache ist abgelaufen
+          // Cache is expired
           rex_file::delete($cachePath);
         } else {
-          // Cache ist gültig
+          // Cache is valid
           return $cacheData['data'];
         }
       }

@@ -35,13 +35,13 @@ class QueryLogger
     try {
       $sql->insert();
     } catch (\rex_sql_exception $e) {
-      // Log-Fehler nicht weiterwerfen, um ursprüngliche Query nicht zu beeinträchtigen
+      // Don't throw log errors to avoid affecting the original query
       error_log('rexQL QueryLogger Error: ' . $e->getMessage());
     }
   }
 
   /**
-   * Statistiken abrufen
+   * Get statistics
    */
   public static function getStats(): array
   {
@@ -78,7 +78,7 @@ class QueryLogger
 
     $stats['top_api_keys'] = $sql->getArray();
 
-    // Häufigste Fehler
+    // Most common errors
     $sql->setQuery('
             SELECT 
                 error_message,

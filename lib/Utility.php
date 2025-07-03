@@ -100,14 +100,14 @@ class Utility
   }
 
   /**
-   * Domain-Beschränkungen validieren
+   * Validate domain restrictions
    */
   public static function validateDomainRestrictions(ApiKey $apiKey): bool
   {
     $allowedDomains = $apiKey->getAllowedDomains();
 
     if (empty($allowedDomains)) {
-      return true; // Keine Beschränkungen
+      return true; // No restrictions
     }
 
     $origin = $_SERVER['HTTP_ORIGIN'] ?? $_SERVER['HTTP_REFERER'] ?? '';
@@ -127,14 +127,14 @@ class Utility
   }
 
   /**
-   * IP-Beschränkungen validieren
+   * Validate IP restrictions
    */
   public static function validateIpRestrictions(ApiKey $apiKey): bool
   {
     $allowedIps = $apiKey->getAllowedIps();
 
     if (empty($allowedIps)) {
-      return true; // Keine Beschränkungen
+      return true; // No restrictions
     }
 
     $clientIp = $_SERVER['REMOTE_ADDR'] ?? '';

@@ -13,8 +13,8 @@ class ApiKey
   private int $id;
   private string $name;
   private string $apiKey;
-  private ?string $publicKey;    // Neuer öffentlicher Schlüssel für Frontend
-  private ?string $privateKey;   // Privater Schlüssel für Backend-Proxy
+  private ?string $publicKey;    // New public key for frontend
+  private ?string $privateKey;   // Private key for backend proxy
   private array $permissions;
   private int $rateLimit;
   private ?\DateTime $lastUsed;
@@ -217,7 +217,7 @@ class ApiKey
     $privateKey = self::generatePrivateKey();
 
     $sql->setValue('name', $name);
-    $sql->setValue('api_key', $publicKey); // Öffentlicher Schlüssel als API Key
+    $sql->setValue('api_key', $publicKey); // Public key as API key
     $sql->setValue('public_key', $publicKey);
     $sql->setValue('private_key', $privateKey);
     $sql->setValue('permissions', json_encode($permissions));
