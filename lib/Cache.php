@@ -84,35 +84,74 @@ class Cache
   }
 
   /**
-   * Query-Resultat aus dem Cache holen
+   * Get query result from cache or generate it
    * 
-   * @param string $queryHash Hash der Query
-   * @param callable $generator Funktion die das Resultat erstellt
+   * @param string $queryHash Hash of the query
+   * @param callable $generator Function that creates the result
+   * @param bool $cacheWithErrors Whether to cache results that contain errors (default: true)
    * @return mixed
    */
-  public static function getQueryResult(string $queryHash, callable $generator)
+  public static function getQueryResult(string $queryHash, callable $generator, bool $cacheWithErrors = true)
   {
-    if (!rex_addon::get('rexql')->getConfig('cache_queries', false)) {
+    // Check if query caching is enabled in config
+    $isCachingEnabled = rex_addon::get('rexql')->getConfig('cache_queries', false);
+    $debugMode = rex_addon::get('rexql')->getConfig('debug_mode', false);
+
+    // Skip cache only if caching is disabled or explicitly bypassed
+    if (!$isCachingEnabled || rex_get('noCache', 'bool', false)) {
       return $generator();
     }
 
-    // ExecutionResult objects cannot be cached directly due to closures
-    // Instead, we cache the array result and create a new ExecutionResult
-    $cachedArray = self::get(self::QUERY_CACHE_DIR, $queryHash, function () use ($generator) {
-      $result = $generator();
-      // Nur das Array cacheen, nicht das ExecutionResult Objekt
-      return $result->toArray();
-    }, 300); // 5 Minuten Cache
+    // Generate cache key with additional context
+    $cacheKey = $queryHash;
 
-    // Wenn wir ein Array aus dem Cache bekommen, erstellen wir ein neues ExecutionResult
+    // ExecutionResult objects cannot be cached directly due to closures
+    // Instead, cache the array result and create a new ExecutionResult
+    $cachedArray = self::get(self::QUERY_CACHE_DIR, $cacheKey, function () use ($generator, $cacheWithErrors) {
+      $result = $generator();
+
+      // Check if we should cache results with errors
+      if (!$cacheWithErrors && !empty($result->errors)) {
+        // Special marker to indicate we shouldn't cache this result
+        return ['__nocache' => true, 'result' => $result->toArray()];
+      }
+
+      // Check for explicit cache directive in result extensions
+      $extensions = $result->extensions ?? [];
+      if (isset($extensions['shouldCache']) && $extensions['shouldCache'] === false) {
+        // Don't cache results that explicitly request no caching
+        return ['__nocache' => true, 'result' => $result->toArray()];
+      }
+
+      // Only cache the array, not the ExecutionResult object
+      return $result->toArray();
+    }, 300); // 5 minute cache
+
+    // If we got a no-cache marker, return the original result without caching
+    if (is_array($cachedArray) && isset($cachedArray['__nocache']) && $cachedArray['__nocache'] === true) {
+      // This result wasn't cached due to errors, so we regenerate it
+      return $generator();
+    }
+
+    // If we got an array from the cache, create a new ExecutionResult
     if (is_array($cachedArray)) {
-      return new \GraphQL\Executor\ExecutionResult(
+      $result = new \GraphQL\Executor\ExecutionResult(
         $cachedArray['data'] ?? null,
         $cachedArray['errors'] ?? []
       );
+
+      // Add cache status to extensions if in debug mode
+      if ($debugMode) {
+        $extensions = $cachedArray['extensions'] ?? [];
+        $extensions['cached'] = true;
+        $extensions['cache_key'] = $cacheKey;
+        $result->extensions = $extensions;
+      }
+
+      return $result;
     }
 
-    // Fallback: Direkt generieren falls Cache-Problem
+    // Fallback: Generate directly if there's a cache problem
     return $generator();
   }
 
@@ -314,5 +353,47 @@ class Cache
     }
 
     return $structures;
+  }
+
+  /**
+   * Determine if a result should be cached based on its error content
+   *
+   * @param \GraphQL\Executor\ExecutionResult $result The query result to check
+   * @return bool True if the result should be cached, false otherwise
+   */
+  public static function shouldCacheResult(\GraphQL\Executor\ExecutionResult $result): bool
+  {
+    // Always cache results without errors
+    if (empty($result->errors)) {
+      return true;
+    }
+
+    // Check for errors that should prevent caching
+    foreach ($result->errors as $error) {
+      // Don't cache system errors, only cache validation errors
+      // System errors might be transient and should be reported live
+      if ($error instanceof \GraphQL\Error\Error) {
+        $originalError = $error->getPrevious();
+
+        // Don't cache database connection errors
+        if ($originalError instanceof \rex_sql_exception) {
+          return false;
+        }
+
+        // Don't cache permission errors
+        if (strpos($error->getMessage(), 'permission') !== false) {
+          return false;
+        }
+
+        // Don't cache internal server errors
+        if (strpos($error->getMessage(), 'internal') !== false) {
+          return false;
+        }
+      }
+    }
+
+    // Cache validation errors (syntax, field validation, etc.)
+    // These are stable and can be cached safely
+    return true;
   }
 }

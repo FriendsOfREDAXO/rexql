@@ -18,7 +18,28 @@ rexQL erweitert REDAXO CMS um eine vollständige GraphQL-API, die speziell für 
 - 🎯 **GraphQL Playground** im Backend
 - 💾 **Intelligentes Caching** für bessere Performance
 
-## 🚀 Schnellstart für Public Headless CMS
+## � Intelligentes Caching und Fehlerberichte
+
+rexQL bietet ein ausgeklügeltes Caching-System, das die Leistung erheblich verbessert und gleichzeitig detaillierte Fehlerberichte liefert:
+
+- **Query-Caching**: Ergebnisse werden für schnelle Antwortzeiten zwischengespeichert (5 Minuten)
+- **Schema-Caching**: Das GraphQL-Schema wird für schnelle API-Initialisierung zwischengespeichert
+- **Selektives Error-Caching**:
+  - ✅ Validierungsfehler (Abfragesyntax) werden gecacht für konsistente Fehlerberichte
+  - ❌ Systemfehler (DB-Fehler, Berechtigungsprobleme) werden nie gecacht, für aktuelle Fehlerberichte
+- **Cache-Steuerung**:
+  - `?noCache=1` Parameter zum Deaktivieren des Cachings für Entwicklung/Testing
+  - Debug-Modus zeigt Cache-Status und Leistungsmetriken
+
+**Beispiel mit Cache-Bypass:**
+
+```bash
+curl -X POST "https://ihre-domain.de/index.php?rex-api-call=rexql_graphql&noCache=1" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "{ rexArticleList { id name } }"}'
+```
+
+## �🚀 Schnellstart für Public Headless CMS
 
 ### 1. Installation & Setup
 
@@ -32,6 +53,7 @@ Aktivieren Sie das Addon im REDAXO Backend und konfigurieren Sie:
 1. **rexQL → Konfiguration**:
    - ✅ API-Endpoint aktivieren
    - ✅ CORS-Origins für Ihre Frontend-Domain(s) eintragen
+   - ✅ Query-Caching aktivieren (für bessere Performance)
    - ❌ "Authentifizierung erforderlich" deaktivieren (für Public CMS)
 
 2. **rexQL → Berechtigungen**:
@@ -463,6 +485,31 @@ curl_close($ch);
 ```
 
 ## Entwicklung
+
+### Cache-Verwaltung und Debugging
+
+Während der Entwicklung können Sie:
+
+1. **Debug-Modus aktivieren** in der rexQL-Konfiguration für detaillierte Infos
+2. **Cache umgehen** mit dem URL-Parameter `?noCache=1`
+3. **Cache manuell zurücksetzen** über den Button in der rexQL-Konfiguration
+4. **Cache-Status prüfen** auf der rexQL-Statusseite
+
+In PHP-Code können Sie den Cache direkt verwalten:
+
+```php
+// Cache komplett zurücksetzen
+FriendsOfRedaxo\RexQL\Cache::invalidateAll();
+
+// Nur Schema-Cache zurücksetzen
+FriendsOfRedaxo\RexQL\Cache::invalidateSchema();
+
+// Nur Query-Cache zurücksetzen
+FriendsOfRedaxo\RexQL\Cache::invalidateQueries();
+
+// Cache-Status abrufen
+$status = FriendsOfRedaxo\RexQL\Cache::getStatus();
+```
 
 ### Migration von älteren Versionen
 

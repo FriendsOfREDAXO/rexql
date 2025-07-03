@@ -112,31 +112,53 @@ class rex_api_rexql_graphql extends rex_api_function
         'clang_id' => rex_request('clang_id', 'int', rex_clang::getCurrentId())
       ];
 
-      // Validate and execute query (temporarily without caching for better error messages)
-      try {
-        // Validate GraphQL query
-        $document = \GraphQL\Language\Parser::parse($query);
-        $validationErrors = \GraphQL\Validator\DocumentValidator::validate($schema, $document);
-        if (!empty($validationErrors)) {
-          // Return validation errors in GraphQL result format
-          $result = new \GraphQL\Executor\ExecutionResult(null, $validationErrors);
-        } else {
-          $result = \GraphQL\GraphQL::executeQuery(
-            $schema,
-            $query,
-            null,
-            $context,
-            $variables,
-            $operationName
-          );
+      // Execute query with caching while preserving detailed error messages
+      $queryHash = md5(json_encode([
+        'query' => $query,
+        'variables' => $variables,
+        'operationName' => $operationName,
+        'clang_id' => $context['clang_id'],
+        'schema_version' => FriendsOfRedaxo\RexQL\Cache::getSchemaVersion(),
+        'api_key_id' => $apiKey ? $apiKey->getId() : null
+      ]));
+
+      // Check if cache should be bypassed via request parameter
+      $bypassCache = rex_get('noCache', 'bool', false);
+
+      // Custom error handling combined with caching
+      $result = FriendsOfRedaxo\RexQL\Cache::getQueryResult($queryHash, function () use ($schema, $query, $context, $variables, $operationName) {
+        try {
+          // Validate GraphQL query
+          $document = \GraphQL\Language\Parser::parse($query);
+          $validationErrors = \GraphQL\Validator\DocumentValidator::validate($schema, $document);
+          if (!empty($validationErrors)) {
+            // Return validation errors in GraphQL result format
+            return new \GraphQL\Executor\ExecutionResult(null, $validationErrors);
+          } else {
+            $result = \GraphQL\GraphQL::executeQuery(
+              $schema,
+              $query,
+              null,
+              $context,
+              $variables,
+              $operationName
+            );
+
+            // Determine if this result should be cached based on its error content
+            $result->extensions['shouldCache'] = FriendsOfRedaxo\RexQL\Cache::shouldCacheResult($result);
+
+            return $result;
+          }
+        } catch (\GraphQL\Error\SyntaxError $e) {
+          // Syntax errors in GraphQL query (these can be cached)
+          return new \GraphQL\Executor\ExecutionResult(null, [$e]);
+        } catch (\Exception $e) {
+          // Other execution errors (these should generally not be cached)
+          $result = new \GraphQL\Executor\ExecutionResult(null, [new \GraphQL\Error\Error($e->getMessage())]);
+          $result->extensions['shouldCache'] = false;
+          return $result;
         }
-      } catch (\GraphQL\Error\SyntaxError $e) {
-        // Syntax errors in GraphQL query
-        $result = new \GraphQL\Executor\ExecutionResult(null, [$e]);
-      } catch (\Exception $e) {
-        // Other execution errors
-        $result = new \GraphQL\Executor\ExecutionResult(null, [new \GraphQL\Error\Error($e->getMessage())]);
-      }
+      }, !$bypassCache);
 
       // Log API key usage
       if ($apiKey) {
@@ -179,11 +201,18 @@ class rex_api_rexql_graphql extends rex_api_function
 
       // Add debug information if enabled
       if ($addon->getConfig('debug_mode', false)) {
-        $response['extensions'] = [
+        // Preserve any existing extensions from the result
+        $extensions = $response['extensions'] ?? [];
+
+        $extensions = array_merge($extensions, [
           'executionTime' => round($executionTime, 2) . 'ms',
           'memoryUsage' => $this->formatBytes($memoryUsage),
-          'queryDepth' => $this->getQueryDepth($query)
-        ];
+          'queryDepth' => $this->getQueryDepth($query),
+          'cacheEnabled' => $addon->getConfig('cache_queries', false),
+          'bypassCache' => rex_get('noCache', 'bool', false)
+        ]);
+
+        $response['extensions'] = $extensions;
       }
 
       // Send JSON response
