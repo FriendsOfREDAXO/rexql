@@ -79,6 +79,13 @@ class rex_api_rexql_graphql extends rex_api_function
         throw new rex_api_exception('Keine GraphQL Query angegeben');
       }
 
+      // Query Syntax vorab prüfen
+      try {
+        \GraphQL\Language\Parser::parse($query);
+      } catch (\GraphQL\Error\SyntaxError $e) {
+        throw new rex_api_exception('GraphQL Syntax Error: ' . $e->getMessage());
+      }
+
       // Query-Tiefe prüfen
       $maxDepth = $addon->getConfig('max_query_depth', 10);
       if ($this->getQueryDepth($query) > $maxDepth) {
@@ -105,18 +112,31 @@ class rex_api_rexql_graphql extends rex_api_function
         'clang_id' => rex_request('clang_id', 'int', rex_clang::getCurrentId())
       ];
 
-      // Query ausführen
-      $queryHash = md5($query . serialize($variables));
-      $result = FriendsOfRedaxo\RexQL\Cache::getQueryResult($queryHash, function () use ($schema, $query, $variables, $operationName, $context) {
-        return \GraphQL\GraphQL::executeQuery(
-          $schema,
-          $query,
-          null,
-          $context,
-          $variables,
-          $operationName
-        );
-      });
+      // Query validieren und ausführen (temporär ohne Caching für bessere Fehlermeldungen)
+      try {
+        // GraphQL Query validieren
+        $document = \GraphQL\Language\Parser::parse($query);
+        $validationErrors = \GraphQL\Validator\DocumentValidator::validate($schema, $document);
+        if (!empty($validationErrors)) {
+          // Validation Errors in GraphQL Result Format zurückgeben
+          $result = new \GraphQL\Executor\ExecutionResult(null, $validationErrors);
+        } else {
+          $result = \GraphQL\GraphQL::executeQuery(
+            $schema,
+            $query,
+            null,
+            $context,
+            $variables,
+            $operationName
+          );
+        }
+      } catch (\GraphQL\Error\SyntaxError $e) {
+        // Syntax-Fehler in GraphQL Query
+        $result = new \GraphQL\Executor\ExecutionResult(null, [$e]);
+      } catch (\Exception $e) {
+        // Andere Ausführungsfehler
+        $result = new \GraphQL\Executor\ExecutionResult(null, [new \GraphQL\Error\Error($e->getMessage())]);
+      }
 
       // API Key Usage protokollieren
       if ($apiKey) {
