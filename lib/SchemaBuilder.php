@@ -46,17 +46,14 @@ class SchemaBuilder
           'clang_id' => ['description' => 'Language ID'],
           'parent_id' => ['description' => 'Parent article ID']
         ],
-        'joins' => [
+        'relations' => [
           'rex_article_slice' => [
-            'type' => 'LEFT JOIN',
-            'on' => 'rex_article.id = rex_article_slice.article_id',
-            'alias' => 'rex_article_slice',
-            'fields' => [
-              'rex_article_slice_id' => 'rex_article_slice.id',
-            ]
+            'type' => '1:n',
+            'foreign_key' => 'article_id',
+            'local_key' => 'id',
+            'order_by' => 'priority ASC'
           ]
         ]
-
       ],
       'rex_article_slice' => [
         'description' => 'REDAXO Artikel-Slices',
@@ -81,20 +78,27 @@ class SchemaBuilder
           'value1' => ['description' => 'Module value 1'],
           'value2' => ['description' => 'Module value 2']
         ],
-        'joins' => [
+        'relations' => [
           'rex_module' => [
-            'type' => 'LEFT JOIN',
-            'on' => 'rex_article_slice.module_id = rex_module.id',
-            'alias' => 'rex_module',
-            'fields' => [
-              'module_id' => 'rex_module.id',
-              'module_name' => 'rex_module.name',
-              'module_key' => 'rex_module.key',
-              'module_input' => 'rex_module.input',
-              'module_output' => 'rex_module.output'
-            ]
+            'type' => 'n:1',
+            'foreign_key' => 'id',
+            'local_key' => 'module_id',
           ]
         ]
+        // 'joins' => [
+        //   'rex_module' => [
+        //     'type' => 'LEFT JOIN',
+        //     'on' => 'rex_article_slice.module_id = rex_module.id',
+        //     'alias' => 'rex_module',
+        //     'fields' => [
+        //       'module_id' => 'rex_module.id',
+        //       'module_name' => 'rex_module.name',
+        //       'module_key' => 'rex_module.key',
+        //       'module_input' => 'rex_module.input',
+        //       'module_output' => 'rex_module.output'
+        //     ]
+        //   ]
+        // ]
       ],
       'rex_clang' => [
         'description' => 'REDAXO Sprachen',
@@ -131,10 +135,21 @@ class SchemaBuilder
       ],
       'rex_module' => [
         'description' => 'REDAXO Module',
+        'args' => [
+          'id' => ['type' => 'int'],
+          'key' => ['type' => 'string'],
+          'name' => ['type' => 'string'],
+          'limit' => ['type' => 'int'],
+          'offset' => ['type' => 'int', 'defaultValue' => 0],
+          'where' => ['type' => 'string'],
+          'order_by' => ['type' => 'string', 'defaultValue' => 'id ASC'],
+        ],
         'fields' => [
           'id' => ['description' => 'Module-ID'],
           'key' => ['description' => 'Key'],
           'name' => ['description' => 'Name'],
+          'input' => ['description' => 'Input-Code'],
+          'output' => ['description' => 'Output-Code'],
         ]
       ],
       'rex_template' => [
@@ -193,11 +208,83 @@ class SchemaBuilder
   /**
    * Core-Tabellen-Types erstellen
    */
+
   private function buildCoreTypes(): void
   {
     $allowedTables = rex_addon::get('rexql')->getConfig('allowed_tables', []);
     $coreTables = $this->getTableConfigurations();
 
+    // Debug: Ausgabe der erlaubten Tabellen
+    if (rex_addon::get('rexql')->getConfig('debug_mode', false)) {
+      rex_logger::factory()->debug("RexQL: Allowed tables: " . implode(', ', $allowedTables));
+      rex_logger::factory()->debug("RexQL: Available configurations: " . implode(', ', array_keys($coreTables)));
+    }
+
+    // Erste Phase: Alle Types erstellen (ohne Relations)
+    foreach ($coreTables as $table => $config) {
+      if (!in_array($table, $allowedTables)) {
+        if (rex_addon::get('rexql')->getConfig('debug_mode', false)) {
+          rex_logger::factory()->debug("RexQL: Skipping table '{$table}' - not in allowed tables");
+        }
+        continue;
+      }
+
+      $typeName = $this->getTypeName($table);
+      if (rex_addon::get('rexql')->getConfig('debug_mode', false)) {
+        rex_logger::factory()->info("RexQL: Creating type '{$typeName}' for table '{$table}' (Phase 1)");
+      }
+
+      // Erstelle erstmal ohne Relations
+      $configWithoutRelations = $config;
+      unset($configWithoutRelations['relations']);
+
+      try {
+        $this->types[$typeName] = $this->createTypeFromTable($table, $configWithoutRelations);
+      } catch (\Exception $e) {
+        if (rex_addon::get('rexql')->getConfig('debug_mode', false)) {
+          rex_logger::factory()->error("RexQL: Error creating type '{$typeName}': " . $e->getMessage());
+        }
+        throw $e;
+      }
+    }
+
+    // Zweite Phase: Types mit Relations aktualisieren
+    foreach ($coreTables as $table => $config) {
+      if (!in_array($table, $allowedTables) || empty($config['relations'])) {
+        continue;
+      }
+
+      $typeName = $this->getTypeName($table);
+      if (rex_addon::get('rexql')->getConfig('debug_mode', false)) {
+        rex_logger::factory()->info("RexQL: Updating type '{$typeName}' with relations (Phase 2)");
+      }
+
+      // Prüfen, ob alle referenzierten Types existieren
+      foreach ($config['relations'] as $relationTable => $relationConfig) {
+        $relationTypeName = $this->getTypeName($relationTable);
+        if (!isset($this->types[$relationTypeName])) {
+          if (rex_addon::get('rexql')->getConfig('debug_mode', false)) {
+            rex_logger::factory()->warning("RexQL: Referenced type '{$relationTypeName}' for table '{$relationTable}' not found");
+          }
+          // Skip this relation if the target type doesn't exist
+          unset($config['relations'][$relationTable]);
+        }
+      }
+
+      // Recreate type with relations now that all types exist
+      if (!empty($config['relations'])) {
+        try {
+          $this->types[$typeName] = $this->createTypeFromTable($table, $config);
+        } catch (\Exception $e) {
+          if (rex_addon::get('rexql')->getConfig('debug_mode', false)) {
+            rex_logger::factory()->error("RexQL: Error updating type '{$typeName}' with relations: " . $e->getMessage());
+          }
+          throw $e;
+        }
+      }
+    }
+
+    // Dritte Phase: Queries erstellen
     foreach ($coreTables as $table => $config) {
       if (!in_array($table, $allowedTables)) {
         continue;
@@ -205,11 +292,18 @@ class SchemaBuilder
 
       $typeName = $this->getTypeName($table);
       if (rex_addon::get('rexql')->getConfig('debug_mode', false)) {
-        rex_logger::factory()->info("RexQL: Creating type '{$typeName}' for table '{$table}'");
+        rex_logger::factory()->info("RexQL: Creating queries for type '{$typeName}' (Phase 3)");
       }
-      $this->types[$typeName] = $this->createTypeFromTable($table, $config);
-      $this->queries[$this->getQueryName($table)] = $this->createQueryField($table, $config, $typeName, false);
-      $this->queries[$this->getListQueryName($table)] = $this->createQueryField($table, $config, $typeName);
+
+      try {
+        $this->queries[$this->getQueryName($table)] = $this->createQueryField($table, $config, $typeName, false);
+        $this->queries[$this->getListQueryName($table)] = $this->createQueryField($table, $config, $typeName);
+      } catch (\Exception $e) {
+        if (rex_addon::get('rexql')->getConfig('debug_mode', false)) {
+          rex_logger::factory()->error("RexQL: Error creating queries for type '{$typeName}': " . $e->getMessage());
+        }
+        throw $e;
+      }
     }
   }
 
@@ -312,6 +406,31 @@ class SchemaBuilder
       }
     }
 
+    // Add 1:n and n:1 relations
+    if (!empty($tableConfig['relations'])) {
+      foreach ($tableConfig['relations'] as $relationTable => $relationConfig) {
+        $fields[$relationTable] = [
+          'type' => function () use ($relationTable, $relationConfig) {
+            $relationTypeName = $this->getTypeName($relationTable);
+            switch ($relationConfig['type']) {
+              case '1:n':
+                // Return list of related records
+                return isset($this->types[$relationTypeName]) ? Type::listOf($this->types[$relationTypeName]) : Type::listOf(Type::string());
+              case 'n:1':
+                // Return single related record
+                return isset($this->types[$relationTypeName]) ? $this->types[$relationTypeName] : Type::string();
+              default:
+                return Type::string(); // Fallback
+            }
+          },
+          'description' => "Related {$relationTable} records",
+          'resolve' => function ($root) use ($relationTable, $relationConfig) {
+            return $this->resolveRelation($root, $relationTable, $relationConfig);
+          }
+        ];
+      }
+    }
+
     if (empty($fields)) {
       throw new \Exception("No fields found for table {$table}");
     }
@@ -321,6 +440,59 @@ class SchemaBuilder
       'description' => $tableConfig['description'] ?? "Tabelle {$table}",
       'fields' => $fields
     ]);
+  }
+
+  /**
+   * Beziehung auflösen
+   */
+  private function resolveRelation(array $parentRecord, string $relationTable, array $relationConfig): array
+  {
+    if (rex_addon::get('rexql')->getConfig('debug_mode', false)) {
+      rex_logger::factory()->debug("RexQL: Resolving relation for table '{$relationTable}'");
+    }
+
+    $isOneToMany = $relationConfig['type'] == '1:n';
+
+    // Prüfen, ob der Parent-Record den Local Key hat
+    $localKey = $relationConfig['local_key'] ?? 'id';
+    if (!isset($parentRecord[$localKey])) {
+      return $isOneToMany ? [] : null;
+    }
+    if ($isOneToMany) {
+      $orderBy = $relationConfig['order_by'] ?? 'id ASC';
+      $limit = 0;
+    } else {
+      $orderBy = '';
+      $limit = 1;
+    }
+
+    // Build query using shared helper
+    $foreignId  = $parentRecord[$localKey];
+    $foreignKey = $relationConfig['foreign_key'];
+    $whereCondition = [":foreign_key" => $foreignId];
+    $whereClause = "{$relationTable}.{$foreignKey} = :foreign_key";
+    $queryData = $this->buildRelationQuery($relationTable, $whereCondition, $orderBy, $limit, $whereClause);
+
+    $sql = rex_sql::factory();
+
+    try {
+      $sql->setQuery($queryData['query'], $queryData['params']);
+      $result = $sql->getArray();
+
+      if (rex_addon::get('rexql')->getConfig('debug_mode', false)) {
+        rex_logger::factory()->debug("RexQL: Found " . count($result) . " related record/s for {$relationTable}");
+        if (!empty($result)) {
+          rex_logger::factory()->debug("RexQL: Sample related record: " . json_encode($result[0]));
+        }
+      }
+
+      return $isOneToMany ? $result : (!empty($result) ? $result[0] : null);
+    } catch (\Exception $e) {
+      if (rex_addon::get('rexql')->getConfig('debug_mode', false)) {
+        rex_logger::factory()->error("RexQL: Error resolving 1:n relation: " . $e->getMessage());
+      }
+      return [];
+    }
   }
 
   /**
@@ -423,53 +595,6 @@ class SchemaBuilder
   }
 
   /**
-   * Einzelnen Datensatz auflösen
-   */
-  private function resolveRecord(string $table, array $args): ?array
-  {
-    $sql = rex_sql::factory();
-    $where = 'WHERE 1=1';
-    $params = [];
-
-    if (isset($args['id'])) {
-      $where .= ' AND id = :id';
-      $params['id'] = $args['id'];
-    }
-    if (isset($args['article_id'])) {
-      $where .= ' AND article_id = :article_id';
-      $params['article_id'] = $args['article_id'];
-    }
-    if (isset($args['clang_id'])) {
-      $where .= ' AND clang_id = :clang_id';
-      $params['clang_id'] = $args['clang_id'];
-    }
-    if (isset($args['module_id'])) {
-      $where .= ' AND module_id = :module_id';
-      $params['module_id'] = $args['module_id'];
-    }
-    if (isset($args['ctype_id'])) {
-      $where .= ' AND ctype_id = :ctype_id';
-      $params['ctype_id'] = $args['ctype_id'];
-    }
-    if (isset($args['id'])) {
-      $where .= ' AND id = :id';
-      $params['id'] = $args['id'];
-    }
-    if (isset($args['status'])) {
-      $where .= ' AND status = :status';
-      $params['status'] = $args['status'];
-    }
-
-    if (isset($args['where'])) {
-      $where .= ' AND (' . $args['where'] . ')';
-    }
-
-    $sql->setQuery("SELECT * FROM $table $where LIMIT 1", $params);
-
-    return $sql->getRows() > 0 ? $sql->getArray()[0] : null;
-  }
-
-  /**
    * Liste von Datensätzen auflösen
    */
   private function resolveRecords(string $table, array $args, bool $list = true): array
@@ -509,40 +634,18 @@ class SchemaBuilder
 
     $selectClause = implode(', ', $selectFields);
 
-    $argFields = ['id', 'article_id', 'clang_id', 'module_id', 'ctype_id', 'status', 'where'];
+    $argFields = ['id', 'article_id', 'clang_id', 'module_id', 'ctype_id', 'status'];
     foreach ($argFields as $field) {
       if (isset($args[$field])) {
         $where .= " AND {$table}.{$field} = :{$field}";
         $params[$field] = $args[$field];
       }
     }
-    // if (isset($args['id'])) {
-    //   $where .= ' AND ' . $table . '.id = :id';
-    //   $params['id'] = $args['id'];
-    // }
-    // if (isset($args['article_id'])) {
-    //   $where .= ' AND article_id = :article_id';
-    //   $params['article_id'] = $args['article_id'];
-    // }
-    // if (isset($args['clang_id'])) {
-    //   $where .= ' AND clang_id = :clang_id';
-    //   $params['clang_id'] = $args['clang_id'];
-    // }
-    // if (isset($args['module_id'])) {
-    //   $where .= ' AND module_id = :module_id';
-    //   $params['module_id'] = $args['module_id'];
-    // }
-    // if (isset($args['ctype_id'])) {
-    //   $where .= ' AND ctype_id = :ctype_id';
-    //   $params['ctype_id'] = $args['ctype_id'];
-    // }
-    // if (isset($args['status'])) {
-    //   $where .= ' AND status = :status';
-    //   $params['status'] = $args['status'];
-    // }
-    // if (isset($args['where'])) {
-    //   $where .= ' AND (' . $args['where'] . ')';
-    // }
+
+    if (isset($args['where'])) {
+      $where .= ' AND (' . $args['where'] . ')';
+    }
+
     if (isset($args['order_by'])) {
       $order_by = $args['order_by'];
     }
@@ -565,10 +668,11 @@ class SchemaBuilder
     try {
       $sql->setQuery($query, $params);
       $resultArray = $sql->getArray();
-      $result = $list ? $resultArray : $resultArray[0];
+      $result = $list ? $resultArray : (!empty($resultArray) ? $resultArray[0] : null);
 
       if (rex_addon::get('rexql')->getConfig('debug_mode', false)) {
-        rex_logger::factory()->debug("RexQL: Successfully resolved " . count($result) . " records for table '{$table}'");
+        $count = $list ? count($resultArray) : (empty($resultArray) ? 0 : 1);
+        rex_logger::factory()->debug("RexQL: Successfully resolved {$count} records for table '{$table}'");
       }
 
       return $result;
@@ -778,7 +882,7 @@ class SchemaBuilder
         'where' => ['type' => Type::string()],
       ],
       'resolve' => function ($root, $args) use ($table) {
-        return $this->resolveRecord($table, $args);
+        return $this->resolveRecords($table, $args);
       }
     ];
   }
@@ -1037,6 +1141,59 @@ class SchemaBuilder
         // Dummy-Objekt zurückgeben, die eigentlichen Werte werden von den Feld-Resolvern geliefert
         return ['dummy' => true];
       }
+    ];
+  }
+
+  /**
+   * Shared method to build SELECT query with joins for relation resolution
+   */
+  private function buildRelationQuery(string $relationTable, array $params, string $orderBy = '', int $limit = 0, string $whereClause = ''): array
+  {
+    // Get table configuration for joins if they exist
+    $tableConfigs = $this->getTableConfigurations();
+    $config = $tableConfigs[$relationTable] ?? [];
+
+    // Build SELECT clause with potential joins
+    $selectFields = [$relationTable . '.*'];
+    $joins = '';
+
+    if (!empty($config['joins'])) {
+      foreach ($config['joins'] as $joinTable => $joinConfig) {
+        $joinType = $joinConfig['type'] ?? 'LEFT JOIN';
+        $joinAlias = $joinConfig['alias'] ?? $joinTable;
+        $joinOn = $joinConfig['on'];
+
+        $joins .= " {$joinType} {$joinTable} AS {$joinAlias} ON {$joinOn}";
+
+        // Add joined fields to SELECT
+        if (!empty($joinConfig['fields'])) {
+          foreach ($joinConfig['fields'] as $fieldAlias => $fieldExpression) {
+            $selectFields[] = "{$fieldExpression} AS {$fieldAlias}";
+          }
+        }
+      }
+    }
+
+    $selectClause = implode(', ', $selectFields);
+
+    // Build the complete query
+    $query = "SELECT {$selectClause} FROM {$relationTable}{$joins}";
+
+    if (!empty($whereClause)) {
+      $query .= " WHERE {$whereClause}";
+    }
+
+    if (!empty($orderBy)) {
+      $query .= " ORDER BY {$orderBy}";
+    }
+
+    if ($limit > 0) {
+      $query .= " LIMIT {$limit}";
+    }
+
+    return [
+      'query' => $query,
+      'params' => $params
     ];
   }
 
