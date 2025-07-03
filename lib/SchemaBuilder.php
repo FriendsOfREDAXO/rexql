@@ -27,27 +27,6 @@ class SchemaBuilder
   private function getTableConfigurations(): array
   {
     return [
-      'rex_config' => [
-        'description' => 'REDAXO Konfiguration',
-        'single_args' => [
-          'namespace' => ['type' => 'string'],
-          'key' => ['type' => 'string'],
-          'where' => ['type' => 'string']
-        ],
-        'list_args' => [
-          'namespace' => ['type' => 'string'],
-          'key' => ['type' => 'string'],
-          'limit' => ['type' => 'int', 'defaultValue' => 50],
-          'offset' => ['type' => 'int', 'defaultValue' => 0],
-          'where' => ['type' => 'string'],
-          'order_by' => ['type' => 'string', 'defaultValue' => 'namespace ASC, `key` ASC']
-        ],
-        'fields' => [
-          'namespace' => ['description' => 'Configuration namespace'],
-          'key' => ['description' => 'Configuration key'],
-          'value' => ['description' => 'Configuration value']
-        ]
-      ],
       'rex_article_slice' => [
         'description' => 'REDAXO Artikel-Slices',
         'single_args' => [
@@ -751,14 +730,6 @@ class SchemaBuilder
   private function getCoreTableConfig(): array
   {
     return [
-      'rex_config' => [
-        'description' => 'REDAXO Konfiguration',
-        'fields' => [
-          'namespace' => ['description' => 'Config-Namespace'],
-          'key' => ['description' => 'Schlüssel'],
-          'value' => ['description' => 'Wert']
-        ]
-      ],
       'rex_article' => [
         'description' => 'REDAXO Artikel',
         'fields' => [
@@ -790,7 +761,33 @@ class SchemaBuilder
           'filename' => ['description' => 'Dateiname'],
           'title' => ['description' => 'Titel']
         ]
+      ],
+      'rex_media_category' => [
+        'description' => 'REDAXO Medien-Kategorien',
+        'fields' => [
+          'id' => ['description' => 'Media-Category-ID'],
+          'name' => ['description' => 'Name'],
+          'parent_id' => ['description' => 'Eltern-ID der Kategorie']
+        ]
+      ],
+      'rex_module' => [
+        'description' => 'REDAXO Module',
+        'fields' => [
+          'id' => ['description' => 'Module-ID'],
+          'key' => ['description' => 'Key'],
+          'name' => ['description' => 'Name'],
+        ]
+      ],
+      'rex_template' => [
+        'description' => 'REDAXO Templates',
+        'fields' => [
+          'id' => ['description' => 'Template-ID'],
+          'key' => ['description' => 'Key'],
+          'name' => ['description' => 'Name'],
+        ]
       ]
+
+
     ];
   }
 
