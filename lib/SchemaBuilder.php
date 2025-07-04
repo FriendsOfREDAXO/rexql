@@ -36,7 +36,7 @@ class SchemaBuilder
           'status' => ['type' => 'int', 'defaultValue' => 1],
           'clang_id' => ['type' => 'int', 'defaultValue' => 1],
           'where' => ['type' => 'string'],
-          'order_by' => ['type' => 'string', 'defaultValue' => 'priority ASC'],
+          'order_by' => ['type' => 'string', 'defaultValue' => 'priority ASC, catpriority ASC'],
           'offset' => ['type' => 'int', 'defaultValue' => 0],
           'limit' => ['type' => 'int'],
         ],
@@ -410,7 +410,11 @@ class SchemaBuilder
     if (!empty($tableConfig['relations'])) {
       foreach ($tableConfig['relations'] as $relationTable => $relationConfig) {
         $relationTypeName = $this->getTypeName($relationTable);
-        $fieldName = lcfirst($relationTypeName); // Use camelCase GraphQL type name as field name
+
+        // Use consistent naming: append 'List' for one-to-many relations
+        $fieldName = $relationConfig['type'] === '1:n'
+          ? lcfirst($relationTypeName) . 'List'  // One-to-many gets 'List' suffix
+          : lcfirst($relationTypeName);          // Many-to-one stays singular
 
         $fields[$fieldName] = [
           'type' => function () use ($relationTable, $relationConfig) {
