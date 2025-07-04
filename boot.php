@@ -51,11 +51,32 @@ if (!$this->getConfig('endpoint_url')) {
 
 // Register extensions - only for existing extension points
 rex_extension::register('PACKAGES_INCLUDED', function () {
-  // Language changes (as they affect the schema cache key)
-  rex_extension::register('CLANG_UPDATED', 'FriendsOfRedaxo\\RexQL\\Cache::invalidateSchema');
-  rex_extension::register('CLANG_DELETED', 'FriendsOfRedaxo\\RexQL\\Cache::invalidateSchema');
-  rex_extension::register('CLANG_ADDED', 'FriendsOfRedaxo\\RexQL\\Cache::invalidateSchema');
 
+  $extensionPoints = [
+    'ART_ADDED',
+    'ART_DELETED',
+    'ART_MOVED',
+    'ART_STATUS',
+    'ART_UPDATED',
+    'CAT_ADDED',
+    'CAT_DELETED',
+    'CAT_MOVED',
+    'CAT_STATUS',
+    'CAT_UPDATED',
+    'CLANG_ADDED',
+    'CLANG_DELETED',
+    'CLANG_UPDATED',
+    'CACHE_DELETED',
+    'REX_FORM_SAVED',
+    'REX_YFORM_SAVED',
+    'YFORM_DATA_ADDED',
+    'YFORM_DATA_DELETED',
+    'YFORM_DATA_UPDATED',
+  ];
+
+  foreach ($extensionPoints as $extensionPoint) {
+    rex_extension::register($extensionPoint, 'FriendsOfRedaxo\\RexQL\\Cache::invalidateSchema');
+  }
   // Note: Addon installation/table structure changes require manual cache invalidation
   // via the "Refresh Schema Cache" button in the rexQL backend
 });
