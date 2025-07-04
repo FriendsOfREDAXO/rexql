@@ -1,5 +1,14 @@
 <?php
 
+namespace FriendsOfRedaxo\RexQL\Api;
+
+use rex_addon;
+use rex_api_function;
+use rex_api_exception;
+use rex_file;
+use rex_api_result;
+use rex_response;
+
 /**
  * Simple session token system for rexQL
  * 
@@ -26,7 +35,7 @@ class rex_api_rexql_auth extends rex_api_function
         default:
           throw new rex_api_exception('Invalid action');
       }
-    } catch (Exception $e) {
+    } catch (\Exception $e) {
       rex_response::setStatus(rex_response::HTTP_BAD_REQUEST);
       rex_response::sendContent(json_encode([
         'success' => false,

@@ -400,12 +400,12 @@ $(document).on('rex:ready', function () {
   })
 
   // API-Schlüssel Copy-Buttons initialisieren
-  var copyButtons = document.querySelectorAll('[data-copy-api-key]')
+  var copyButtons = document.querySelectorAll('[data-copy]')
   copyButtons.forEach(function (button) {
     button.addEventListener('click', function (e) {
       e.preventDefault()
-      var apiKey = this.getAttribute('data-copy-api-key')
-      rexQL.copyToClipboard(apiKey)
+      var value = this.getAttribute('data-copy')
+      rexQL.copyToClipboard(value)
     })
   })
 

@@ -18,9 +18,26 @@ use rex_clang;
  */
 class SchemaBuilder
 {
+  private ?rex_addon $addon = null;
+  private bool $debugMode = false;
   private array $types = [];
   private array $queries = [];
   private array $mutations = [];
+  private ?rex_logger $logger = null;
+
+  function __construct()
+  {
+    $this->addon = rex_addon::get('rexql');
+    $this->debugMode = $this->addon->getConfig('debug_mode', false);
+    $this->logger = rex_logger::factory();
+  }
+
+  public function log(string $message, string $type = 'info'): void
+  {
+    if ($this->debugMode) {
+      $this->logger->log($type, $message, [], __FILE__, __LINE__);
+    }
+  }
 
   /**
    * Table configurations for arguments and special handling
@@ -184,9 +201,7 @@ class SchemaBuilder
   public function buildSchema(): Schema
   {
     // Debug logging for schema building
-    if (rex_addon::get('rexql')->getConfig('debug_mode', false)) {
-      rex_logger::factory()->info('RexQL: Building fresh GraphQL schema');
-    }
+    $this->log('RexQL: Building fresh GraphQL schema');
 
     $this->buildCoreTypes();
     $this->buildYFormTypes();
@@ -215,24 +230,18 @@ class SchemaBuilder
     $coreTables = $this->getTableConfigurations();
 
     // Debug: Output allowed tables
-    if (rex_addon::get('rexql')->getConfig('debug_mode', false)) {
-      rex_logger::factory()->debug("RexQL: Allowed tables: " . implode(', ', $allowedTables));
-      rex_logger::factory()->debug("RexQL: Available configurations: " . implode(', ', array_keys($coreTables)));
-    }
+    $this->log("RexQL: Allowed tables: " . implode(', ', $allowedTables), 'debug');
+    $this->log("RexQL: Available configurations: " . implode(', ', array_keys($coreTables)), 'debug');
 
     // First phase: Create all types (without relations)
     foreach ($coreTables as $table => $config) {
       if (!in_array($table, $allowedTables)) {
-        if (rex_addon::get('rexql')->getConfig('debug_mode', false)) {
-          rex_logger::factory()->debug("RexQL: Skipping table '{$table}' - not in allowed tables");
-        }
+        $this->log("RexQL: Skipping table '{$table}' - not in allowed tables", 'debug');
         continue;
       }
 
       $typeName = $this->getTypeName($table);
-      if (rex_addon::get('rexql')->getConfig('debug_mode', false)) {
-        rex_logger::factory()->info("RexQL: Creating type '{$typeName}' for table '{$table}' (Phase 1)");
-      }
+      $this->log("RexQL: Creating type '{$typeName}' for table '{$table}' (Phase 1)");
 
       // Create first without relations
       $configWithoutRelations = $config;
@@ -241,9 +250,7 @@ class SchemaBuilder
       try {
         $this->types[$typeName] = $this->createTypeFromTable($table, $configWithoutRelations);
       } catch (\Exception $e) {
-        if (rex_addon::get('rexql')->getConfig('debug_mode', false)) {
-          rex_logger::factory()->error("RexQL: Error creating type '{$typeName}': " . $e->getMessage());
-        }
+        $this->logger->alert("RexQL: Error creating type '{$typeName}': " . $e->getMessage());
         throw $e;
       }
     }
@@ -255,17 +262,13 @@ class SchemaBuilder
       }
 
       $typeName = $this->getTypeName($table);
-      if (rex_addon::get('rexql')->getConfig('debug_mode', false)) {
-        rex_logger::factory()->info("RexQL: Updating type '{$typeName}' with relations (Phase 2)");
-      }
+      $this->log("RexQL: Updating type '{$typeName}' with relations (Phase 2)");
 
       // Check if all referenced types exist
       foreach ($config['relations'] as $relationTable => $relationConfig) {
         $relationTypeName = $this->getTypeName($relationTable);
         if (!isset($this->types[$relationTypeName])) {
-          if (rex_addon::get('rexql')->getConfig('debug_mode', false)) {
-            rex_logger::factory()->warning("RexQL: Referenced type '{$relationTypeName}' for table '{$relationTable}' not found");
-          }
+          $this->log("RexQL: Referenced type '{$relationTypeName}' for table '{$relationTable}' not found", 'warning');
           // Skip this relation if the target type doesn't exist
           unset($config['relations'][$relationTable]);
         }
@@ -276,9 +279,7 @@ class SchemaBuilder
         try {
           $this->types[$typeName] = $this->createTypeFromTable($table, $config);
         } catch (\Exception $e) {
-          if (rex_addon::get('rexql')->getConfig('debug_mode', false)) {
-            rex_logger::factory()->error("RexQL: Error updating type '{$typeName}' with relations: " . $e->getMessage());
-          }
+          $this->logger->alert("RexQL: Error updating type '{$typeName}' with relations: " . $e->getMessage());
           throw $e;
         }
       }
@@ -291,17 +292,13 @@ class SchemaBuilder
       }
 
       $typeName = $this->getTypeName($table);
-      if (rex_addon::get('rexql')->getConfig('debug_mode', false)) {
-        rex_logger::factory()->info("RexQL: Creating queries for type '{$typeName}' (Phase 3)");
-      }
+      $this->log("RexQL: Creating queries for type '{$typeName}' (Phase 3)");
 
       try {
         $this->queries[$this->getQueryName($table)] = $this->createQueryField($table, $config, $typeName, false);
         $this->queries[$this->getListQueryName($table)] = $this->createQueryField($table, $config, $typeName);
       } catch (\Exception $e) {
-        if (rex_addon::get('rexql')->getConfig('debug_mode', false)) {
-          rex_logger::factory()->error("RexQL: Error creating queries for type '{$typeName}': " . $e->getMessage());
-        }
+        $this->logger->alert("RexQL: Error creating queries for type '{$typeName}': " . $e->getMessage());
         throw $e;
       }
     }
@@ -454,9 +451,7 @@ class SchemaBuilder
    */
   private function resolveRelation(array $parentRecord, string $relationTable, array $relationConfig): array
   {
-    if (rex_addon::get('rexql')->getConfig('debug_mode', false)) {
-      rex_logger::factory()->debug("RexQL: Resolving relation for table '{$relationTable}'");
-    }
+    $this->log("RexQL: Resolving relation for table '{$relationTable}'", 'debug');
 
     $isOneToMany = $relationConfig['type'] == '1:n';
 
@@ -486,18 +481,14 @@ class SchemaBuilder
       $sql->setQuery($queryData['query'], $queryData['params']);
       $result = $sql->getArray();
 
-      if (rex_addon::get('rexql')->getConfig('debug_mode', false)) {
-        rex_logger::factory()->debug("RexQL: Found " . count($result) . " related record/s for {$relationTable}");
-        if (!empty($result)) {
-          rex_logger::factory()->debug("RexQL: Sample related record: " . json_encode($result[0]));
-        }
+      $this->log("RexQL: Successfully resolved relation for table '{$relationTable}'", 'debug');
+      if (empty($result)) {
+        $this->log("RexQL: No related records found for table '{$relationTable}'", 'debug');
       }
 
       return $isOneToMany ? $result : (!empty($result) ? $result[0] : null);
     } catch (\Exception $e) {
-      if (rex_addon::get('rexql')->getConfig('debug_mode', false)) {
-        rex_logger::factory()->error("RexQL: Error resolving 1:n relation: " . $e->getMessage());
-      }
+      $this->logger->alert("RexQL: Error resolving relation for table '{$relationTable}': " . $e->getMessage());
       return [];
     }
   }
@@ -609,9 +600,7 @@ class SchemaBuilder
     $config = $this->getTableConfigurations()[$table] ?? [];
 
     // Debug logging
-    if (rex_addon::get('rexql')->getConfig('debug_mode', false)) {
-      rex_logger::factory()->debug("RexQL: Resolving records for table '{$table}' with args: " . json_encode($args));
-    }
+    $this->log("RexQL: Resolving records for table '{$table}'", 'debug');
 
     $sql = rex_sql::factory();
     $params = [];
@@ -667,9 +656,7 @@ class SchemaBuilder
     $query .= " ORDER BY {$order_by}";
     $query .= " LIMIT {$limit} OFFSET {$offset}";
 
-    if (rex_addon::get('rexql')->getConfig('debug_mode', false)) {
-      rex_logger::factory()->debug("RexQL: Executing query: $query with params: " . json_encode($params));
-    }
+    $this->log("RexQL: Executing query: $query with params: " . json_encode($params), 'debug');
 
 
     try {
@@ -677,16 +664,15 @@ class SchemaBuilder
       $resultArray = $sql->getArray();
       $result = $list ? $resultArray : (!empty($resultArray) ? $resultArray[0] : null);
 
-      if (rex_addon::get('rexql')->getConfig('debug_mode', false)) {
+      if ($this->debugMode) {
         $count = $list ? count($resultArray) : (empty($resultArray) ? 0 : 1);
-        rex_logger::factory()->debug("RexQL: Successfully resolved {$count} records for table '{$table}'");
+        $this->log("RexQL: Successfully resolved {$count} records for table '{$table}'", 'debug');
       }
+
 
       return $result;
     } catch (\Exception $e) {
-      if (rex_addon::get('rexql')->getConfig('debug_mode', false)) {
-        rex_logger::factory()->error("RexQL: Error resolving records for table '{$table}': " . $e->getMessage());
-      }
+      $this->logger->alert("RexQL: Error resolving records for table '{$table}': " . $e->getMessage());
       throw $e;
     }
   }

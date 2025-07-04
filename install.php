@@ -58,6 +58,25 @@ if (!$error) {
     ->ensureIndex(new rex_sql_index('success', ['success']))
     ->ensureForeignKey(new rex_sql_foreign_key('fk_rexql_query_log_api_key', rex::getTable('rexql_api_keys'), ['api_key_id' => 'id'], rex_sql_foreign_key::SET_NULL))
     ->ensure();
+
+  // Webhooks table
+  rex_sql_table::get(rex::getTable('rexql_webhook'))
+    ->ensurePrimaryIdColumn()
+    ->ensureColumn(new rex_sql_column('name', 'varchar(255)', false))
+    ->ensureColumn(new rex_sql_column('url', 'varchar(500)', false))
+    ->ensureColumn(new rex_sql_column('secret', 'varchar(255)', false))
+    ->ensureColumn(new rex_sql_column('active', 'tinyint(1)', false, 1))
+    ->ensureColumn(new rex_sql_column('timeout', 'int(10)', false, 30))
+    ->ensureColumn(new rex_sql_column('retry_attempts', 'int(3)', false, 3))
+    ->ensureColumn(new rex_sql_column('last_called', 'datetime', true))
+    ->ensureColumn(new rex_sql_column('last_status', 'varchar(50)', true))
+    ->ensureColumn(new rex_sql_column('last_error', 'text', true))
+    ->ensureColumn(new rex_sql_column('call_count', 'int(10)', false, 0))
+    ->ensureColumn(new rex_sql_column('created_by', 'varchar(255)', false))
+    ->ensureColumn(new rex_sql_column('createdate', 'datetime', false))
+    ->ensureColumn(new rex_sql_column('updatedate', 'datetime', false))
+    ->ensureIndex(new rex_sql_index('active', ['active']))
+    ->ensure();
 }
 
 if ($error) {

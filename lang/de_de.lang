@@ -97,8 +97,8 @@ rexql_error_https_required = HTTPS erforderlich
 rexql_error_authentication_required = Authentifizierung erforderlich
 
 # Dev Mode
-rexql_dev_mode_notice = Entwicklungsmodus aktiv - API ohne Authentifizierung zugänglich
-rexql_dev_mode_warning = Achtung: In Produktion sollte die Authentifizierung aktiviert sein
+rexql_auth_notice = API ohne Authentifizierung zugänglich
+rexql_auth_warning = Achtung: In Produktion sollte die Authentifizierung aktiviert sein
 
 # Playground
 rexql_playground_title = GraphQL Playground

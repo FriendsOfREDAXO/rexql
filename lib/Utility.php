@@ -66,37 +66,16 @@ class Utility
 
 
   /**
-   * Prüft, ob die REDAXO-Installation im Entwicklungsmodus ist
+   * Prüft, ob Authentifizierung erforderlich ist
    *
    * @return bool True, wenn im Entwicklungsmodus, sonst false
    */
-  public static function isDevMode(): bool
+  public static function isAuthEnabled(): bool
   {
-
-    // Check environment variable
-    if (getenv('REDAXO_DEV_MODE') === '1') {
-      return true;
+    if (self::$addon === null) {
+      self::$addon = rex_addon::get('rexql');
     }
-
-    // Check .env.local file for mode variable
-    $envFile = rex_path::base('.env.local');
-    if (file_exists($envFile)) {
-      $envContent = file_get_contents($envFile);
-      if (preg_match('/^mode\s*=\s*dev/m', $envContent)) {
-        return true;
-      }
-    }
-
-    // Check if ydeploy addon is available and check deployment status
-    if (rex_addon::get('ydeploy')->isAvailable()) {
-      $ydeploy = rex_ydeploy::factory();
-      // If not deployed, allow (development environment)
-      if (!$ydeploy->isDeployed()) {
-        return true;
-      }
-    }
-
-    return false;
+    return self::$addon->getConfig('require_authentication', true);
   }
 
   /**
@@ -184,12 +163,12 @@ class Utility
     return ($ip & $mask) === $subnet;
   }
 
-  public static function copyToClipboardButton(string|null $text = ''): string
+  public static function copyToClipboardButton(string $value): string
   {
-    if (empty($text) || $text === null) {
+    if (empty($value) || $value === null) {
       return '';
     }
 
-    return '<div><button class="btn btn-xs btn-default" onclick="copyToClipboard(\'' . htmlspecialchars($text, ENT_QUOTES) . '\')" title="' . rex_i18n::msg('copy') . '"><i class="fa fa-copy"></i></button></div>';
+    return '<div><button class="btn btn-xs btn-default" data-copy="' . $value . '" title="' . rex_i18n::msg('copy') . '"><i class="fa fa-copy"></i></button></div>';
   }
 }

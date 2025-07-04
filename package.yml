@@ -17,6 +17,9 @@ page:
     permissions:
       title: 'translate:rexql_permissions'
       perm: rexql[permissions]
+    webhooks:
+      title: 'Webhooks'
+      perm: rexql[webhooks]
     apiinfo:
       title: 'API Information'
       perm: rexql[apiinfo]

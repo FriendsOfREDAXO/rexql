@@ -18,44 +18,6 @@ $coreTables = [
     'rex_template' => 'Templates',
 ];
 
-// Werte aus der Konfiguration laden mit Standardwerten
-$values = array_merge([
-    'endpoint_enabled' => 0,
-    'require_authentication' => 1,
-    'rate_limit' => 100,
-    'max_query_depth' => 10,
-    'introspection_enabled' => 0,
-    'debug_mode' => 0,
-    'cache_queries' => 0,
-    'allowed_tables' => [],
-    'proxy_enabled' => 0,
-    'allow_public_dev' => 0,
-    'cors_allowed_origins' => ['*'],
-    'cors_allowed_methods' => ['GET', 'POST', 'OPTIONS'],
-    'cors_allowed_headers' => []
-], $addon->getConfig());
-
-// Development mode notice
-$isDevMode = FriendsOfRedaxo\RexQL\Utility::isDevMode() || false;
-
-$allowedTables = is_array($values['allowed_tables']) ? $values['allowed_tables'] : [];
-
-
-$content = '<div class="rexql-config-section">';
-$buttons = '';
-$formElements = [];
-
-// Handle cache refresh action
-if (rex_post('action', 'string') === 'refresh_schema_cache') {
-    FriendsOfRedaxo\RexQL\Cache::invalidateSchema();
-    echo rex_view::success($addon->i18n('cache_refreshed', 'Schema cache successfully refreshed'));
-}
-
-if (rex_post('action', 'string') === 'refresh_all_cache') {
-    FriendsOfRedaxo\RexQL\Cache::invalidateAll();
-    echo rex_view::success($addon->i18n('cache_refreshed', 'All caches successfully refreshed'));
-}
-
 // Konfiguration speichern
 if (rex_post('formsubmit', 'string') == '1') {
     $postConfig = rex_post('config', 'array', []);
@@ -81,17 +43,50 @@ if (rex_post('formsubmit', 'string') == '1') {
     echo rex_view::success($addon->i18n('config_saved'));
 }
 
+// Werte aus der Konfiguration laden mit Standardwerten
+$values = array_merge([
+    'endpoint_enabled' => 0,
+    'require_authentication' => 1,
+    'rate_limit' => 100,
+    'max_query_depth' => 10,
+    'introspection_enabled' => 0,
+    'debug_mode' => 0,
+    'cache_queries' => 0,
+    'allowed_tables' => [],
+    'proxy_enabled' => 0,
+    'allow_public_dev' => 0,
+    'cors_allowed_origins' => ['*'],
+    'cors_allowed_methods' => ['GET', 'POST', 'OPTIONS'],
+    'cors_allowed_headers' => []
+], $addon->getConfig());
 
-if (!$isDevMode) {
-    $isDevMode = (method_exists('rex', 'isDebugMode') && rex::isDebugMode()) ||
-        (isset($_SERVER['SERVER_NAME']) && in_array($_SERVER['SERVER_NAME'], ['localhost', '127.0.0.1', 'redaxo-graph-ql.test']));
+// Development mode notice
+$isAuthEnabled = FriendsOfRedaxo\RexQL\Utility::isAuthEnabled() || false;
+
+$allowedTables = is_array($values['allowed_tables']) ? $values['allowed_tables'] : [];
+
+
+$content = '<div class="rexql-config-section">';
+$buttons = '';
+$formElements = [];
+
+// Handle cache refresh action
+if (rex_post('action', 'string') === 'refresh_schema_cache') {
+    FriendsOfRedaxo\RexQL\Cache::invalidateSchema();
+    echo rex_view::success($addon->i18n('cache_refreshed', 'Schema cache successfully refreshed'));
 }
 
-if ($isDevMode) {
-    $content .= '<div class="rexql-config-dev-notice">
+if (rex_post('action', 'string') === 'refresh_all_cache') {
+    FriendsOfRedaxo\RexQL\Cache::invalidateAll();
+    echo rex_view::success($addon->i18n('cache_refreshed', 'All caches successfully refreshed'));
+}
+
+
+if (!$isAuthEnabled) {
+    $content .= '<div class="rexql-config-auth-notice">
         <i class="fa fa-info-circle"></i>
-        <strong>' . $addon->i18n('dev_mode_notice') . '</strong><br>
-        <small>' . $addon->i18n('dev_mode_warning') . '</small>
+        <strong>' . $addon->i18n('auth_notice') . '</strong><br>
+        <small>' . $addon->i18n('auth_warning') . '</small>
     </div>';
 }
 

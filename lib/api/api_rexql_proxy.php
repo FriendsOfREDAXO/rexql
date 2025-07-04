@@ -1,10 +1,25 @@
 <?php
 
+namespace FriendsOfRedaxo\RexQL\Api;
+
+use FriendsOfRedaxo\RexQL\Utility;
+use FriendsOfRedaxo\RexQL\ApiKey;
+
+use rex;
+use rex_addon;
+use rex_api_function;
+use rex_api_exception;
+use rex_api_result;
+use rex_response;
+
+
 /**
  * Backend proxy for rexQL GraphQL API
  * 
  * Enables secure frontend integration without exposing API keys
  */
+
+
 class rex_api_rexql_proxy extends rex_api_function
 {
   protected $published = true;
@@ -32,23 +47,23 @@ class rex_api_rexql_proxy extends rex_api_function
       }
 
       // Find API Key by Public Private Key
-      $apiKey = FriendsOfRedaxo\RexQL\ApiKey::findByKey($publicKey);
+      $apiKey = ApiKey::findByKey($publicKey);
       if (!$apiKey || $apiKey->getKeyType() !== 'public_private') {
         throw new rex_api_exception('Ungültiger Public Key');
       }
 
       // Validate domain restrictions
-      if (!FriendsOfRedaxo\RexQL\Utility::validateDomainRestrictions($apiKey)) {
+      if (!Utility::validateDomainRestrictions($apiKey)) {
         throw new rex_api_exception('Domain nicht erlaubt');
       }
 
       // Validate IP restrictions
-      if (!FriendsOfRedaxo\RexQL\Utility::validateIpRestrictions($apiKey)) {
+      if (!Utility::validateIpRestrictions($apiKey)) {
         throw new rex_api_exception('IP-Adresse nicht erlaubt');
       }
 
       // Validate HTTPS restrictions
-      if (!FriendsOfRedaxo\RexQL\Utility::validateHttpsRestrictions($apiKey)) {
+      if (!Utility::validateHttpsRestrictions($apiKey)) {
         throw new rex_api_exception('HTTPS erforderlich');
       }
 
@@ -61,7 +76,7 @@ class rex_api_rexql_proxy extends rex_api_function
       // Return response
       rex_response::setStatus(rex_response::HTTP_OK);
       rex_response::sendContent($response, 'application/json');
-    } catch (Exception $e) {
+    } catch (\Exception $e) {
       rex_response::setStatus($e instanceof rex_api_exception ? rex_response::HTTP_BAD_REQUEST : rex_response::HTTP_INTERNAL_ERROR);
       rex_response::sendContent(json_encode([
         'errors' => [['message' => $e->getMessage()]]
@@ -159,13 +174,13 @@ class rex_api_rexql_proxy extends rex_api_function
 
     if (curl_errno($ch)) {
       curl_close($ch);
-      throw new Exception('Fehler beim Weiterleiten der Anfrage: ' . curl_error($ch));
+      throw new \Exception('Fehler beim Weiterleiten der Anfrage: ' . curl_error($ch));
     }
 
     curl_close($ch);
 
     if ($httpCode !== 200) {
-      throw new Exception('GraphQL API Fehler (HTTP ' . $httpCode . ')');
+      throw new \Exception('GraphQL API Fehler (HTTP ' . $httpCode . ')');
     }
 
     return $response;

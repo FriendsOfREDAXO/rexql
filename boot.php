@@ -15,9 +15,10 @@ require_once __DIR__ . '/vendor/autoload.php';
 // Register permissions
 rex_perm::register('rexql[graphql]', null, rex_perm::OPTIONS);
 rex_perm::register('rexql[admin]', 'rexql[graphql]');
+rex_perm::register('rexql[webhooks]', 'rexql[admin]');
 
 // Register API classes
-rex_api_function::register('rexql_graphql', 'rex_api_rexql_graphql');
+rex_api_function::register('rexql_graphql', 'FriendsOfRedaxo\RexQL\Api\rex_api_rexql_graphql');
 rex_api_function::register('rexql_proxy', 'rex_api_rexql_proxy');
 rex_api_function::register('rexql_auth', 'rex_api_rexql_auth');
 
@@ -58,6 +59,11 @@ rex_extension::register('PACKAGES_INCLUDED', function () {
     'ART_MOVED',
     'ART_STATUS',
     'ART_UPDATED',
+    'ART_SLICES_COPY',
+    'SLICE_ADD',
+    'SLICE_UPDATE',
+    'SLICE_MOVE',
+    'SLICE_DELETE',
     'CAT_ADDED',
     'CAT_DELETED',
     'CAT_MOVED',
@@ -75,10 +81,18 @@ rex_extension::register('PACKAGES_INCLUDED', function () {
   ];
 
   foreach ($extensionPoints as $extensionPoint) {
-    rex_extension::register($extensionPoint, 'FriendsOfRedaxo\\RexQL\\Cache::invalidateSchema');
+    rex_extension::register($extensionPoint, function ($ep) {
+      // Existing cache invalidation
+      FriendsOfRedaxo\RexQL\Cache::invalidateSchema($ep);
+
+      // Send webhook
+      FriendsOfRedaxo\RexQL\Webhook::send($ep->getName(), [
+        'subject' => $ep->getSubject(),
+        'params' => $ep->getParams(),
+        'extension_point' => $ep->getName(),
+      ]);
+    });
   }
-  // Note: Addon installation/table structure changes require manual cache invalidation
-  // via the "Refresh Schema Cache" button in the rexQL backend
 });
 
 // Load backend assets only in backend
