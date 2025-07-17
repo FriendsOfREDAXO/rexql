@@ -10,8 +10,11 @@ $error = '';
 
 // Check if graphql-php is available
 if (!class_exists('GraphQL\\GraphQL')) {
-  $error = 'The package "webonyx/graphql-php" is not installed. Run "composer install" in the addon directory.';
+  $error = 'Dependencies not installed. Run "composer install" in the addon directory.';
 }
+
+rex_dir::copy($this->getPath('data'), $this->getDataPath());
+
 
 // Create database structure
 if (!$error) {

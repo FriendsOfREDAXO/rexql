@@ -111,6 +111,7 @@ body.rex-theme-dark .rex-page-rexql {
 }
 
 .rex-page-rexql .rexql-playground textarea {
+   height: 400px;
   font-size: 13px;
   font-family: var(--rexql-font-mono);
   line-height: 1.4;
@@ -119,7 +120,7 @@ body.rex-theme-dark .rex-page-rexql {
   border-radius: var(--rexql-border-radius);
 }
 
-.rex-page-rexql .rexql-playground pre {
+.rex-page-rexql .rexql-playground .result {
   height: 400px;
   padding: 10px;
   overflow-y: auto;
@@ -414,8 +415,10 @@ body.rex-theme-dark .rex-page-rexql {
     margin-bottom: 20px;
   }
 
-  .rexql-playground textarea,
-  .rexql-playground pre {
+  .rex-page-rexql .rexql-playground textarea{
+    height: 250px !important;
+  }
+  .rex-page-rexql .rexql-playground .result {
     height: 250px !important;
   }
 }

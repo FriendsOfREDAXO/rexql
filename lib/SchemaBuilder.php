@@ -2,9 +2,12 @@
 
 namespace FriendsOfRedaxo\RexQL;
 
+use FriendsOfRedaxo\RexQL\Resolvers\Resolver;
+
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\Type;
 use GraphQL\Type\Schema;
+
 use rex;
 use rex_addon;
 use rex_sql;
@@ -12,6 +15,7 @@ use rex_yform_manager_table;
 use rex_logger;
 use rex_config;
 use rex_clang;
+
 
 /**
  * GraphQL Schema Builder for REDAXO
@@ -25,8 +29,11 @@ class SchemaBuilder
   private array $mutations = [];
   private ?rex_logger $logger = null;
 
+  private Resolver $resolver;
+
   function __construct()
   {
+    $this->resolver = new Resolver();
     $this->addon = rex_addon::get('rexql');
     $this->debugMode = $this->addon->getConfig('debug_mode', false);
     $this->logger = rex_logger::factory();
@@ -212,10 +219,10 @@ class SchemaBuilder
         'name' => 'Query',
         'fields' => $this->queries
       ]),
-      'mutation' => new ObjectType([
-        'name' => 'Mutation',
-        'fields' => $this->mutations
-      ]),
+      // 'mutation' => new ObjectType([
+      //   'name' => 'Mutation',
+      //   'fields' => $this->mutations
+      // ]),
       'types' => array_values($this->types)
     ]);
   }
@@ -376,7 +383,8 @@ class SchemaBuilder
             return null;
           }
           return $root[$column];
-        }
+        },
+        // 'resolve' => [$this->resolver, 'resolveObjectType', $column]
       ];
 
       $sql->next();

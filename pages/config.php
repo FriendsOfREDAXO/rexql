@@ -23,7 +23,6 @@ if (rex_post('formsubmit', 'string') == '1') {
     $postConfig = rex_post('config', 'array', []);
     $config['endpoint_enabled'] = isset($postConfig['endpoint_enabled']) ? 1 : 0;
     $config['require_authentication'] = isset($postConfig['require_authentication']) ? 1 : 0;
-    $config['rate_limit'] = (int)($postConfig['rate_limit'] ?? 0);
     $config['max_query_depth'] = (int)($postConfig['max_query_depth'] ?? 0);
     $config['introspection_enabled'] = isset($postConfig['introspection_enabled']) ? 1 : 0;
     $config['debug_mode'] = isset($postConfig['debug_mode']) ? 1 : 0;
@@ -38,7 +37,7 @@ if (rex_post('formsubmit', 'string') == '1') {
     $addon->setConfig($config);
 
     // Cache invalidieren
-    FriendsOfRedaxo\RexQL\Cache::invalidateAll();
+    FriendsOfRedaxo\RexQL\Cache::invalidate();
 
     echo rex_view::success($addon->i18n('config_saved'));
 }
@@ -47,7 +46,6 @@ if (rex_post('formsubmit', 'string') == '1') {
 $values = array_merge([
     'endpoint_enabled' => 0,
     'require_authentication' => 1,
-    'rate_limit' => 100,
     'max_query_depth' => 10,
     'introspection_enabled' => 0,
     'debug_mode' => 0,
@@ -71,16 +69,10 @@ $buttons = '';
 $formElements = [];
 
 // Handle cache refresh action
-if (rex_post('action', 'string') === 'refresh_schema_cache') {
-    FriendsOfRedaxo\RexQL\Cache::invalidateSchema();
-    echo rex_view::success($addon->i18n('cache_refreshed', 'Schema cache successfully refreshed'));
+if (rex_post('action', 'string') === 'refresh_cache') {
+    FriendsOfRedaxo\RexQL\Cache::invalidate();
+    echo rex_view::success($addon->i18n('cache_refreshed', 'Cache successfully refreshed'));
 }
-
-if (rex_post('action', 'string') === 'refresh_all_cache') {
-    FriendsOfRedaxo\RexQL\Cache::invalidateAll();
-    echo rex_view::success($addon->i18n('cache_refreshed', 'All caches successfully refreshed'));
-}
-
 
 if (!$isAuthEnabled) {
     $content .= '<div class="rexql-config-auth-notice">
@@ -105,13 +97,6 @@ $formElements[] = $n;
 $n = [];
 $n['label'] = '<label for="require_authentication">' . $addon->i18n('config_require_authentication') . '</label>';
 $n['field'] = '<input type="checkbox" id="require_authentication" name="config[require_authentication]" value="1" ' . ($values['require_authentication'] ? ' checked="checked"' : '') . ' />';
-$formElements[] = $n;
-
-// Rate Limit
-$n = [];
-$n['label'] = '<label for="rate_limit">' . $addon->i18n('config_rate_limit') . '</label>';
-$n['field'] = '<input type="number" id="rate_limit" name="config[rate_limit]" class="rexql-config-input" value="' . $values['rate_limit'] . '" min="1" max="10000" />'
-    . '<small class="rexql-field-hint">Number of API requests allowed per minute per API key.</small>';
 $formElements[] = $n;
 
 // Maximale Query-Tiefe
@@ -271,28 +256,23 @@ $content .= '</div></div>';
 $content .= '</fieldset>';
 
 // Cache Management Section
-$cacheStatus = FriendsOfRedaxo\RexQL\Cache::getStatus();
 $content .= '<fieldset>';
 $content .= '<legend>' . $addon->i18n('cache_management', 'Cache Management') . '</legend>';
 $content .= '<div class="row">';
 $content .= '<div class="col-md-6">';
 $content .= '<h4>' . $addon->i18n('cache_status', 'Cache Status') . '</h4>';
-$content .= '<ul class="list-unstyled">';
-$content .= '<li><strong>' . $addon->i18n('schema_version', 'Schema Version') . ':</strong> ' . $cacheStatus['schema_version'] . '</li>';
-$content .= '<li><strong>' . $addon->i18n('query_caching', 'Query Caching') . ':</strong> ' . ($cacheStatus['query_caching_enabled'] ? $addon->i18n('enabled', 'Enabled') : $addon->i18n('disabled', 'Disabled')) . '</li>';
-$content .= '<li><strong>' . $addon->i18n('schema_cache_files', 'Schema Cache Files') . ':</strong> ' . $cacheStatus['schema_cache_files'] . '</li>';
-$content .= '<li><strong>' . $addon->i18n('query_cache_files', 'Query Cache Files') . ':</strong> ' . $cacheStatus['query_cache_files'] . '</li>';
-$content .= '</ul>';
+// $content .= '<ul class="list-unstyled">';
+// $content .= '<li><strong>' . $addon->i18n('schema_version', 'Schema Version') . ':</strong> ' . $cacheStatus['schema_version'] . '</li>';
+// $content .= '<li><strong>' . $addon->i18n('query_caching', 'Query Caching') . ':</strong> ' . ($cacheStatus['query_caching_enabled'] ? $addon->i18n('enabled', 'Enabled') : $addon->i18n('disabled', 'Disabled')) . '</li>';
+// $content .= '<li><strong>' . $addon->i18n('schema_cache_files', 'Schema Cache Files') . ':</strong> ' . $cacheStatus['schema_cache_files'] . '</li>';
+// $content .= '<li><strong>' . $addon->i18n('query_cache_files', 'Query Cache Files') . ':</strong> ' . $cacheStatus['query_cache_files'] . '</li>';
+// $content .= '</ul>';
 $content .= '</div>';
 $content .= '<div class="col-md-6">';
 $content .= '<h4>' . $addon->i18n('cache_actions', 'Cache Actions') . '</h4>';
-$content .= '<p><small>' . $addon->i18n('cache_help', 'Refresh the schema cache when you install/uninstall addons or modify YForm table structures.') . '</small></p>';
 $content .= '<div class="btn-group-vertical" style="width: 100%;">';
-$content .= '<button type="submit" name="action" value="refresh_schema_cache" class="btn btn-warning">';
-$content .= '<i class="fa fa-refresh"></i> ' . $addon->i18n('refresh_schema_cache', 'Refresh Schema Cache');
-$content .= '</button>';
-$content .= '<button type="submit" name="action" value="refresh_all_cache" class="btn btn-danger">';
-$content .= '<i class="fa fa-trash"></i> ' . $addon->i18n('refresh_all_cache', 'Clear All Caches');
+$content .= '<button type="submit" name="action" value="refresh_cache" class="btn btn-danger">';
+$content .= '<i class="fa fa-trash"></i> ' . $addon->i18n('refresh_cache');
 $content .= '</button>';
 $content .= '</div>';
 $content .= '</div>';

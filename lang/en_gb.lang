@@ -97,6 +97,7 @@ rexql_api_key_deleted = API key deleted
 rexql_public_private_key_created = Public/Private key pair created
 rexql_domain_restricted_key_created = Domain-restricted API key created
 rexql_error_invalid_api_key = Invalid API key
+rexql_error_schema_file_not_found = Schema file not found, please re-install addon
 rexql_error_rate_limit_exceeded = Rate limit exceeded
 rexql_error_permission_denied = Permission denied
 rexql_error_query_too_deep = Query too deeply nested

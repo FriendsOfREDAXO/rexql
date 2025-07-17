@@ -21,22 +21,17 @@ $playgroundHtml = '
     <div class="row">
         <div class="col-md-6">
             <h4>GraphQL Query</h4>
-            <textarea id="graphql-query" class="form-control" rows="15" placeholder="Geben Sie hier Ihre GraphQL Query ein...">
+            <textarea id="graphql-query" class="form-control" rows="15" placeholder="Geben Sie hier Ihre GraphQL Query ein..." autocapitalize="off" autocorrect="off" spellcheck="false">
 # Beispiel-Queries:
 
 # Core-Tabellen abfragen (Listen):
 {
-  rexArticleList(limit: 5) {
+  articles(limit: 5) {
     id
     name
     createdate
   }
   
-  rexClangList {
-    id
-    name
-    code
-  }
 }
 
 # YForm-Tabellen abfragen (Listen):
@@ -63,7 +58,6 @@ $playgroundHtml = '
 #   }
 # }
             </textarea>
-            
             <div class="form-group rexql-form-group-spacing">
                 <label for="api-key-input">API-Schlüssel:</label>
                 <input type="text" id="api-key-input" class="form-control" placeholder="Ihr API-Schlüssel">
@@ -76,7 +70,7 @@ $playgroundHtml = '
         
         <div class="col-md-6">
             <h4>Ergebnis</h4>
-            <pre id="query-result">
+            <pre class="result" id="query-result">
 Führen Sie eine Query aus, um Ergebnisse zu sehen...
             </pre>
         </div>

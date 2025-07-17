@@ -98,12 +98,21 @@ $content .= $fragment->parse('core/page/section.php');
 // Endpoint-URL anzeigen wenn aktiviert
 if ($apiEnabled) {
     $endpointUrl = FriendsOfRedaxo\RexQL\Utility::getEndpointUrl();
+    $endpointUrlShort = FriendsOfRedaxo\RexQL\Utility::getEndpointUrl(true);
 
     $urlContent = '<p><strong>GraphQL Endpoint:</strong></p>
     <div class="input-group">
         <input type="text" class="form-control" value="' . $endpointUrl . '" readonly>
         <span class="input-group-btn">
             <button class="btn btn-default" type="button" onclick="copyToClipboard(\'' . $endpointUrl . '\')">
+                <i class="rex-icon rex-icon-copy"></i> Kopieren
+            </button>
+        </span>
+    </div>
+    <div class="input-group">
+        <input type="text" class="form-control" value="' . $endpointUrlShort . '" readonly>
+        <span class="input-group-btn">
+            <button class="btn btn-default" type="button" onclick="copyToClipboard(\'' . $endpointUrlShort . '\')">
                 <i class="rex-icon rex-icon-copy"></i> Kopieren
             </button>
         </span>

@@ -109,6 +109,16 @@ export default defineConfig({
         } catch (err) {
           console.warn('Warning: Could not copy test-client.html:', err.message)
         }
+        try {
+          copyFileSync(
+            resolve(__dirname, 'assets-src/graphql.umd.js'),
+            resolve(__dirname, 'assets/graphql.umd.js')
+          )
+          console.log('✓ Copied graphql.umd.js')
+        } catch (err) {
+          console.warn('Warning: Could not copy graphql.umd.js:', err.message)
+        }
+
       }
     }
   ]

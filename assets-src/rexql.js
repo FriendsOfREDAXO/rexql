@@ -20,6 +20,8 @@ rexQL.playground = {
 
     if (!queryTextarea || !executeButton) return // Nicht auf Playground-Seite
 
+      this.initCodemirror(queryTextarea)
+
     executeButton.addEventListener('click', function () {
       const query = queryTextarea.value.trim()
       rexQL.playground.executeQuery(
@@ -98,52 +100,174 @@ rexQL.playground = {
       headers: headers,
       body: JSON.stringify(requestData)
     })
-      .then((response) => {
+      .then(async(response) => {
+        const data = await response.json();
         if (!response.ok) {
-          throw new Error(
-            'HTTP ' + response.status + ': ' + response.statusText
-          )
-        }
-        return response.json()
-      })
-      .then((data) => {
-        if (data.errors && data.errors.length > 0) {
-          let errorMsg = 'GraphQL Fehler:\n'
-          data.errors.forEach((error) => {
-            if (error.message.includes('API-Schlüssel erforderlich')) {
-              errorMsg +=
-                '• Authentifizierung erforderlich: Bitte geben Sie einen gültigen API-Schlüssel ein.\n'
-            } else if (error.message.includes('invalid_api_key')) {
-              errorMsg +=
-                '• Ungültiger API-Schlüssel: Überprüfen Sie Ihren API-Schlüssel.\n'
-            } else {
-              errorMsg += '• ' + error.message + '\n'
-            }
-          })
+          let errorMsg = 'HTTP ' + response.status + ': ' + response.statusText + '\n\n'
+          if (data.errors && data.errors.length > 0) {
+            errorMsg+= 'GraphQL Fehler:\n'
+            data.errors.forEach((error) => {
+                errorMsg += '• ' + error.message + '\n'
+            })
+          }
 
-          resultPre.textContent = JSON.stringify(
-            {
-              data: data.data,
-              errors: data.errors,
-              info: errorMsg
-            },
-            null,
-            2
-          )
-        } else {
-          resultPre.textContent = JSON.stringify(data, null, 2)
-        }
+          throw new Error(errorMsg)
+        }  else {
+            resultPre.textContent = JSON.stringify(data, null, 2)
+          }
       })
       .catch((error) => {
         resultPre.textContent =
           'Netzwerkfehler: ' +
           error.message +
-          '\n\nStellen Sie sicher, dass:\n• Der GraphQL Endpoint erreichbar ist\n• Sie einen gültigen API-Schlüssel eingegeben haben\n• Die Query syntaktisch korrekt ist'
+          '\n\nTipps: Stellen Sie sicher, dass:\n• Der GraphQL Endpoint erreichbar ist\n• Sie einen gültigen API-Schlüssel eingegeben haben\n• Die Query syntaktisch korrekt ist'
       })
       .finally(() => {
         executeButton.disabled = false
         introspectButton.disabled = false
       })
+  },
+
+  initCodemirror: function (textarea){
+        var themes = rex.customizer_codemirror_defaulttheme + ',' + rex.customizer_codemirror_defaultdarktheme + ',';
+
+        if (themes != '') {
+            themes = themes.substring(0, themes.length - 1);
+        }
+        if (typeof CodeMirror !== 'function') {
+          // this could better use javascript Promises, but browser support..
+          var cssLoaded = false,
+              scriptLoaded = false;
+          var css = document.createElement('link');
+          css.rel = 'stylesheet';
+          css.href = '?codemirror_output=css&buster=' + rex.customizer_codemirror_cssbuster + '&themes=' + themes;
+
+          document.head.appendChild(css);
+          css.onload = function () {
+            cssLoaded = true;
+            var script = document.createElement('script');
+            script.src = '?rexql_output=codemirror&buster=' + rex.customizer_codemirror_jsbuster;
+            document.head.appendChild(script);
+            script.onload = function () {
+              console.log('CodeMirror script loaded');
+                scriptLoaded = true;
+
+                if (cssLoaded && scriptLoaded) {
+                  var mode = "graphql";
+                  var theme = rex.customizer_codemirror_defaulttheme;
+
+                  let systemDarkModeDetector = null;
+                  if (window.matchMedia) {
+                      systemDarkModeDetector = window.matchMedia('(prefers-color-scheme: dark)');
+                      // Systemseitige Einstellung abfragen
+                      if (systemDarkModeDetector.matches) {
+                          theme = rex.customizer_codemirror_defaultdarktheme;
+                      }
+                      // Einstellung aus Profil
+                      if (document.body.classList.contains('rex-theme-light')) {
+                          theme = rex.customizer_codemirror_defaulttheme;
+                      } else if (document.body.classList.contains('rex-theme-dark')) {
+                          theme = rex.customizer_codemirror_defaultdarktheme;
+                      }
+                      // Systemseitiges Umschalten Dark/Light erkennen
+                      systemDarkModeDetector.addEventListener('change', function (e) {
+                          if (systemDarkModeDetector.matches) {
+                              theme = rex.customizer_codemirror_defaultdarktheme;
+                          } else {
+                              theme = rex.customizer_codemirror_defaulttheme;
+                          }
+                          if (document.body.classList.contains('rex-theme-light')) {
+                              theme = rex.customizer_codemirror_defaulttheme;
+                          } else if (document.body.classList.contains('rex-theme-dark')) {
+                              theme = rex.customizer_codemirror_defaultdarktheme;
+                          }
+                          cm_editor[cm].setOption('theme', theme);
+                      });
+                  }
+
+                  
+                  var new_theme = textarea.dataset.codemirrorTheme;
+
+                  if (typeof new_theme !== "undefined") {
+                      theme = new_theme;
+                  }
+
+                  if (typeof CodeMirror === "function") {
+                      cm_options = {
+                          mode: mode,
+                          theme: theme,
+                          autoRefresh: true,
+                          lineNumbers: true,
+                          lineWrapping: false,
+                          styleActiveLine: true,
+                          matchBrackets: true,
+                          autoCloseBrackets: true,
+                          matchTags: {
+                              bothTags: true
+                          },
+                          tabSize: 4,
+                          indentUnit: 4,
+                          indentWithTabs: false,
+                          smartIndent: true,
+                          enterMode: "keep",
+                          tabMode: "shift",
+                          gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+                          foldGutter: true,
+                          extraKeys: {
+                              "F11": function (cm) {
+                                  cm.setOption("fullScreen", !cm.getOption("fullScreen"));
+                              },
+                              "Esc": function (cm) {
+                                  cm.setOption("fullScreen", !cm.getOption("fullScreen"));
+                              },
+                              "Tab": function (cm) {
+                                  if (cm.doc.somethingSelected()) {
+                                      return CodeMirror.Pass;
+                                  }
+                                  if (!cm.getOption("indentWithTabs")) {
+                                      var spacesPerTab = cm.getOption("indentUnit");
+                                      var spacesToInsert = spacesPerTab - (cm.doc.getCursor("start").ch % spacesPerTab);
+                                      var spaces = Array(spacesToInsert + 1).join(" ");
+                                      cm.replaceSelection(spaces, "end", "+input");
+                                  } else {
+                                      cm.replaceSelection('\t', "end", "+input");
+                                  }
+                              }
+                          }
+                      }
+                      try {
+                          if (rex.customizer_codemirror_options) {
+                              additional_options = jQuery.parseJSON(rex.customizer_codemirror_options);
+                              $.extend(cm_options, additional_options);
+                          }
+                      } catch (e) {
+                          console.log('Error in global Codemirror-Options! \nOptions: ' + rex.customizer_codemirror_options);
+                          console.log(e);
+                      }
+                      var editor = CodeMirror.fromTextArea(textarea, cm_options);
+                      if(editor) {
+                          editor.on('change', function (cm) {
+                              cm.save();
+                          });
+                          editor.on('focus', function () {
+                              textarea.classList.add('active');
+                          });
+                          editor.on('blur', function () {
+                              textarea.classList.remove('active');
+                          });
+                      }
+                  }
+                }
+            };
+            script.onerror = function () {
+                console.error('CodeMirror script konnte nicht geladen werden.');
+            }
+
+          }
+      
+        }
+        
+
   }
 }
 

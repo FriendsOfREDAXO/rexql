@@ -7,8 +7,6 @@
  * @psalm-scope-this rex_addon
  */
 
-require_once __DIR__ . '/vendor/autoload.php';
-
 \rex_fragment::addDirectory(\rex_path::src('fragments'));
 
 
@@ -60,10 +58,11 @@ rex_extension::register('PACKAGES_INCLUDED', function () {
     'ART_STATUS',
     'ART_UPDATED',
     'ART_SLICES_COPY',
-    'SLICE_ADD',
+    'SLICE_ADDED',
     'SLICE_UPDATE',
     'SLICE_MOVE',
     'SLICE_DELETE',
+    'SLICE_STATUS',
     'CAT_ADDED',
     'CAT_DELETED',
     'CAT_MOVED',
@@ -81,22 +80,94 @@ rex_extension::register('PACKAGES_INCLUDED', function () {
   ];
 
   foreach ($extensionPoints as $extensionPoint) {
-    rex_extension::register($extensionPoint, function ($ep) {
-      // Existing cache invalidation
-      FriendsOfRedaxo\RexQL\Cache::invalidateSchema($ep);
 
+    rex_extension::register($extensionPoint, function ($ep) {
       // Send webhook
-      FriendsOfRedaxo\RexQL\Webhook::send($ep->getName(), [
-        'subject' => $ep->getSubject(),
-        'params' => $ep->getParams(),
-        'extension_point' => $ep->getName(),
-      ]);
-    });
+      switch ($ep->getName()) {
+        case 'CLANG_ADDED':
+        case 'CLANG_DELETED':
+        case 'CLANG_UPDATED':
+        case 'CACHE_DELETED':
+        case 'REX_FORM_SAVED':
+          FriendsOfRedaxo\RexQL\Cache::invalidate();
+          break;
+        default:
+          FriendsOfRedaxo\RexQL\Cache::invalidate('query');
+          break;
+      }
+      $params = $ep->getParams();
+      $params['subject'] = $ep->getSubject();
+      $params['extension_point'] = $ep->getName();
+      FriendsOfRedaxo\RexQL\Webhook::send($params);
+    }, rex_extension::LATE);
   }
 });
 
 // Load backend assets only in backend
 if (rex::isBackend() && rex::getUser()) {
+
+  if ('codemirror' == rex_request('rexql_output', 'string', '')) {
+    rex_response::cleanOutputBuffers();
+    header('Content-Type: application/javascript');
+    $plugin = rex_plugin::get('be_style', 'customizer');
+    $filenames = [];
+    $filenames[] = $plugin->getAssetsUrl('vendor/codemirror/codemirror.min.js');
+    $filenames[] = $plugin->getAssetsUrl('vendor/codemirror/addon/display/autorefresh.js');
+    $filenames[] = $plugin->getAssetsUrl('vendor/codemirror/addon/display/fullscreen.js');
+    $filenames[] = $plugin->getAssetsUrl('vendor/codemirror/addon/selection/active-line.js');
+
+    if (isset($config['codemirror-tools']) && $config['codemirror-tools']) {
+      $filenames[] = $plugin->getAssetsUrl('vendor/codemirror/addon/fold/foldcode.js');
+      $filenames[] = $plugin->getAssetsUrl('vendor/codemirror/addon/fold/foldgutter.js');
+      $filenames[] = $plugin->getAssetsUrl('vendor/codemirror/addon/fold/brace-fold.js');
+      $filenames[] = $plugin->getAssetsUrl('vendor/codemirror/addon/fold/xml-fold.js');
+      $filenames[] = $plugin->getAssetsUrl('vendor/codemirror/addon/fold/indent-fold.js');
+      $filenames[] = $plugin->getAssetsUrl('vendor/codemirror/addon/fold/markdown-fold.js');
+      $filenames[] = $plugin->getAssetsUrl('vendor/codemirror/addon/fold/comment-fold.js');
+      $filenames[] = $plugin->getAssetsUrl('vendor/codemirror/addon/edit/closebrackets.js');
+      $filenames[] = $plugin->getAssetsUrl('vendor/codemirror/addon/edit/matchtags.js');
+      $filenames[] = $plugin->getAssetsUrl('vendor/codemirror/addon/edit/matchbrackets.js');
+      $filenames[] = $plugin->getAssetsUrl('vendor/codemirror/addon/mode/overlay.js');
+      $filenames[] = $plugin->getAssetsUrl('vendor/codemirror/addon/dialog/dialog.js');
+      $filenames[] = $plugin->getAssetsUrl('vendor/codemirror/addon/search/searchcursor.js');
+      $filenames[] = $plugin->getAssetsUrl('vendor/codemirror/addon/search/search.js');
+      $filenames[] = $plugin->getAssetsUrl('vendor/codemirror/addon/scroll/annotatescrollbar.js');
+      $filenames[] = $plugin->getAssetsUrl('vendor/codemirror/addon/search/matchesonscrollbar.js');
+      $filenames[] = $plugin->getAssetsUrl('vendor/codemirror/addon/search/jump-to-line.js');
+    }
+
+    $filenames[] = $plugin->getAssetsUrl('vendor/codemirror/mode/xml/xml.js');
+    $filenames[] = $plugin->getAssetsUrl('vendor/codemirror/mode/htmlmixed/htmlmixed.js');
+    $filenames[] = $plugin->getAssetsUrl('vendor/codemirror/mode/htmlembedded/htmlembedded.js');
+    $filenames[] = $plugin->getAssetsUrl('vendor/codemirror/mode/javascript/javascript.js');
+    $filenames[] = $plugin->getAssetsUrl('vendor/codemirror/mode/css/css.js');
+    $filenames[] = $plugin->getAssetsUrl('vendor/codemirror/mode/clike/clike.js');
+    $filenames[] = $plugin->getAssetsUrl('vendor/codemirror/mode/php/php.js');
+
+    if (isset($config['codemirror-langs']) && $config['codemirror-langs']) {
+      $filenames[] = $plugin->getAssetsUrl('vendor/codemirror/mode/markdown/markdown.js');
+      $filenames[] = $plugin->getAssetsUrl('vendor/codemirror/mode/textile/textile.js');
+      $filenames[] = $plugin->getAssetsUrl('vendor/codemirror/mode/gfm/gfm.js');
+      $filenames[] = $plugin->getAssetsUrl('vendor/codemirror/mode/yaml/yaml.js');
+      $filenames[] = $plugin->getAssetsUrl('vendor/codemirror/mode/yaml-frontmatter/yaml-frontmatter.js');
+      $filenames[] = $plugin->getAssetsUrl('vendor/codemirror/mode/meta.js');
+      $filenames[] = $plugin->getAssetsUrl('vendor/codemirror/mode/properties/properties.js');
+      $filenames[] = $plugin->getAssetsUrl('vendor/codemirror/mode/sql/sql.js');
+    }
+    $filenames[] = $this->getAssetsUrl('graphql.umd.js');
+
+    $content = '';
+    foreach ($filenames as $filename) {
+      $content .= '/* ' . $filename . ' */' . "\n" . rex_file::get($filename) . "\n";
+    }
+
+    header('Pragma: cache');
+    header('Cache-Control: public');
+    header('Expires: ' . date('D, j M Y', strtotime('+1 week')) . ' 00:00:00 GMT');
+    echo $content;
+
+    exit;
+  }
   rex_view::addCssFile($this->getAssetsUrl('rexql.css'));
-  rex_view::addJsFile($this->getAssetsUrl('rexql.js'));
+  rex_view::addJsFile($this->getAssetsUrl('rexql.js'), [rex_view::JS_IMMUTABLE => true]);
 }

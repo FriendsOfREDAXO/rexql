@@ -129,7 +129,7 @@ class ApiKey
   /**
    * Check if the API key has reached its rate-limit
    */
-  public function isRateLimited(): bool
+  public function isRateLimitedExceeded(): bool
   {
     $sql = \rex_sql::factory();
     $sql->setQuery(

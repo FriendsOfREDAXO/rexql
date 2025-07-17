@@ -87,6 +87,7 @@ rexql_api_key_created = API-Schlüssel erstellt
 rexql_api_key_updated = API-Schlüssel aktualisiert
 rexql_api_key_deleted = API-Schlüssel gelöscht
 rexql_error_invalid_api_key = Ungültiger API-Schlüssel
+rexql_error_schema_file_not_found = Schema Datei nicht gefunden, bitte Addon reinstallieren
 rexql_error_rate_limit_exceeded = Rate Limit überschritten
 rexql_error_permission_denied = Zugriff verweigert
 rexql_error_query_too_deep = Query zu tief verschachtelt

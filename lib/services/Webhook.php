@@ -2,8 +2,11 @@
 
 namespace FriendsOfRedaxo\RexQL;
 
-use rex_logger;
 use rex_addon;
+use rex_article;
+use rex_logger;
+use rex_response;
+use rex_string;
 
 /**
  * Webhook service for sending HTTP requests to external endpoints
@@ -13,12 +16,14 @@ class Webhook
   private static ?rex_addon $addon = null;
   private static ?rex_logger $logger = null;
   private static $loggerContext = '; rexql webhook';
-  private static $isDevMode = false;
+  private static $isDevMode = true;
 
   public static function init()
   {
+    // Utility::deleteRexSystemLog();
+
     self::$addon = rex_addon::get('rexql');
-    self::$isDevMode = self::$addon->getConfig('dev_mode', false);
+    self::$isDevMode = self::$addon->getConfig('debug_mode', false);
     self::$logger = rex_logger::factory();
   }
 
@@ -29,7 +34,7 @@ class Webhook
    * @param array $data The event data to send
    * @return bool Success status
    */
-  public static function send(string $event, array $data): bool
+  public static function send(array $params): bool
   {
     if (!self::$addon) {
       self::init();
@@ -41,7 +46,7 @@ class Webhook
 
     $success = true;
     foreach ($sql->getArray() as $webhook) {
-      $payload = self::buildPayload($event, $data);
+      $payload = self::buildPayload($params['extension_point'], $params);
       $result = self::sendToWebhook($webhook, $payload);
       if (!$result['success']) {
         $success = false;
@@ -58,33 +63,68 @@ class Webhook
    * @param array $data The event data
    * @return array The enhanced payload
    */
-  private static function buildPayload(string $event, array $data): array
+  private static function buildPayload(string $event, array $params): array
   {
     $payload = [
       'event' => $event,
       'timestamp' => time(),
-      'data' => $data,
+      'data' => [],
       'source' => 'rexql',
       'site_url' => \rex::getServer(),
     ];
 
     // Add normalized names and additional context based on event type
-    if (strpos($event, 'ART_') === 0) {
-      $payload['data']['table_name'] = 'rex_article';
-      if (isset($data['subject'])) {
-        $payload['data']['tag'] = self::getNormalizedArticleName($data['subject']);
-      }
-    } elseif (strpos($event, 'CAT_') === 0) {
-      $payload['data']['table_name'] = 'rex_category';
-      if (isset($data['subject'])) {
-        $payload['data']['tag'] = self::getNormalizedCategoryName($data['subject']);
-      }
-    } elseif (strpos($event, 'YFORM_') === 0) {
-      if (isset($data['subject'])) {
-        $payload['data']['tag'] = is_object($data['subject']) ? $data['subject']->getTableName() : 'unknown';
-        $payload['data']['id'] = is_object($data['subject']) ? $data['subject']->getId() : $data['subject'];
-      }
+    switch ($event) {
+      case 'ART_ADDED':
+      case 'ART_UPDATED':
+      case 'ART_DELETED':
+      case 'ART_MOVED':
+      case 'ART_STATUS':
+      case 'ART_SLICES_COPY':
+      case 'CAT_ADDED':
+      case 'CAT_UPDATED':
+      case 'CAT_DELETED':
+      case 'CAT_MOVED':
+      case 'CAT_STATUS':
+        $payload['data']['table_name'] = 'rex_article';
+        $payload['data']['tag'] = self::getNormalizedName($params['name']);
+        break;
+      case 'SLICE_ADDED':
+      case 'SLICE_UPDATE':
+      case 'SLICE_DELETE':
+      case 'SLICE_MOVE':
+      case 'SLICE_STATUS':
+        $payload['data']['table_name'] = 'rex_article_slice';
+        $payload['data']['tag'] = self::getNormalizedNameById($params['article_id']);
+        break;
+      case 'YFORM_DATA_ADDED':
+      case 'YFORM_DATA_UPDATED':
+      case 'YFORM_DATA_DELETED':
+        $payload['data']['table_name'] = $params['subject']->getTableName();
+        break;
+      default:
+        $payload['data']['tag'] = 'all';
+        break;
     }
+    // if (strpos($event, 'ART_') === 0) {
+    //   $payload['data']['table_name'] = 'rex_article';
+    //   if (isset($data['subject'])) {
+    //     $payload['data']['tag'] = self::getNormalizedArticleName($data['subject']);
+    //   }
+    // } elseif (strpos($event, 'CAT_') === 0) {
+    //   $payload['data']['table_name'] = 'rex_category';
+    //   if (isset($data['subject'])) {
+    //     $payload['data']['tag'] = self::getNormalizedCategoryName($data['subject']);
+    //   }
+    // } elseif (strpos($event, 'YFORM_') === 0) {
+    //   if (isset($data['subject'])) {
+    //     $payload['data']['tag'] = is_object($data['subject']) ? $data['subject']->getTableName() : 'unknown';
+    //     $payload['data']['id'] = is_object($data['subject']) ? $data['subject']->getId() : $data['subject'];
+    //   }
+    // } else {
+    //   $payload['data']['tag'] = 'all';
+    // }
+    self::$logger->log('info', "Sending webhook for event: {$event}" . self::$loggerContext . '; data: ' . print_r($payload, true), [], __FILE__, __LINE__);
 
     return $payload;
   }
@@ -95,18 +135,10 @@ class Webhook
    * @param mixed $subject The article object or ID
    * @return string The normalized name
    */
-  private static function getNormalizedArticleName($subject): string
+  private static function getNormalizedName(string $value): string
   {
-    if (is_object($subject) && method_exists($subject, 'getName')) {
-      $name = $subject->getName();
-    } elseif (is_numeric($subject)) {
-      $article = \rex_article::get($subject);
-      $name = $article ? $article->getName() : 'unknown';
-    } else {
-      return 'unknown';
-    }
 
-    return self::normalizeSlug($name);
+    return rex_string::normalize($value);
   }
 
   /**
@@ -115,33 +147,11 @@ class Webhook
    * @param mixed $subject The category object or ID
    * @return string The normalized name
    */
-  private static function getNormalizedCategoryName($subject): string
+  private static function getNormalizedNameById(int $id): string
   {
-    if (is_object($subject) && method_exists($subject, 'getName')) {
-      $name = $subject->getName();
-    } elseif (is_numeric($subject)) {
-      $category = \rex_category::get($subject);
-      $name = $category ? $category->getName() : 'unknown';
-    } else {
-      return 'unknown';
-    }
-
-    return self::normalizeSlug($name);
-  }
-
-  /**
-   * Normalize a string to a URL-friendly slug
-   * 
-   * @param string $text The text to normalize
-   * @return string The normalized slug
-   */
-  private static function normalizeSlug(string $text): string
-  {
-    return strtolower(str_replace(
-      [' ', 'ä', 'ö', 'ü', 'ß'],
-      ['-', 'ae', 'oe', 'ue', 'ss'],
-      $text
-    ));
+    $article = rex_article::get($id);
+    $name = $article ? $article->getName() : 'unknown';
+    return rex_string::normalize($name);
   }
 
   /**
@@ -176,10 +186,11 @@ class Webhook
 
       if ($success) {
         if (self::$isDevMode && self::$logger)
-          self::$logger->log('info', "Webhook sent successfully (attempt {$attempt})" . self::$loggerContext . '; url: ' . $url . '; payload:' . $payload, [], __FILE__, __LINE__);
+          self::$logger->log('info', "Webhook sent successfully (attempt {$attempt})" . self::$loggerContext . '; url: ' . $url . '; payload:' . print_r($payload, true), [], __FILE__, __LINE__);
         self::updateWebhookStatus($webhook['id'], 'success');
         return ['success' => true, 'message' => 'Webhook sent successfully'];
       }
+      self::$logger->log('error', "Webhook failed (attempt {$attempt})" . self::$loggerContext . '; url: ' . $url . '; payload:' . print_r($payload, true), [], __FILE__, __LINE__);
 
       if ($attempt < $retryAttempts) {
         sleep(pow(2, $attempt - 1)); // Exponential backoff
@@ -254,6 +265,7 @@ class Webhook
         if (self::$isDevMode && self::$logger) {
           self::$logger->log('info', "Webhook sent successfully (attempt {$attempt})" . self::$loggerContext . '; url: ' . $url, [], __FILE__, __LINE__);
         }
+        rex_response::cleanOutputBuffers();
         return true;
       }
 
@@ -264,6 +276,7 @@ class Webhook
     }
     if (self::$isDevMode && self::$logger)
       self::$logger->log('info', "Failed to send webhook after {$retryAttempts}" . self::$loggerContext . '; url: ' . $url, [], __FILE__, __LINE__);
+    rex_response::cleanOutputBuffers();
 
     return false;
   }
@@ -279,6 +292,7 @@ class Webhook
    */
   private static function performRequest(string $url, string $payload, array $headers, int $timeout): bool
   {
+
     // Use cURL for HTTP request
     $ch = curl_init();
 
@@ -314,43 +328,6 @@ class Webhook
     if (self::$isDevMode && self::$logger)
       self::$logger->log('info', "HTTP error ($httpCode) response: $response; payload " . \json_encode($payload) . self::$loggerContext . '; url: ' . $url, [], __FILE__, __LINE__);
     return false;
-  }
-
-  /**
-   * Test webhook connection
-   * 
-   * @return array Test result with status and message
-   */
-  public static function test(): array
-  {
-    if (!self::$addon) {
-      self::init();
-    }
-
-    $url = self::$addon->getConfig('webhook_url');
-    $secret = self::$addon->getConfig('webhook_secret');
-
-    if (empty($url) || empty($secret)) {
-      return [
-        'success' => false,
-        'message' => 'Webhook URL or secret not configured'
-      ];
-    }
-
-    $testPayload = [
-      'event' => 'TEST',
-      'timestamp' => time(),
-      'data' => ['test' => true],
-      'source' => 'rexql',
-      'site_url' => \rex::getServer(),
-    ];
-
-    $success = self::sendRequest($url, $secret, $testPayload);
-
-    return [
-      'success' => $success,
-      'message' => $success ? 'Webhook test successful' : 'Webhook test failed'
-    ];
   }
 
   /**

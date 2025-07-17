@@ -1,0 +1,135 @@
+type Query {
+  article(id: ID!, clangId: Int, ctypeId: Int): rexArticle!
+  articles(clangId: Int, ctypeId: Int, categoryId: Int, status: Boolean, where: String, orderBy: String, offset: Int, limit: Int): [rexArticle]!
+  slice(id: ID!): rexArticleSlice
+  slices(articleId: Int, clangId: Int, ctypeId: Int): [rexArticleSlice]
+  navigation(categoryId: Int, clangId: Int, depth: Int, nested: Boolean): [navigationItem]!
+  rexSystem(host: String): rexSystem!
+}
+
+type rexArticle {
+  id: ID!
+  name: String
+  slug: String
+  priority: Int
+  catPriority: Int
+  status: Boolean
+  parentId: Int
+  clangId: Int
+  startarticle: Boolean
+  createdate: String
+  yrewriteUrlType: String
+  yrewriteUrl: String
+  yrewriteRedirection: String
+  yrewriteTitle: String
+  yrewriteDescription: String
+  yrewriteImage: String
+  yrewriteIndex: Boolean
+  rexArticleSlice: [rexArticleSlice]
+}
+
+type rexArticleSlice {
+  id: ID!
+  ctypeId: Int
+  clangId: Int
+  priority: Int
+  status: Boolean
+  value1: String
+  value2: String
+  value3: String
+  value4: String
+  value5: String
+  value6: String
+  value7: String
+  value8: String
+  value9: String
+  value10: String
+  value11: String
+  value12: String
+  value13: String
+  value14: String
+  value15: String
+  value16: String
+  value17: String
+  value18: String
+  value19: String
+  value20: String
+  media1: String
+  media2: String
+  media3: String
+  media4: String
+  media5: String
+  media6: String
+  media7: String
+  media8: String
+  media9: String
+  media10: String
+  medialist1: String
+  medialist2: String
+  medialist3: String
+  medialist4: String
+  medialist5: String
+  medialist6: String
+  medialist7: String
+  medialist8: String
+  medialist9: String
+  medialist10: String
+  link1: String
+  link2: String
+  link3: String
+  link4: String
+  link5: String
+  link6: String
+  link7: String
+  link8: String
+  link9: String
+  link10: String
+  linklist1: String
+  linklist2: String
+  linklist3: String
+  linklist4: String
+  linklist5: String
+  linklist6: String
+  linklist7: String
+  linklist8: String
+  linklist9: String
+  linklist10: String
+  rexModule: rexModule
+}
+
+type rexModule {
+  id: ID
+  key: String
+  name: String
+}
+
+type rexSystem {
+  server: String
+  serverName: String
+  errorEmail: String
+  version: String
+  startArticleId: Int
+  notFoundArticleId: Int
+  defaultTemplateId: Int
+  domainHost: String
+  domainUrl: String
+  domainStartId: Int
+  domainNotfoundId: Int
+  domainLanguages: [rexLanguage]
+  domainDefaultLanguage: rexLanguage
+  startClangHidden: Boolean
+}
+
+type rexLanguage {
+  id: Int
+  name: String
+  code: String
+}
+
+type navigationItem {
+  id: ID!
+  name: String
+  parentId: Int
+  slug: String
+  children: [navigationItem]
+}
