@@ -7,7 +7,16 @@
  * @psalm-scope-this rex_addon
  */
 
-\rex_fragment::addDirectory(\rex_path::src('fragments'));
+use FriendsOfRedaxo\RexQL\Cache;
+use FriendsOfRedaxo\RexQL\Webhook;
+use rex;
+use rex_api_function;
+use rex_extension;
+use rex_fragment;
+use rex_perm;
+use rex_view;
+
+rex_fragment::addDirectory(\rex_path::src('fragments'));
 
 
 // Register permissions
@@ -89,16 +98,16 @@ rex_extension::register('PACKAGES_INCLUDED', function () {
         case 'CLANG_UPDATED':
         case 'CACHE_DELETED':
         case 'REX_FORM_SAVED':
-          FriendsOfRedaxo\RexQL\Cache::invalidate();
+          Cache::invalidate();
           break;
         default:
-          FriendsOfRedaxo\RexQL\Cache::invalidate('query');
+          Cache::invalidate('query');
           break;
       }
       $params = $ep->getParams();
       $params['subject'] = $ep->getSubject();
       $params['extension_point'] = $ep->getName();
-      FriendsOfRedaxo\RexQL\Webhook::send($params);
+      Webhook::send($params);
     }, rex_extension::LATE);
   }
 });

@@ -29,7 +29,7 @@ use rex_extension_point;
 use rex_file;
 use rex_i18n;
 
-class Api
+class RexQL
 {
   protected rex_addon $addon;
   protected ApiKey|null $apiKey = null;

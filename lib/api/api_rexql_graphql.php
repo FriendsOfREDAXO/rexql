@@ -7,34 +7,12 @@
 namespace FriendsOfRedaxo\RexQL\Api;
 
 use FriendsOfRedaxo\RexQL\ApiKey;
-use FriendsOfRedaxo\RexQL\Cache;
-use FriendsOfRedaxo\RexQL\Api;
-use FriendsOfRedaxo\RexQL\Services\Logger;
-use FriendsOfRedaxo\RexQL\QueryLogger;
-use FriendsOfRedaxo\RexQL\Resolver;
-use FriendsOfRedaxo\RexQL\SchemaGenerator;
-use FriendsOfRedaxo\RexQL\SchemaBuilder;
-use FriendsOfRedaxo\RexQL\Utility;
+use FriendsOfRedaxo\RexQL\RexQL;
 
-use GraphQL\Error\DebugFlag;
-use GraphQL\Error\Error;
-use GraphQL\Error\SyntaxError;
-use GraphQL\Executor\ExecutionResult;
-use GraphQL\GraphQL;
-use GraphQL\Language\Parser;
-use GraphQL\Service\Auth\AuthService;
-use GraphQL\Type\Introspection;
-use GraphQL\Type\Schema;
-use GraphQL\Validator\DocumentValidator;
-use GraphQL\Validator\Rules\QueryComplexity;
-use GraphQL\Validator\Rules\QueryDepth;
-
-use rex;
 use rex_addon;
 use rex_api_function;
 use rex_api_exception;
 use rex_api_result;
-use rex_clang;
 use rex_formatter;
 use rex_i18n;
 use rex_logger;
@@ -43,7 +21,7 @@ use rex_response;
 use Exception;
 use function str_contains;
 
-class rex_api_rexql_graphql extends rex_api_function
+class GraphQl extends rex_api_function
 {
   protected $published = true;
 
@@ -76,8 +54,8 @@ class rex_api_rexql_graphql extends rex_api_function
       // Cast variables to correct types
       $variables = $this->castVariables($variables);
 
-      $api = new Api($this->addon, $this->debugMode);
-      $response = $api->executeQuery($query, $variables, $operationName);
+      $rexql = new RexQL($this->addon, $this->debugMode);
+      $response = $rexql->executeQuery($query, $variables, $operationName);
 
       // Check for schema introspection request
       // if ($this->isIntrospectionEnabled) {

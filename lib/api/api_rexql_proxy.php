@@ -2,8 +2,9 @@
 
 namespace FriendsOfRedaxo\RexQL\Api;
 
-use FriendsOfRedaxo\RexQL\Utility;
 use FriendsOfRedaxo\RexQL\ApiKey;
+use FriendsOfRedaxo\RexQL\Api\Auth;
+use FriendsOfRedaxo\RexQL\Utility;
 
 use rex;
 use rex_addon;
@@ -20,7 +21,7 @@ use rex_response;
  */
 
 
-class rex_api_rexql_proxy extends rex_api_function
+class Proxy extends rex_api_function
 {
   protected $published = true;
 
@@ -113,7 +114,7 @@ class rex_api_rexql_proxy extends rex_api_function
   private function validateCustomSessionToken(string $token): bool
   {
     // Verwende das neue Auth-System
-    $sessionData = rex_api_rexql_auth::validateSessionToken($token);
+    $sessionData = Auth::validateSessionToken($token);
     return $sessionData !== null;
   }
 

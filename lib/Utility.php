@@ -82,8 +82,12 @@ class Utility
   /**
    * Validate domain restrictions
    */
-  public static function validateDomainRestrictions(ApiKey $apiKey): bool
+  public static function validateDomainRestrictions(?ApiKey $apiKey): bool
   {
+    if (!$apiKey) {
+      return true; // Keine API Key = keine Restrictions
+    }
+
     $allowedDomains = $apiKey->getAllowedDomains();
 
     if (empty($allowedDomains)) {
