@@ -108,9 +108,9 @@ class Api
       throw new rex_api_exception('rexQL: Generator: Schema: Schema file not found!');
     }
     $sdl = $this->handleExtensions($sdl, $schemaGeneratedFilepath);
-    $generatedSdl = @self::loadSdlFile($schemaGeneratedFilepath);
+    $generatedSdl = self::loadSdlFile($schemaGeneratedFilepath);
 
-    $schemaCache->setCacheKey(serialize('graphql_ast_' . $schemaFilepath . ($generatedSdl ? $generatedSdl : $sdl)));
+    $schemaCache->setCacheKey(serialize('graphql_ast_' . $schemaFilepath . $generatedSdl . $sdl));
     $cachedDoc = $schemaCache->get('graphql_ast', null);
 
     if ($cachedDoc) {
