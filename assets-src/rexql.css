@@ -111,7 +111,7 @@ body.rex-theme-dark .rex-page-rexql {
 }
 
 .rex-page-rexql .rexql-playground textarea {
-   height: 400px;
+  height: 400px;
   font-size: 13px;
   font-family: var(--rexql-font-mono);
   line-height: 1.4;
@@ -409,13 +409,45 @@ body.rex-theme-dark .rex-page-rexql {
   color: var(--rexql-primary);
 }
 
+.rexql-notificiation {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  z-index: 9999;
+  width: calc(100% - 40px);
+  max-width: 400px;
+  padding: 15px;
+  color: var(--rexql-text-color);
+  background-color: var(--rexql-bg-light);
+  border: 1px solid var(--rexql-border-color);
+  border-radius: var(--rexql-border-radius);
+  transform: translateX(-50%);
+  animation: fadeIn 0.3s ease-in-out;
+  > div {
+    position: relative;
+  }
+  .close {
+    right: 0;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    transform: translateX(-50%) translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+}
 /* Responsive Anpassungen */
 @media (max-width: 768px) {
   .rexql-playground .row > div {
     margin-bottom: 20px;
   }
 
-  .rex-page-rexql .rexql-playground textarea{
+  .rex-page-rexql .rexql-playground textarea {
     height: 250px !important;
   }
   .rex-page-rexql .rexql-playground .result {

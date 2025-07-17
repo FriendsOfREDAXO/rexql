@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 import { resolve } from 'path'
-import { copyFileSync, readFileSync } from 'fs'
+import { readFileSync } from 'fs'
+import copy from 'rollup-plugin-copy'
 import yaml from 'js-yaml'
 
 // Read version from package.yml (single source of truth)
@@ -95,31 +96,16 @@ export default defineConfig({
 
   // Plugins
   plugins: [
-    // Custom plugin to copy static files
-    {
-      name: 'copy-static-files',
-      writeBundle() {
-        // Copy test-client.html to output directory
-        try {
-          copyFileSync(
-            resolve(__dirname, 'assets-src/test-client.html'),
-            resolve(__dirname, 'assets/test-client.html')
-          )
-          console.log('✓ Copied test-client.html')
-        } catch (err) {
-          console.warn('Warning: Could not copy test-client.html:', err.message)
-        }
-        try {
-          copyFileSync(
-            resolve(__dirname, 'assets-src/graphql.umd.js'),
-            resolve(__dirname, 'assets/graphql.umd.js')
-          )
-          console.log('✓ Copied graphql.umd.js')
-        } catch (err) {
-          console.warn('Warning: Could not copy graphql.umd.js:', err.message)
-        }
-
-      }
-    }
+    [
+      copy({
+        targets: [
+          {
+            src: 'assets-src/test-client.html',
+            dest: 'assets'
+          }
+        ],
+        hook: 'writeBundle'
+      })
+    ]
   ]
 })

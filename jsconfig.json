@@ -1,0 +1,6 @@
+{
+  "include": [
+    "assets-src/**/*",
+    "scripts/**/*",
+  ]
+}

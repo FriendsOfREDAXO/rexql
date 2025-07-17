@@ -15,7 +15,8 @@ class RexSystemResolver extends BaseResolver
     $addonStructureConfig = rex_config::get('structure');
     $yrewrite_domain_data = null;
     $allLanguages = [];
-    if (rex_addon::get('yrewrite')->isAvailable()) {
+
+    if (rex_addon::get('yrewrite')->isAvailable() && isset($this->args['host'])) {
       \rex_yrewrite::init();
       $url = parse_url($this->args['host']);
       $domainName = $url['host'] ?? '';
@@ -24,6 +25,7 @@ class RexSystemResolver extends BaseResolver
       $yrewrite_domain_data = \rex_yrewrite::getDomainByName($domainName);
       $allLanguages = $yrewrite_domain_data->getClangs();
     }
+
     $langs = [];
     if (!count($allLanguages)) {
       $allLanguages = rex_clang::getAllIds();

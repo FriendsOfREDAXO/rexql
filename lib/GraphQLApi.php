@@ -32,7 +32,7 @@ use rex_i18n;
 class Api
 {
   protected rex_addon $addon;
-  protected ApiKey $apiKey;
+  protected ApiKey|null $apiKey = null;
   protected ?int $apiKeyId = null;
   protected ?Context $context = null;
 
@@ -73,7 +73,7 @@ class Api
     // Check authentication
     if (Utility::isAuthEnabled()) {
       $this->apiKey = $this->validateAuthentication();
-      $this->apiKeyId = $this->apiKey->getId();
+      $this->apiKeyId = $this->apiKey ? $this->apiKey->getId() : -1;
 
       // Check domain/IP restrictions (except in dev mode)
       if (!$this->validateDomainRestrictions($this->apiKey)) {
@@ -81,11 +81,11 @@ class Api
       }
 
       // Check rate limiting
-      if ($this->apiKey->isRateLimitedExceeded()) {
-        throw new rex_api_exception(rex_i18n::msg('rexql_error_rate_limit_exceeded'));
-      }
 
       if ($this->apiKey) {
+        if ($this->apiKey->isRateLimitedExceeded()) {
+          throw new rex_api_exception(rex_i18n::msg('rexql_error_rate_limit_exceeded'));
+        }
         $this->apiKey->logUsage();
       }
     } else {
@@ -101,13 +101,16 @@ class Api
 
     $schemaCache = new Cache($this->context, 'schema');
     $schemaFilepath = $this->addon->getDataPath('schema.graphql');
+    $schemaGeneratedFilepath = $this->addon->getCachePath('generated.schema.graphql');
+
     $sdl = self::loadSdlFile($schemaFilepath);
     if (!$sdl) {
       throw new rex_api_exception('rexQL: Generator: Schema: Schema file not found!');
     }
-    $sdl = $this->handleExtensions($sdl);
+    $sdl = $this->handleExtensions($sdl, $schemaGeneratedFilepath);
+    $generatedSdl = @self::loadSdlFile($schemaGeneratedFilepath);
 
-    $schemaCache->setCacheKey(serialize('graphql_ast_' . $schemaFilepath . $sdl));
+    $schemaCache->setCacheKey(serialize('graphql_ast_' . $schemaFilepath . ($generatedSdl ? $generatedSdl : $sdl)));
     $cachedDoc = $schemaCache->get('graphql_ast', null);
 
     if ($cachedDoc) {
@@ -117,6 +120,8 @@ class Api
     } else {
       rex_dir::delete($this->context->get('cachePath') . 'schema', false);
     }
+    rex_file::put($schemaGeneratedFilepath, $sdl);
+    $sdl = self::loadSdlFile($schemaGeneratedFilepath);
 
     $doc = Parser::parse($sdl);
     DocumentValidator::assertValidSDL($doc);
@@ -205,18 +210,22 @@ class Api
     }
   }
 
-  protected function validateAuthentication(): ApiKey
+  protected function validateAuthentication(): ApiKey|null
   {
     // Check if API Key is provided in request
     $apiKeyValue =
       rex_request('api_key', 'string') ?: ($_SERVER['HTTP_X_API_KEY'] ?? '') ?: (isset($_SERVER['HTTP_AUTHORIZATION']) ? str_replace('Bearer ', '', $_SERVER['HTTP_AUTHORIZATION']) : '');
 
     if (empty($apiKeyValue)) {
-      throw new rex_api_exception('API-Schlüssel erforderlich');
+      if ($this->debugMode) {
+        Logger::log('rexQL: API: No API key provided');
+      } else {
+        throw new rex_api_exception('API-Schlüssel erforderlich');
+      }
     }
 
     $apiKey = ApiKey::findByKey($apiKeyValue);
-    if (!$apiKey) {
+    if (!$apiKey && !$this->debugMode) {
       throw new rex_api_exception(rex_i18n::msg('rexql_error_invalid_api_key'));
     }
 
@@ -250,7 +259,7 @@ class Api
   public static function loadSdlFile($filepath): string
   {
     if (!file_exists($filepath)) {
-      throw new rex_api_exception('rexQL: Generator: Schema: Schema file not found at ' . $filepath);
+      return '';
     }
     $sdl = rex_file::get($filepath);
     if (!$sdl) {

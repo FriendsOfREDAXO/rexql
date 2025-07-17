@@ -21,10 +21,9 @@ $playgroundHtml = '
     <div class="row">
         <div class="col-md-6">
             <h4>GraphQL Query</h4>
-            <textarea id="graphql-query" class="form-control" rows="15" placeholder="Geben Sie hier Ihre GraphQL Query ein..." autocapitalize="off" autocorrect="off" spellcheck="false">
-# Beispiel-Queries:
-
-# Core-Tabellen abfragen (Listen):
+            <div id="graphql-editor-container"></div>
+            <textarea id="graphql-query" class="hidden form-control" rows="15" placeholder="Geben Sie hier Ihre GraphQL Query ein..." autocapitalize="off" autocorrect="off" spellcheck="false">
+# Beispiel-Query:
 {
   articles(limit: 5) {
     id
@@ -33,30 +32,6 @@ $playgroundHtml = '
   }
   
 }
-
-# YForm-Tabellen abfragen (Listen):
-# {
-#   rexYfNewsList(limit: 10) {
-#     id
-#     name
-#     topic
-#     description
-#   }
-# }
-
-# Einzelne Datensätze (benötigen ID):
-# {
-#   rexArticle(id: 1) {
-#     id
-#     name
-#   }
-#   
-#   rexYfNews(id: 1) {
-#     id
-#     name
-#     topic
-#   }
-# }
             </textarea>
             <div class="form-group rexql-form-group-spacing">
                 <label for="api-key-input">API-Schlüssel:</label>
