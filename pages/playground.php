@@ -14,15 +14,7 @@ if (!$addon->getConfig('endpoint_enabled', false)) {
 $endpointUrl = FriendsOfRedaxo\RexQL\Utility::getEndpointUrl();
 
 $content = '';
-
-// GraphQL Playground Interface
-$playgroundHtml = '
-<div class="rexql-playground" data-endpoint-url="' . $endpointUrl . '">
-    <div class="row">
-        <div class="col-md-6">
-            <h4>GraphQL Query</h4>
-            <div id="graphql-editor-container"></div>
-            <textarea id="graphql-query" class="hidden form-control" rows="15" placeholder="Geben Sie hier Ihre GraphQL Query ein..." autocapitalize="off" autocorrect="off" spellcheck="false">
+$example = '
 # Beispiel-Query:
 {
   articles(limit: 5) {
@@ -31,25 +23,42 @@ $playgroundHtml = '
     createdate
   }
   
-}
-            </textarea>
-            <div class="form-group rexql-form-group-spacing">
-                <label for="api-key-input">API-Schlüssel:</label>
-                <input type="text" id="api-key-input" class="form-control" placeholder="Ihr API-Schlüssel">
+}';
+
+// GraphQL Playground Interface
+$playgroundHtml = '
+<div class="rexql-playground" data-endpoint-url="' . $endpointUrl . '">
+  <div class="rex-ql-playground-cols">
+    <div class="rexql-query-container">
+      <div>
+          <h4>GraphQL Query</h4>
+
+          <div class="rexql-editor-wrap">
+            <div id="graphql-editor"></div>
+            <textarea id="graphql-query" class="hidden form-control" rows="15" placeholder="Geben Sie hier Ihre GraphQL Query ein..." autocapitalize="off" autocorrect="off" spellcheck="false">' . $example . '</textarea>
+
+            <div class="form-group rexql-playground-actions">
+              <input type="text" id="api-key-input" class="form-control" placeholder="Ihr API-Schlüssel">
+              <div class="btn-group">
+                <button id="execute-query" class="btn btn-primary">Query ausführen</button>
+                <button id="clear-result" class="btn btn-default">Ergebnis löschen</button>
+              </div>
             </div>
-            
-            <button id="execute-query" class="btn btn-primary">Query ausführen</button>
-            <button id="clear-result" class="btn btn-default">Ergebnis löschen</button>
-            <button id="introspect" class="btn btn-info">Schema abfragen</button>
-        </div>
-        
-        <div class="col-md-6">
-            <h4>Ergebnis</h4>
-            <pre class="result" id="query-result">
-Führen Sie eine Query aus, um Ergebnisse zu sehen...
-            </pre>
-        </div>
+          </div>
+      
+      </div>
     </div>
+    <div class="rexql-result-container">
+      <h4>Ergebnis</h4>
+      <pre class="result" id="query-result">
+  Führen Sie eine Query aus, um Ergebnisse zu sehen...
+      </pre>
+    </div>
+  </div>
+  <div class="rexql-schema-container">
+    <h4><span>Schema</span> <span class="sdl badge">SDL</span></h4>
+    <div id="graphql-schema"></div>
+  </div>
 </div>
 ';
 

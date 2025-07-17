@@ -5,7 +5,6 @@ export const playground = {
     const apiKeyInput = document.getElementById('api-key-input')
     const executeButton = document.getElementById('execute-query')
     const clearButton = document.getElementById('clear-result')
-    const introspectButton = document.getElementById('introspect')
     const resultPre = document.getElementById('query-result')
 
     if (!queryTextarea || !executeButton) return // Nicht auf Playground-Seite
@@ -18,33 +17,7 @@ export const playground = {
         query,
         apiKeyInput.value.trim(),
         resultPre,
-        executeButton,
-        introspectButton
-      )
-    })
-
-    introspectButton.addEventListener('click', function () {
-      const introspectionQuery = `
-{
-  __schema {
-    queryType {
-      name
-      fields {
-        name
-        type {
-          name
-          kind
-        }
-      }
-    }
-  }
-}`
-      rexQL.playground.executeQuery(
-        introspectionQuery,
-        apiKeyInput.value.trim(),
-        resultPre,
-        executeButton,
-        introspectButton
+        executeButton
       )
     })
 
@@ -54,13 +27,7 @@ export const playground = {
     })
   },
 
-  executeQuery: function (
-    query,
-    apiKey,
-    resultPre,
-    executeButton,
-    introspectButton
-  ) {
+  executeQuery: function (query, apiKey, resultPre, executeButton) {
     if (!query) {
       alert('Bitte geben Sie eine GraphQL Query ein.')
       return
@@ -68,7 +35,6 @@ export const playground = {
 
     resultPre.textContent = 'Führe Query aus...'
     executeButton.disabled = true
-    introspectButton.disabled = true
 
     const requestData = { query: query }
     const headers = { 'Content-Type': 'application/json' }
@@ -115,21 +81,43 @@ export const playground = {
       })
       .finally(() => {
         executeButton.disabled = false
-        introspectButton.disabled = false
       })
   },
 
   initCodemirror: async function (textarea) {
     const lib = await import('./graphql-editor')
-    const container = document.getElementById('graphql-editor-container')
-    textarea.style.display = 'none'
-    const graphqlEditor = new lib.GraphQLEditor(container, {
+
+    const schemaContainer = document.getElementById('graphql-schema')
+    new lib.GraphQLEditor(schemaContainer, {
       schema,
-      initialValue: textarea.value || '',
-      height: '500px',
+      initialValue: '',
+      height: '400px',
+      readOnly: true,
+      renderSchema: true,
       onChange: (content) => {
         textarea.value = content
       }
     })
+
+    const container = document.getElementById('graphql-editor')
+    new lib.GraphQLEditor(container, {
+      schema,
+      initialValue: textarea.value || '',
+      height: '400px',
+      onChange: (content) => {
+        textarea.value = content
+      }
+    })
+
+    // new EditorView({
+    //   parent: document.querySelector('#editor_focus'),
+    //   doc: 'I am focusable but not editable',
+    //   extensions: [
+    //     basicSetup,
+    //     EditorState.readOnly.of(true),
+    //     EditorView.editable.of(false),
+    //     EditorView.contentAttributes.of({ tabindex: '0' })
+    //   ]
+    // })
   }
 }

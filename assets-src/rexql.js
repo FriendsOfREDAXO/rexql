@@ -28,14 +28,6 @@ window.rexQL = window.rexQL || {
 
 console.log('rexQL Addon rex:ready')
 
-// Syntax-Highlighting für Code-Blöcke (einfach)
-var codeBlocks = document.querySelectorAll('pre code')
-codeBlocks.forEach(function (block) {
-  if (block.textContent.trim().startsWith('{')) {
-    block.classList.add('language-graphql')
-  }
-})
-
 // API-Schlüssel Copy-Buttons initialisieren
 var copyButtons = document.querySelectorAll('[data-copy]')
 copyButtons.forEach(function (button) {

@@ -26,7 +26,7 @@
 /* Dark theme colors */
 .rex-page-rexql {
   --rexql-dark-bg-light: #202b35;
-  --rexql-dark-bg-code: #26323f;
+  --rexql-dark-bg-code: #282c34;
   --rexql-dark-border-color: #2e3b4a;
   --rexql-dark-text-color: rgba(255, 255, 255, 0.75);
   --rexql-dark-text-muted: rgba(255, 255, 255, 0.45);
@@ -109,9 +109,34 @@ body.rex-theme-dark .rex-page-rexql {
 .rex-page-rexql .rexql-playground {
   margin: 20px 0;
 }
+.rex-ql-playground-cols {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  > div {
+    max-width: 100%;
+  }
+}
+
+.rexql-editor-wrap {
+  position: relative;
+}
+
+.rexql-playground-actions {
+  position: absolute;
+  display: flex;
+  inset: auto 10px 0 10px;
+  .btn-group {
+    display: flex;
+  }
+}
+
+.rexql-schema-container {
+  margin-top: 20px;
+}
 
 .rex-page-rexql .rexql-playground textarea {
-  height: 400px;
+  height: 300px;
   font-size: 13px;
   font-family: var(--rexql-font-mono);
   line-height: 1.4;

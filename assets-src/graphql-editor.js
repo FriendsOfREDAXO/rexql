@@ -1,19 +1,38 @@
 // advanced-graphql-editor.js
-import { EditorView, basicSetup } from 'codemirror'
+import { basicSetup } from 'codemirror'
+import { EditorView, keymap } from '@codemirror/view'
+import { defaultKeymap, indentWithTab } from '@codemirror/commands'
 import { EditorState } from '@codemirror/state'
+import {
+  autocompletion,
+  completionKeymap,
+  closeBrackets,
+  closeBracketsKeymap
+} from '@codemirror/autocomplete'
+import {
+  indentOnInput,
+  bracketMatching,
+  foldGutter,
+  foldKeymap
+} from '@codemirror/language'
+import { lintKeymap } from '@codemirror/lint'
 import { oneDark } from '@codemirror/theme-one-dark'
 import { graphql } from 'cm6-graphql'
 import { buildSchema } from 'graphql'
 
 export class GraphQLEditor {
   constructor(container, options = {}) {
+    const { theme, schema, initialValue, height, renderSchema, ...rest } =
+      options
+    this.schema = null
     this.container = container
     this.options = {
-      theme: options.theme || oneDark,
-      schema: options.schema || null,
-      initialValue: options.initialValue || '',
-      height: options.height || '400px',
-      ...options
+      theme: theme || this.detectColorScheme(),
+      schema: schema || null,
+      initialValue: initialValue || '',
+      height: height || '300px',
+      renderSchema: renderSchema || false,
+      ...rest
     }
 
     this.view = null
@@ -21,32 +40,61 @@ export class GraphQLEditor {
   }
 
   init() {
+    this.schema = buildSchema(this.options.schema)
+
     const extensions = [
       basicSetup,
-      this.options.theme,
       EditorView.theme({
         '&': {
           height: this.options.height,
-          fontSize: '14px'
-        },
-        '.cm-scroller': {
-          fontFamily:
-            'Monaco, Consolas, "Liberation Mono", "Courier New", monospace'
-        },
-        '.cm-focused': {
-          outline: '2px solid #e91e63'
+          fontSize: '12px'
         }
+        // '.cm-scroller': {
+        //   fontFamily:
+        //     'Monaco, Consolas, "Liberation Mono", "Courier New", monospace'
+        // },
+        // '.cm-focused': {
+        //   outline: '2px solid #e91e63'
+        // }
       })
     ]
 
+    if (!this.options.renderSchema) {
+      const graphqlKeymap = keymap.of([
+        ...defaultKeymap,
+        ...completionKeymap,
+        ...foldKeymap,
+        ...closeBracketsKeymap,
+        ...lintKeymap,
+        indentWithTab
+      ])
+
+      extensions.push(
+        foldGutter(),
+        indentOnInput(),
+        closeBrackets(),
+        autocompletion(),
+        bracketMatching(),
+        graphqlKeymap
+      )
+    } else {
+      extensions.push(EditorState.readOnly.of(true))
+      extensions.push(EditorView.editable.of(false))
+    }
+
+    if (this.options.theme) {
+      extensions.push(this.options.theme)
+    }
+
     // Add GraphQL language support
-    if (this.options.schema) {
-      extensions.push(graphql(buildSchema(this.options.schema)))
+    if (this.schema) {
+      extensions.push(graphql(this.schema))
+      // extensions.push(this.createGraphQLCompletion(this.schema))
     } else {
       extensions.push(graphql())
     }
 
-    if (this.options.onChange) {
+    if (!this.options.renderSchema && this.options.onChange) {
       extensions.push(
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {
@@ -65,14 +113,35 @@ export class GraphQLEditor {
       state: startState,
       parent: this.container
     })
+    console.log(
+      'GraphQLEditor initialized with view:',
+      this.view,
+      this.container
+    )
+
+    window.formatQuery = function () {
+      // Simple GraphQL formatting
+      const doc = editor.state.doc
+      const formatted = doc
+        .toString()
+        .replace(/\s*{\s*/g, ' {\n  ')
+        .replace(/\s*}\s*/g, '\n}\n')
+        .replace(/,\s*/g, ',\n  ')
+        .trim()
+
+      editor.dispatch({
+        changes: { from: 0, to: doc.length, insert: formatted }
+      })
+    }
+
+    if (this.schema && this.options.renderSchema)
+      this.renderSchema(this.options.schema)
   }
 
-  // Get current content
   getValue() {
     return this.view.state.doc.toString()
   }
 
-  // Set content
   setValue(content) {
     this.view.dispatch({
       changes: {
@@ -83,153 +152,86 @@ export class GraphQLEditor {
     })
   }
 
-  // Update schema
-  updateSchema(schemaString) {
-    try {
-      const schema = buildSchema(schemaString)
-      // You would need to recreate the editor with new schema
-      // This is a simplified version
-      this.options.schema = schemaString
-      this.destroy()
-      this.init()
-    } catch (error) {
-      console.error('Invalid schema:', error)
-    }
-  }
-
-  // Destroy editor
   destroy() {
     if (this.view) {
       this.view.destroy()
       this.view = null
     }
   }
-}
 
-// Usage example
-const sampleSchema = `
-  type Query {
-    user(id: ID!): User
-    users: [User]
-    post(id: ID!): Post
-    posts: [Post]
+  renderSchema(schema) {
+    this.view.dispatch({
+      changes: {
+        from: 0,
+        to: this.view.state.doc.length,
+        insert: schema.toString()
+      }
+    })
+    // const sdlDiv = document.createElement('div')
+    // sdlDiv.className = 'schema-sdl'
+    // sdlDiv.innerHTML = this.schemaToSDL(schema)
+    // schemaContent.appendChild(sdlDiv)
   }
-
-  type Mutation {
-    createUser(input: CreateUserInput!): User
-    updateUser(id: ID!, input: UpdateUserInput!): User
-    deleteUser(id: ID!): Boolean
-    createPost(input: CreatePostInput!): Post
-    updatePost(id: ID!, input: UpdatePostInput!): Post
-    deletePost(id: ID!): Boolean
-  }
-
-  type User {
-    id: ID!
-    name: String!
-    email: String!
-    posts: [Post]
-    createdAt: String!
-    updatedAt: String!
-  }
-
-  type Post {
-    id: ID!
-    title: String!
-    content: String!
-    author: User!
-    published: Boolean!
-    createdAt: String!
-    updatedAt: String!
-  }
-
-  input CreateUserInput {
-    name: String!
-    email: String!
-  }
-
-  input UpdateUserInput {
-    name: String
-    email: String
-  }
-
-  input CreatePostInput {
-    title: String!
-    content: String!
-    authorId: ID!
-  }
-
-  input UpdatePostInput {
-    title: String
-    content: String
-    published: Boolean
-  }
-`
-
-const initialQuery = `query GetUserWithPosts($userId: ID!) {
-  user(id: $userId) {
-    id
-    name
-    email
-    posts {
-      id
-      title
-      content
-      published
-      createdAt
+  schemaToSDL(schema) {
+    if (!schema.getTypeMap) {
+      return '# Schema format not supported for SDL display'
     }
-  }
-}
 
-query GetAllPosts {
-  posts {
-    id
-    title
-    content
-    published
-    author {
-      id
-      name
-      email
+    const typeMap = schema.getTypeMap()
+    let sdl = ''
+
+    // Add Query, Mutation, Subscription types first
+    const rootTypes = ['Query', 'Mutation', 'Subscription']
+    rootTypes.forEach((rootType) => {
+      if (typeMap[rootType] && typeMap[rootType].getFields) {
+        sdl += this.formatTypeToSDL(typeMap[rootType], rootType) + '\n\n'
+      }
+    })
+
+    // Add other types
+    Object.keys(typeMap).forEach((typeName) => {
+      if (typeName.startsWith('__')) return // Skip introspection types
+      if (rootTypes.includes(typeName)) return // Already added
+
+      const type = typeMap[typeName]
+      if (type.getFields) {
+        sdl += this.formatTypeToSDL(type, typeName) + '\n\n'
+      }
+    })
+
+    return sdl.trim()
+  }
+  formatTypeToSDL(type, typeName) {
+    let sdl = `<span class="keyword">type</span> <span class="type-name">${typeName}</span> {\n`
+
+    try {
+      const fields = type.getFields()
+      Object.keys(fields).forEach((fieldName) => {
+        const field = fields[fieldName]
+        sdl += `  <span class="field-name">${fieldName}</span>`
+
+        // Add arguments
+        if (field.args && field.args.length > 0) {
+          const argStrings = field.args.map(
+            (arg) =>
+              `${arg.name}: <span class="field-type">${arg.type.toString()}</span>`
+          )
+          sdl += `(${argStrings.join(', ')})`
+        }
+
+        sdl += `: <span class="field-type">${field.type.toString()}</span>\n`
+      })
+    } catch (e) {
+      sdl += `  # Error reading fields\n`
     }
+
+    sdl += `}`
+    return sdl
+  }
+
+  detectColorScheme() {
+    // Detect user's color scheme preference
+    const darkMode = !document.body.classList.contains('rex-theme-light')
+    return darkMode ? oneDark : null
   }
 }
-
-mutation CreateNewUser($input: CreateUserInput!) {
-  createUser(input: $input) {
-    id
-    name
-    email
-    createdAt
-  }
-}
-
-mutation CreateNewPost($input: CreatePostInput!) {
-  createPost(input: $input) {
-    id
-    title
-    content
-    author {
-      name
-    }
-    published
-    createdAt
-  }
-}`
-
-// // Initialize the editor
-
-// // Add change listener
-// graphqlEditor.onChange((content) => {
-//   console.log('Content changed:', content)
-// })
-
-// Export for global use
-// window.graphqlEditor = editor
-
-// Add some utility functions to window for testing
-// export const editorUtils = {
-//   getValue: () => editor.getValue(),
-//   setValue: (content) => editor.setValue(content),
-//   updateSchema: (schema) => editor.updateSchema(schema)
-// }
