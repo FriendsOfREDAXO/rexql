@@ -21,7 +21,7 @@ use rex_response;
 use Exception;
 use function str_contains;
 
-class GraphQl extends rex_api_function
+class Endpoint extends rex_api_function
 {
   protected $published = true;
 

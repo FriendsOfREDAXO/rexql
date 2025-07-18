@@ -25,9 +25,9 @@ rex_perm::register('rexql[admin]', 'rexql[graphql]');
 rex_perm::register('rexql[webhooks]', 'rexql[admin]');
 
 // Register API classes
-rex_api_function::register('rexql_graphql', 'FriendsOfRedaxo\RexQL\Api\rex_api_rexql_graphql');
-rex_api_function::register('rexql_proxy', 'rex_api_rexql_proxy');
-rex_api_function::register('rexql_auth', 'rex_api_rexql_auth');
+rex_api_function::register('rexql', 'FriendsOfRedaxo\RexQL\Api\Endpoint');
+rex_api_function::register('rexql_proxy', 'FriendsOfRedaxo\RexQL\Api\Proxy');
+rex_api_function::register('rexql_auth', 'FriendsOfRedaxo\RexQL\Api\Auth');
 
 // Set default configuration
 if (!$this->hasConfig()) {
