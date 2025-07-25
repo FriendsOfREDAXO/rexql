@@ -7,7 +7,7 @@ use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\Type;
 
-class DefaultResolver extends BaseResolver
+class DefaultResolver extends ResolverBase
 {
   public function resolve(): \Closure
   {

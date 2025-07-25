@@ -1,5 +1,5 @@
 package: rexql
-version: '0.2.3-beta'
+version: '1.0.0-beta'
 license: MIT
 author: 'Friends Of REDAXO'
 supportpage: 'https://github.com/FriendsOfREDAXO/rexql/issues'
@@ -10,24 +10,27 @@ page:
   subpages:
     overview:
       title: 'Übersicht'
+      icon: fa fa-home
       perm: uploader[bulk_rework]
-    config:
-      title: 'translate:rexql_config'
-      perm: rexql[config]
-    permissions:
-      title: 'translate:rexql_permissions'
-      perm: rexql[permissions]
-    webhooks:
-      title: 'Webhooks'
-      perm: rexql[webhooks]
-    apiinfo:
-      title: 'API Information'
-      perm: rexql[apiinfo]
     playground:
       title: 'Playground'
+      icon: fa fa-play
       perm: rexql[playground]
+    permissions:
+      title: 'translate:rexql_permissions'
+      icon: rex-icon rex-icon-user
+      perm: rexql[permissions]
+    config:
+      title: 'translate:rexql_config'
+      icon: rex-icon fa-cog
+      perm: rexql[config]
+    webhooks:
+      title: 'Webhooks'
+      icon: fa fa-bell
+      perm: rexql[webhooks]
     docs:
       title: 'translate:rexql_docs'
+      itemClass: 'pull-right'
       icon: rex-icon fa-info-circle
 
 requires:

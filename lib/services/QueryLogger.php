@@ -1,6 +1,6 @@
 <?php
 
-namespace FriendsOfRedaxo\RexQL;
+namespace FriendsOfRedaxo\RexQL\Services;
 
 /**
  * Query-Logger für rexQL
@@ -15,7 +15,7 @@ class QueryLogger
     string $query,
     ?array $variables,
     float $executionTime,
-    int $memoryUsage,
+    float $memoryUsage,
     bool $success,
     ?string $errorMessage = null
   ): void {

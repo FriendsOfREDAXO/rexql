@@ -4,9 +4,9 @@ namespace FriendsOfRedaxo\RexQL\Resolver;
 
 use rex_category;
 
-class NavigationResolver extends BaseResolver
+class NavigationResolver extends ResolverBase
 {
-  protected function getData()
+  public function getData(): array
   {
     $rootCategoryId = $this->args['categoryId'] ?? null;
     $clangId = $this->args['clangId'] ?? null;

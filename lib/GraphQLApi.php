@@ -58,7 +58,7 @@ class RexQL
     $this->context->set('debugMode', $debugMode);
     $this->context->set('apiKey', $this->apiKey ?? null);
     $this->context->set('cachePath', $addon->getCachePath());
-    $this->context->set('cache', true);
+    $this->context->set('cache', false);
 
     $this->schema = $this->generateSchema();
   }
@@ -116,7 +116,6 @@ class RexQL
     if ($cachedDoc) {
       $doc = AST::fromArray($cachedDoc);
       return (new BuildSchema($doc, self::$typeResolvers, [], self::$fieldResolvers))->buildSchema();
-      // return (new BuildSchema($doc, self::$typeResolvers, [], self::$fieldResolvers))->buildSchema();
     } else {
       rex_dir::delete($this->context->get('cachePath') . 'schema', false);
     }
@@ -238,17 +237,14 @@ class RexQL
       return true; // No API key = no restrictions
     }
 
-    // Domain-Validierung
     if (!Utility::validateDomainRestrictions($apiKey)) {
       return false;
     }
 
-    // IP-Validierung
     if (!Utility::validateIpRestrictions($apiKey)) {
       return false;
     }
 
-    // HTTPS-Validierung
     if (!Utility::validateHttpsRestrictions($apiKey)) {
       return false;
     }

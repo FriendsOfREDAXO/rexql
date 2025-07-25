@@ -1,16 +1,16 @@
 {
   "name": "rexql-assets",
-  "version": "0.2.3-beta",
+  "version": "1.0.0-beta",
   "description": "Asset build for rexQL Addon",
   "scripts": {
     "version:sync": "node scripts/sync-version.js",
-    "prebuild": "npm run version:sync",
-    "build": "vite build",
+    "prebuild": "npm run version:sync && npm run clean:assets",
+    "build": "vite build && rsync -a assets/. ../../../public/assets/addons/rexql/",
     "build:css": "vite build --mode css",
     "build:js": "vite build --mode js",
     "watch": "vite build --watch",
     "dev": "concurrently \"vite build --watch\" \"npm run clean:assets\" \"npm run sync\"",
-    "clean:assets": "rm ../../../public/assets/addons/rexql/*",
+    "clean:assets": "rm -f ../../../public/assets/addons/rexql/*",
     "sync": "chokidar 'assets/**/*' -c 'rsync -a assets/. ../../../public/assets/addons/rexql/'",
     "preview": "vite preview",
     "clean": "rm -rf assets dist node_modules/.vite",
@@ -43,7 +43,6 @@
     "prettier-plugin-organize-attributes": "^1.0.0",
     "prettier-plugin-style-order": "^0.2.2",
     "prettier-plugin-tailwindcss": "^0.6.11",
-    "rollup-plugin-copy": "^3.5.0",
     "stylelint": "^16.18.0",
     "stylelint-config-standard": "^36.0.1",
     "vite": "^7.0.0"

@@ -54,7 +54,7 @@ if (!$this->hasConfig()) {
 }
 // Set endpoint URL if not configured
 if (!$this->getConfig('endpoint_url')) {
-  $this->setConfig('endpoint_url', '/index.php?rex-api-call=rexql_graphql');
+  $this->setConfig('endpoint_url', '/index.php?rex-api-call=rexql');
 }
 
 // Register extensions - only for existing extension points

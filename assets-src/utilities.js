@@ -17,7 +17,7 @@ export const copyToClipboard = function (event, text, successMessage) {
 }
 
 /**
- * Fallback für ältere Browser
+ * Fallback for older browsers that don't support Clipboard API
  */
 export const fallbackCopyToClipboard = function (event, text, successMessage) {
   var textArea = document.createElement('textarea')
@@ -53,7 +53,7 @@ export const fallbackCopyToClipboard = function (event, text, successMessage) {
 }
 
 /**
- * Benachrichtigung anzeigen
+ * Show a notification message
  */
 export const showNotification = function (message, type, node) {
   type = type || 'info'
@@ -87,36 +87,4 @@ export const showNotification = function (message, type, node) {
       alert.parentNode.removeChild(alert)
     }
   }, 3000)
-}
-
-/**
- * GraphQL Query Formatter
- */
-export const formatGraphQL = function (query) {
-  // Einfache Formatierung - in Produktion würde man eine richtige GraphQL-Bibliothek verwenden
-  return query
-    .replace(/\s+/g, ' ')
-    .replace(/\{\s*/g, '{\n  ')
-    .replace(/\s*\}/g, '\n}')
-    .replace(/,\s*/g, ',\n  ')
-    .trim()
-}
-
-/**
- * GraphQL Query validieren
- */
-export const validateGraphQL = function (query) {
-  // Einfache Validierung
-  var openBraces = (query.match(/\{/g) || []).length
-  var closeBraces = (query.match(/\}/g) || []).length
-
-  if (openBraces !== closeBraces) {
-    return 'Unbalanced braces in GraphQL query'
-  }
-
-  if (query.trim().length === 0) {
-    return 'Empty query'
-  }
-
-  return null // Keine Fehler
 }

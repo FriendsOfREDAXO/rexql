@@ -35,29 +35,4 @@ class FieldResolvers
       return $config;
     };
   }
-
-  //   return function (
-  //     array $fieldConfig,
-  //     FieldDefinitionNode $fieldDefinitionNode,
-  //     $parentTypeDefinitionNode
-  //   ): array {
-  //     $fieldName = $fieldDefinitionNode->name->value;
-  //     $parentTypeName = $parentTypeDefinitionNode->name->value;
-  //     $default = fn($root, $args, $context, $info) => $root[$info->fieldName] ?? null;
-
-  //     if ($parentTypeName === 'Query') {
-  // if (isset(self::$resolvers[$fieldName])) {
-  //   $fieldConfig['resolve'] = self::$resolvers[$fieldName];
-  // } else {
-  //   // Default resolver if no specific resolver is registered
-  //   $fieldConfig['resolve'] = fn($root, $args, $context, $info) => $root[$info->fieldName] ?? null;
-  // }
-  //     } elseif ($parentTypeName === 'Mutation') {
-  //       $fieldConfig['resolve'] = fn($root, $args, $context, $info) => $root[$info->fieldName] ?? null;
-  //     } else {
-  //       $fieldConfig['resolve'] = fn($root, $args, $context, $info) => $root[$info->fieldName] ?? null;
-  //     }
-  //     return $fieldConfig;
-  //   };
-  // }
 }

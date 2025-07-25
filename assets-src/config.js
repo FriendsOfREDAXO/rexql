@@ -1,9 +1,9 @@
 /**
- * Konfiguration: Table Selection funktionalität
+ * Configuration: Table Selection functionality
  */
 export const config = {
   init: function () {
-    // Handler für "Alle Core-Tabellen auswählen"
+    // Handler for "Select All Core Tables"
     const coreSelectAll = document.getElementById('select_all_core_tables')
     if (coreSelectAll) {
       coreSelectAll.addEventListener('change', function () {
@@ -16,7 +16,7 @@ export const config = {
       })
     }
 
-    // Handler für "Alle YForm-Tabellen auswählen" (falls vorhanden)
+    // Handler for "Select All YForm Tables" (if available)
     const yformSelectAll = document.getElementById('select_all_yform_tables')
     if (yformSelectAll) {
       yformSelectAll.addEventListener('change', function () {
@@ -29,7 +29,7 @@ export const config = {
       })
     }
 
-    // Status der "Alle auswählen" Checkboxen aktualisieren
+    // update status when "select all" checkbox is toggled
     const updateSelectAllStatus = (groupSelector, selectAllId) => {
       const checkboxes = document.querySelectorAll(groupSelector)
       const selectAll = document.getElementById(selectAllId)
@@ -42,7 +42,7 @@ export const config = {
       selectAll.checked = allChecked
     }
 
-    // Event-Listener für Core-Tabellen
+    // Event-Listener for Core Tables
     const coreCheckboxes = document.querySelectorAll(
       '.table-checkbox.core-table'
     )
@@ -55,7 +55,7 @@ export const config = {
       })
     })
 
-    // Event-Listener für YForm-Tabellen
+    // Event-Listener for YForm Tables
     const yformCheckboxes = document.querySelectorAll(
       '.table-checkbox.yform-table'
     )
@@ -68,7 +68,7 @@ export const config = {
       })
     })
 
-    // Initial-Status der "Alle auswählen" Checkboxen setzen
+    // Initial status of "select all" checkboxes
     updateSelectAllStatus(
       '.table-checkbox.core-table',
       'select_all_core_tables'

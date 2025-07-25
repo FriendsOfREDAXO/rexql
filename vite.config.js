@@ -1,7 +1,6 @@
 import { defineConfig } from 'vite'
 import { resolve } from 'path'
 import { readFileSync } from 'fs'
-import copy from 'rollup-plugin-copy'
 import yaml from 'js-yaml'
 
 // Read version from package.yml (single source of truth)
@@ -92,20 +91,5 @@ export default defineConfig({
   // Define global constants
   define: {
     __VERSION__: JSON.stringify(ADDON_VERSION)
-  },
-
-  // Plugins
-  plugins: [
-    [
-      copy({
-        targets: [
-          {
-            src: 'assets-src/test-client.html',
-            dest: 'assets'
-          }
-        ],
-        hook: 'writeBundle'
-      })
-    ]
-  ]
+  }
 })

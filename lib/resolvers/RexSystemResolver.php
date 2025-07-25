@@ -7,16 +7,17 @@ use rex_addon;
 use rex_clang;
 use rex_config;
 
-class RexSystemResolver extends BaseResolver
+class RexSystemResolver extends ResolverBase
 {
-  protected function getData()
+  public function getData(): array
   {
     $addonStructureIsAvailable = rex_addon::get('structure')->isAvailable();
     $addonStructureConfig = rex_config::get('structure');
     $yrewrite_domain_data = null;
     $allLanguages = [];
 
-    if (rex_addon::get('yrewrite')->isAvailable() && isset($this->args['host'])) {
+    $yrewrite = rex_addon::get('yrewrite');
+    if ($yrewrite->isAvailable() && $yrewrite->isInstalled() && isset($this->args['host'])) {
       \rex_yrewrite::init();
       $url = parse_url($this->args['host']);
       $domainName = $url['host'] ?? '';

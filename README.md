@@ -34,7 +34,7 @@ rexQL bietet ein ausgeklügeltes Caching-System, das die Leistung erheblich verb
 **Beispiel mit Cache-Bypass:**
 
 ```bash
-curl -X POST "https://ihre-domain.de/index.php?rex-api-call=rexql_graphql&noCache=1" \
+curl -X POST "https://ihre-domain.de/index.php?rex-api-call=rexql&noCache=1" \
   -H "Content-Type: application/json" \
   -d '{"query": "{ rexArticleList { id name } }"}'
 ```
@@ -133,7 +133,7 @@ function ArticleList() {
 ### Hauptendpoint
 
 ```
-POST /index.php?rex-api-call=rexql_graphql
+POST /index.php?rex-api-call=rexql
 ```
 
 ### Authentifizierung (Public Headless CMS)
@@ -143,7 +143,7 @@ POST /index.php?rex-api-call=rexql_graphql
 curl -H "X-API-KEY: rexql_abc123..." \
      -H "Content-Type: application/json" \
      -d '{"query": "{ rexArticleList { id name } }"}' \
-     https://cms.ihre-domain.de/index.php?rex-api-call=rexql_graphql
+     https://cms.ihre-domain.de/index.php?rex-api-call=rexql
 ```
 
 > **Hinweis**: rexQL nutzt ein eigenständiges API-Key System und ist **nicht** in REDAXO's Backend-Benutzerverwaltung integriert. Dies ermöglicht sichere Public Headless CMS Nutzung ohne Backend-Zugriff.
@@ -452,7 +452,7 @@ const query = `{
   }
 }`
 
-fetch('/index.php?rex-api-call=rexql_graphql', {
+fetch('/index.php?rex-api-call=rexql', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
@@ -470,7 +470,7 @@ fetch('/index.php?rex-api-call=rexql_graphql', {
 $query = '{ rexArticleList(limit: 5) { id name createdate } }';
 
 $ch = curl_init();
-curl_setopt($ch, CURLOPT_URL, "https://ihre-domain.de/index.php?rex-api-call=rexql_graphql");
+curl_setopt($ch, CURLOPT_URL, "https://ihre-domain.de/index.php?rex-api-call=rexql");
 curl_setopt($ch, CURLOPT_POST, 1);
 curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode(['query' => $query]));
 curl_setopt($ch, CURLOPT_HTTPHEADER, [

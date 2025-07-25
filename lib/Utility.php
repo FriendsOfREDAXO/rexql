@@ -5,15 +5,10 @@ namespace FriendsOfRedaxo\RexQL;
 use rex;
 use rex_yrewrite;
 use rex_addon;
-use rex_ydeploy;
-use rex_path;
 use rex_i18n;
 use rex_logger;
 use rex_log_file;
 
-/**
- * GraphQL Schema Builder für REDAXO
- */
 
 class Utility
 {
@@ -21,7 +16,7 @@ class Utility
   static protected $addon = null;
 
   /**
-   * Prüft, ob YRewrite aktiviert ist
+   * Checks if YRewrite is enabled
    *
    * @return bool
    */
@@ -31,7 +26,7 @@ class Utility
   }
 
   /**
-   * Generiert die Endpoint-URL für rexQL
+   * Generates the endpoint URL for rexQL
    *
    * @return string Endpoint URL
    */
@@ -42,7 +37,7 @@ class Utility
       self::$addon = rex_addon::get('rexql');
     }
 
-    // Custom endpoint URL aus Konfiguration
+    // Custom endpoint URL from configuration
     $endpointUrl = self::$addon->getConfig('endpoint_url', '');
     if ($endpointUrl !== '') {
       $baseUrl = self::isYRewriteEnabled() ? rtrim(rex_yrewrite::getFullPath(), '/') : rtrim(rex::getServer(), '/');
@@ -52,24 +47,24 @@ class Utility
       return $baseUrl . '/' . ltrim($endpointUrl, '/');
     }
 
-    // Standard API-Endpoint verwenden
+    // Default endpoint URL
     $baseUrl = self::isYRewriteEnabled() ? rtrim(rex_yrewrite::getFullPath(), '/') : rtrim(rex::getServer(), '/');
 
-    // Falls kein Server-URL verfügbar, verwende relativen Pfad
+    // If no server URL is available, use relative path
     if (empty($baseUrl) || $baseUrl === 'http://.') {
       $baseUrl = '';
     }
     if ($short) {
       return $baseUrl . '/api/rexql';
     }
-    return $baseUrl . '/index.php?rex-api-call=rexql_graphql';
+    return $baseUrl . '/index.php?rex-api-call=rexql';
   }
 
 
   /**
-   * Prüft, ob Authentifizierung erforderlich ist
+   * Checks if authentication is required
    *
-   * @return bool True, wenn im Entwicklungsmodus, sonst false
+   * @return bool True, when in development mode, otherwise false
    */
   public static function isAuthEnabled(): bool
   {
@@ -85,7 +80,7 @@ class Utility
   public static function validateDomainRestrictions(?ApiKey $apiKey): bool
   {
     if (!$apiKey) {
-      return true; // Keine API Key = keine Restrictions
+      return true; // No API key, no restrictions
     }
 
     $allowedDomains = $apiKey->getAllowedDomains();
@@ -121,7 +116,7 @@ class Utility
       return true; // No restrictions
     }
 
-    $clientIp = $_SERVER['REMOTE_ADDR'] ?? '';
+    $clientIp = self::getClientIp();
     if (empty($clientIp)) {
       return false;
     }
@@ -129,7 +124,7 @@ class Utility
     foreach ($allowedIps as $allowedIp) {
       $allowedIp = trim($allowedIp);
 
-      // Exact match oder CIDR-Notation
+      // Exact match or CIDR-Notation
       if ($clientIp === $allowedIp || self::isIpInRange($clientIp, $allowedIp)) {
         return true;
       }
@@ -139,19 +134,44 @@ class Utility
   }
 
   /**
-   * HTTPS-Beschränkungen validieren
+   * get client IP address
+   */
+  private static function getClientIp(): string
+  {
+    $headers = [
+      'HTTP_CF_CONNECTING_IP',     // Cloudflare
+      'HTTP_CLIENT_IP',
+      'HTTP_X_FORWARDED_FOR',
+      'HTTP_X_FORWARDED',
+      'HTTP_FORWARDED_FOR',
+      'HTTP_FORWARDED',
+      'REMOTE_ADDR'
+    ];
+
+    foreach ($headers as $header) {
+      if (!empty($_SERVER[$header])) {
+        $ips = explode(',', $_SERVER[$header]);
+        return trim($ips[0]);
+      }
+    }
+
+    return $_SERVER['REMOTE_ADDR'] ?? '';
+  }
+
+  /**
+   * Validate HTTPS restrictions
    */
   public static function validateHttpsRestrictions(ApiKey $apiKey): bool
   {
     if (!$apiKey->isHttpsOnly()) {
-      return true; // HTTPS nicht erforderlich
+      return true; // HTTPS not required
     }
 
     return isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
   }
 
   /**
-   * Prüft ob IP in einem CIDR-Bereich liegt
+   * Checks if an IP is within a CIDR range
    */
   public static function isIpInRange(string $ip, string $range): bool
   {
@@ -177,7 +197,7 @@ class Utility
     return '<div><button class="btn btn-xs btn-default" data-copy="' . $value . '" title="' . rex_i18n::msg('copy') . '"><i class="fa fa-copy"></i></button></div>';
   }
 
-  public static function deleteRexSystemLog(): void
+  public static function clearRexSystemLog(): void
   {
     rex_logger::close();
     $logFile = rex_logger::getPath();

@@ -45,7 +45,7 @@ $backendInfo = '
 <p>API-Schlüssel können in der <a href="' . rex_url::currentBackendPage(['page' => 'rexql/permissions']) . '">Berechtigungsverwaltung</a> erstellt und verwaltet werden.</p>
 
 <h3>Verfügbare Endpunkte</h3>
-<p><strong>Haupt-Endpoint:</strong> <code>' . rtrim(rex::getServer(), '/') . '/index.php?rex-api-call=rexql_graphql</code></p>
+<p><strong>Haupt-Endpoint:</strong> <code>' . rtrim(rex::getServer(), '/') . '/index.php?rex-api-call=rexql</code></p>
 
 <h3>Verfügbare Queries</h3>
 <p>Die folgenden Query-Typen sind verfügbar:</p>

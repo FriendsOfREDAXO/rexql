@@ -154,7 +154,7 @@ class Proxy extends rex_api_function
   private function forwardToRexQL(array $input, string $privateKey): string
   {
     $baseUrl = rex_addon::get('rexql')->getConfig('base_url', rex::getServer());
-    $url = rtrim($baseUrl, '/') . '/index.php?rex-api-call=rexql_graphql';
+    $url = rtrim($baseUrl, '/') . '/index.php?rex-api-call=rexql';
 
     $ch = curl_init();
     curl_setopt_array($ch, [

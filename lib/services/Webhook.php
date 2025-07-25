@@ -20,7 +20,7 @@ class Webhook
 
   public static function init()
   {
-    // Utility::deleteRexSystemLog();
+    // Utility::clearRexSystemLog();
 
     self::$addon = rex_addon::get('rexql');
     self::$isDevMode = self::$addon->getConfig('debug_mode', false);

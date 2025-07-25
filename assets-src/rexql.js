@@ -2,9 +2,7 @@ import { playground } from './playground'
 import {
   copyToClipboard,
   fallbackCopyToClipboard,
-  showNotification,
-  formatGraphQL,
-  validateGraphQL
+  showNotification
 } from './utilities'
 import { config } from './config'
 
@@ -14,21 +12,12 @@ window.rexQL = window.rexQL || {
   copyToClipboard,
   fallbackCopyToClipboard,
   showNotification,
-  formatGraphQL,
-  validateGraphQL,
   config
 }
 
-/**
- * Legacy-Funktionen für Kompatibilität
- */
-// window.copyToClipboard = function (text) {
-//   rexQL.copyToClipboard(text, 'In Zwischenablage kopiert')
-// }
-
 console.log('rexQL Addon rex:ready')
 
-// API-Schlüssel Copy-Buttons initialisieren
+// Initialize copy to clipboard buttons
 var copyButtons = document.querySelectorAll('[data-copy]')
 copyButtons.forEach(function (button) {
   button.addEventListener('click', function (e) {
@@ -38,12 +27,12 @@ copyButtons.forEach(function (button) {
   })
 })
 
-// Playground initialisieren (falls vorhanden)
+// Initialize playground if on playground page
 if (window.location.href.indexOf('page=rexql/playground') !== -1) {
   rexQL.playground.init()
 }
 
-// Konfiguration initialisieren (falls vorhanden)
+// Initialize config if on config page
 if (window.location.href.indexOf('page=rexql/config') !== -1) {
   rexQL.config.init()
 }

@@ -7,7 +7,7 @@ export const playground = {
     const clearButton = document.getElementById('clear-result')
     const resultPre = document.getElementById('query-result')
 
-    if (!queryTextarea || !executeButton) return // Nicht auf Playground-Seite
+    if (!queryTextarea || !executeButton) return // Not on playground page
 
     this.initCodemirror(queryTextarea)
 
@@ -49,7 +49,7 @@ export const playground = {
         .querySelector('[data-endpoint-url]')
         ?.getAttribute('data-endpoint-url') ||
       window.rexQLEndpointUrl ||
-      '/index.php?rex-api-call=rexql_graphql'
+      '/index.php?rex-api-call=rexql'
 
     fetch(endpointUrl, {
       method: 'POST',
@@ -108,16 +108,5 @@ export const playground = {
         textarea.value = content
       }
     })
-
-    // new EditorView({
-    //   parent: document.querySelector('#editor_focus'),
-    //   doc: 'I am focusable but not editable',
-    //   extensions: [
-    //     basicSetup,
-    //     EditorState.readOnly.of(true),
-    //     EditorView.editable.of(false),
-    //     EditorView.contentAttributes.of({ tabindex: '0' })
-    //   ]
-    // })
   }
 }

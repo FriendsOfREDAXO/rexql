@@ -31,7 +31,7 @@ class RexQLClient {
   async query(query, variables = null, operationName = null) {
     const endpoint = this.useProxy
       ? `${this.baseUrl}/index.php?rex-api-call=rexql_proxy`
-      : `${this.baseUrl}/index.php?rex-api-call=rexql_graphql`
+      : `${this.baseUrl}/index.php?rex-api-call=rexql`
 
     const headers = {
       'Content-Type': 'application/json'
