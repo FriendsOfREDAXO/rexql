@@ -12,7 +12,7 @@ class MediaCategoryResolver extends ResolverBase
     $this->relations = [
       'rex_media' =>
       [
-        'alias' => 'media',
+        'alias' => 'medias',
         'type' => 'hasMany',
         'localKey' => 'id',
         'foreignKey' => 'category_id',
