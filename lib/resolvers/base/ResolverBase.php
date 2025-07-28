@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace FriendsOfRedaxo\RexQL\Resolver;
 
+use BadMethodCallException;
 use Closure;
 use FriendsOfRedaxo\RexQL\Context;
 use FriendsOfRedaxo\RexQL\Resolver\Interface\Resolver;
@@ -13,15 +14,13 @@ use GraphQL\Error\Error;
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Error\UserError;
 use rex_sql;
-use BadMethodCallException;
 
-use function is_array;
-use function json_encode;
-use function is_callable;
-use function in_array;
-use function implode;
 use function array_map;
-use function array_merge_recursive;
+use function array_values;
+use function implode;
+use function in_array;
+use function is_array;
+use function is_callable;
 
 abstract class ResolverBase implements Resolver
 {
@@ -38,8 +37,8 @@ abstract class ResolverBase implements Resolver
   protected array $mainIdColumns = [];
   protected array $params = [];
   protected string $query = '';
-  protected array $relationColumns = [];
   protected array $relations = [];
+  protected array $relationColumns = [];
   protected array $root = [];
   protected string $selectClause = '';
   protected rex_sql $sql;
@@ -63,6 +62,10 @@ abstract class ResolverBase implements Resolver
       $this->info = $info;
       $this->args = $args;
       $this->context = $context;
+      $this->sql->reset();
+      $this->query = '';
+      $this->selectClause = '';
+      $this->joinClause = '';
       return $this->getData();
     };
   }
@@ -78,10 +81,12 @@ abstract class ResolverBase implements Resolver
     $fieldSelection = $this->info->getFieldSelection(5);
     $this->fields = $this->getFields($this->table, $fieldSelection);
 
+    // Utility::clearRexSystemLog();
     $query = $this->createQuery();
     if (empty($query)) {
       $this->error('Query could not be created. Please check your arguments and fields.');
     }
+
     $this->log('Base Resolver: query: ' . $query);
 
     try {
@@ -108,8 +113,8 @@ abstract class ResolverBase implements Resolver
     $offset = $this->args['offset'] ?? 0;
     $whereColumns = Utility::deconstruct($this->args, ['orderBy', 'where', 'limit', 'offset']);
 
+    $this->setJoinClause($this->table, $this->relations);
     $this->selectClause = implode(', ', $this->getSelectArray($this->fields));
-    $this->handleRelations($this->table, $this->relations);
 
     $whereClause = '';
     foreach ($whereColumns as $key => $value) {
@@ -150,167 +155,142 @@ abstract class ResolverBase implements Resolver
   protected function buildResult(array $result): array
   {
     $tmpMainArray = [];
-    $tmpRelationArray = [];
     $usedIds = [];
-    $mainIdColumn = $this->getMainId($this->table);
-
+    $mainIdColumn = $this->getMainIdColumn($this->table);
 
     foreach ($result as $row) {
       $entry = [];
       $id = $row["{$this->table}_{$mainIdColumn}"];
-      if (!empty($this->relations)) {
-        $relationResult = $this->buildRelationResult($row, $this->relations);
-        if ($relationResult === null) {
-          continue; // Skip if no relation result
-        }
-        $tmpRelationArray[$id][] = $relationResult;
-      }
+      if (!in_array($id, $usedIds)) {
+        $usedIds[] = $id;
 
-      if (in_array($id, $usedIds)) {
-        continue;
-      }
-      $usedIds[] = $id;
-
-      foreach ($this->fields[$this->table] as $column) {
-        $normalizedColumn = Utility::camelCaseToSnakeCase($column);
-        $columnName = "{$this->table}_{$normalizedColumn}";
-        if (isset($this->fieldsMap[$this->table]) && isset($this->fieldsMap[$this->table][$column])) {
-          $mappedColumn = Utility::camelCaseToSnakeCase($this->fieldsMap[$this->table][$column]);
-          $columnName = "{$this->table}_{$mappedColumn}";
-        }
-        if (isset($row[$columnName])) {
-          $entry[$column] = $row[$columnName];
-        }
-      }
-      if (isset($this->fieldResolvers[$this->table])) {
-        foreach ($this->fieldResolvers[$this->table] as $field => $resolver) {
-          if (in_array($field, $this->fields[$this->table]) && is_callable($resolver)) {
-            $entry[$field] = $resolver($row);
+        foreach ($this->fields[$this->table] as $column) {
+          $normalizedColumn = Utility::camelCaseToSnakeCase($column);
+          $columnName = "{$this->table}_{$normalizedColumn}";
+          if (isset($this->fieldsMap[$this->table]) && isset($this->fieldsMap[$this->table][$column])) {
+            $mappedColumn = Utility::camelCaseToSnakeCase($this->fieldsMap[$this->table][$column]);
+            $columnName = "{$this->table}_{$mappedColumn}";
+          }
+          if (isset($row[$columnName])) {
+            $entry[$column] = $row[$columnName];
           }
         }
+        if (isset($this->fieldResolvers[$this->table])) {
+          foreach ($this->fieldResolvers[$this->table] as $field => $resolver) {
+            if (in_array($field, $this->fields[$this->table]) && is_callable($resolver)) {
+              $entry[$field] = $resolver($row);
+            }
+          }
+        }
+        $tmpMainArray[$id]['data'] = $entry;
       }
-      $tmpMainArray[$id] = $entry;
+
+      if (empty($this->relations)) {
+        continue; // No relations to process
+      }
+
+      if (!isset($tmpMainArray[$id])) {
+        $tmpMainArray[$id] = [];
+      }
+
+      $relations = $this->buildRelationResult($this->table, $id, $this->relations, $row, $tmpMainArray);
+      $tmpMainArray[$id] = array_merge($tmpMainArray[$id], $relations[$id] ?? []);
     }
-    $this->log('Mapping tmpRelationArray for ' . json_encode($tmpRelationArray, JSON_PRETTY_PRINT));
 
     foreach ($tmpMainArray as $id => $entry) {
-      if (isset($tmpRelationArray[$id])) {
 
-        foreach ($tmpRelationArray[$id] as $relationEntries) {
-
-          // foreach ($relationEntries as $relationTypeName => $relationEntry) {
-          //   $hasMany = $relationEntry['type'] === 'hasMany';
-          //   unset($relationEntry['type']); // Remove type as it's not needed in the final result
-          //   if (!isset($entry[$relationTypeName])) {
-          //     $entry[$relationTypeName] = [];
-          //   }
-          //   if (is_array($relationEntry) && !empty($relationEntry)) {
-          //     if ($hasMany) {
-          //       $entry[$relationTypeName][] = $relationEntry;
-          //     } else {
-          //       $entry[$relationTypeName] = $relationEntry; // For hasOne relations, replace the entry
-          //     }
-          //   } elseif (is_array($relationEntry) && empty($relationEntry)) {
-          //     $entry[$relationTypeName] = []; // If no values, set to null
-          //   }
-          // }
-          $entry = $this->mapFinalRelationResult($relationEntries, $entry);
-        }
+      $resultArray[$id] = !empty($entry['data']) ? $entry['data'] : [];
+      if (isset($entry['relations'])) {
+        $resultArray[$id] = array_merge($resultArray[$id], $this->mapRelationResult($entry['relations']));
       }
-      $resultArray[] = $entry;
     }
 
-    return $resultArray;
+    return array_values($resultArray);
   }
 
-  protected function mapFinalRelationResult(array $entries, array &$entry): array
+  protected function buildRelationResult(string $rootTable, int $rootId, array $relations, array $row, &$entries): mixed
   {
 
-    foreach ($entries as $relationTypeName => $relationEntry) {
-      $hasMany = $relationEntry['type'] === 'hasMany';
-      unset($relationEntry['type']); // Remove type as it's not needed in the final result
-      if (!isset($entry[$relationTypeName])) {
-        $entry[$relationTypeName] = [];
-      }
-      if (is_array($relationEntry) && !empty($relationEntry)) {
-        if ($hasMany) {
-          $entry[$relationTypeName][] = $relationEntry;
-        } else {
-          $entry[$relationTypeName] = $relationEntry; // For hasOne relations, replace the entry
-        }
-      } elseif (is_array($relationEntry) && empty($relationEntry)) {
-        $entry[$relationTypeName] = []; // If no values, set to null
-      }
-      // $this->log('Mapping nested relations for ' . print_r($relationEntry, true));
-      // if (isset($relationEntry['relations']) && is_array($relationEntry['relations'])) {
-      //   $nestedResult = $this->mapFinalRelationResult($relationEntry['relations'], $entry[$relationTypeName]);
-      //   if (!empty($nestedResult)) {
-      //     $entry[$relationTypeName] = array_merge_recursive(
-      //       $entry[$relationTypeName],
-      //       $nestedResult
-      //     );
-      //   }
-      // }
-    }
-    return $entry;
-  }
-
-  protected function buildRelationResult(array $row, array $relations): mixed
-  {
-    $result = [];
-    foreach ($relations as $relationTable => $options) {
+    foreach ($relations as $table => $options) {
       $hasMany = $options['type'] === 'hasMany';
-      $relationTypeName = $options['alias'] ?? Utility::snakeCaseToCamelCase($relationTable);
-      $relationTableAlias = $options['alias'] ?? $relationTable;
-
-      if (!isset($this->fields[$relationTypeName])) {
+      $alias = $options['alias'] ?? $table;
+      $typeName = Utility::snakeCaseToCamelCase($alias);
+      $fields = isset($this->fields[$typeName]) ? $this->fields[$typeName] : null;
+      if (!$fields) {
+        continue; // Skip if no fields are defined for this relation
+      }
+      $mainIdColumn = $this->getMainIdColumn($table);
+      $identifier = "{$typeName}_{$options['localKey']}";
+      $identifierMain = "{$typeName}_{$mainIdColumn}";
+      $localId = isset($row[$identifier]) ? $row[$identifier] : $row[$identifierMain];
+      if (!$hasMany && isset($entries[$rootId]['relations'][$typeName])) {
+        // If it's a hasOne relation and already exists, skip to avoid overwriting
         continue;
       }
-      $relationFields = $this->fields[$relationTypeName];
-      $relationResult = $hasMany ? [] : null;
-      $hasValue = false;
-      foreach ($relationFields as $column) {
-        $columnName = "{$relationTableAlias}_{$column}";
+      $entry = [];
+      foreach ($fields as $field) {
+        $columnName = "{$alias}_" . Utility::camelCaseToSnakeCase($field);
         if (isset($row[$columnName])) {
-          $relationResult[$column] = $row[$columnName];
-          $hasValue = true;
+          $entry[$field] = $row[$columnName];
         }
       }
-      if (!$hasValue && !$hasMany) {
-        return null; // If no values, set to null for hasOne relations
+      if (empty($entry)) {
+        continue; // Skip if no fields are defined for this relation
       }
-      $relationResult['type'] = $options['type']; // Add type for easier identification
-      $result[$relationTypeName] = $relationResult;
-      if (isset($options['relations']) && is_array($options['relations'])) {
-        $nestedResult = $this->buildRelationResult($row, $options['relations']);
-        $this->log('Building nested relations for ' . $relationTypeName . '; result:' . print_r($nestedResult, true));
-        if (!empty($nestedResult)) {
-          $result[$relationTypeName] = array_merge_recursive(
-            $result[$relationTypeName],
-            $nestedResult
-          );
-          // foreach ($nestedResult as $nestedRelationTypeName => $nestedRelationEntry) {
-          //   $nestedHasMany = $nestedRelationEntry['type'] === 'hasMany';
-          //   if (!isset($result[$relationTypeName])) {
-          //     $result[$relationTypeName] = $nestedHasMany ? [] : null;
-          //   }
-          //   if (!isset($result[$relationTypeName][$nestedRelationTypeName])) {
-          //     $result[$relationTypeName][$nestedRelationTypeName] = [];
-          //   }
-          //   if ($nestedHasMany) {
-          //     $result[$relationTypeName][$nestedRelationTypeName][] = $nestedRelationEntry;
-          //   } else {
-          //     $result[$relationTypeName][$nestedRelationTypeName] = $nestedRelationEntry; // For hasOne relations, replace the entry
-          //   }
-          // }
+      $entries[$rootId]['relations'][$typeName][$localId]['data'] = $entry; // Add the relation entry to the main array 
+      $entries[$rootId]['relations'][$typeName][$localId]['type'] = $options['type'];
+
+      /*
+      * nested relations
+      */
+
+      if (empty($options['relations']) || empty($entry)) {
+        continue; // No relations to process
+      }
+
+      $nestedRelations = $this->buildRelationResult(
+        $alias,
+        $localId,
+        $options['relations'],
+        $row,
+        $entries[$rootId]['relations'][$typeName]
+      );
+      $entries[$rootId]['relations'][$typeName][$localId] = array_merge(
+        $entries[$rootId]['relations'][$typeName][$localId],
+        $nestedRelations[$localId] ?? []
+      );
+
+      /* 
+      * nested relations end
+      */
+    }
+
+    return $entries;
+  }
+
+  protected function mapRelationResult(array $relationArray): array
+  {
+    $mapped = [];
+    if (empty($relationArray)) {
+      return $mapped; // Return empty array if no relation data
+    }
+    foreach ($relationArray as $relationType => $relation) {
+      foreach ($relation as $id => $relationData) {
+        if ($relationData['type'] === 'hasOne') {
+          $mapped[$relationType] = !empty($relationData['data']) ? $relationData['data'] : [];
+        } else {
+          $mapped[$relationType][$id] = !empty($relationData['data']) ? $relationData['data'] : [];
+        }
+        if (isset($relationData['relations'])) {
+          $mapped[$relationType][$id] = array_merge($mapped[$relationType][$id], $this->mapRelationResult($relationData['relations']));
         }
       }
     }
 
-    return $result;
+    return $mapped;
   }
 
-  protected function handleRelations(string $table, array $relations): void
+  protected function setJoinClause(string $table, array $relations): void
   {
 
     foreach ($relations as $relation => $options) {
@@ -319,11 +299,19 @@ abstract class ResolverBase implements Resolver
         continue;
       }
       $alias = $options['alias'] ?? $relation;
+      if (!isset($this->fields[$alias])) {
+        continue;
+      }
       $relationAlias = $this->findRelationByTable($this->relations, $table);
       $tableAlias = $relationAlias ? $relationAlias['alias'] : $table;
+      if (!isset($this->fields[$tableAlias])) {
+        $tableAlias = Utility::camelCaseToSnakeCase($table);
+      }
       $this->joinClause .= " LEFT JOIN {$relation} {$alias} ON {$tableAlias}.`{$options['localKey']}` = {$alias}.`{$options['foreignKey']}`";
+      $this->relationColumns[] = "{$tableAlias}.`{$options['localKey']}` AS `{$tableAlias}_{$options['localKey']}`";
+      $this->relationColumns[] = "{$alias}.`{$options['foreignKey']}` AS `{$alias}_{$options['foreignKey']}`";
       if (isset($options['relations']) && is_array($options['relations'])) {
-        $this->handleRelations($relation, $options['relations']);
+        $this->setJoinClause($relation, $options['relations']);
       }
     }
   }
@@ -339,7 +327,6 @@ abstract class ResolverBase implements Resolver
       $table = $relation ? Utility::camelCaseToSnakeCase($relation['key']) : $normalizedTable;
       $alias = $relation && isset($relation['alias']) ? $relation['alias'] : $normalizedTable;
       foreach ($columnsList as $column) {
-
         if (in_array($column, $excludeFieldsFromSQL))
           continue; // Skip as field is handled separately 
         if (isset($this->fieldsMap[$table]) && isset($this->fieldsMap[$table][$column])) {
@@ -349,7 +336,7 @@ abstract class ResolverBase implements Resolver
         $columns[] = "{$alias}.`{$column}` AS `{$alias}_{$column}`";
       }
       // Ensure main 'id' is always included
-      $mainIdColumn = $this->getMainId($table);
+      $mainIdColumn = $this->getMainIdColumn($table);
       if (!in_array($mainIdColumn, $columnsList)) {
         $columns[] = "{$alias}.`{$mainIdColumn}` AS `{$alias}_{$mainIdColumn}`";
       }
@@ -361,10 +348,16 @@ abstract class ResolverBase implements Resolver
         }
       }
     }
+    // add relation data columns
+    foreach ($this->relationColumns as $relationColumn) {
+      if (!in_array($relationColumn, $columns)) {
+        $columns[] = $relationColumn;
+      }
+    }
     return $columns;
   }
 
-  protected function getMainId(string $table): string
+  protected function getMainIdColumn(string $table): string
   {
     $mainIdColumn = 'id';
     if (isset($this->mainIdColumns[$table]) && !empty($this->mainIdColumns[$table])) {
