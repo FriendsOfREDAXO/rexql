@@ -38,7 +38,7 @@ class RoutesResolver extends ResolverBase
       $this->table => [
         'routeType' => fn($row): string => $row['rex_article_catpriority'] !== 0 ? 'category' : 'article',
         'slug' => function ($row): string {
-          $clangId = isset($row['rex_article_clang_id']) ? $row['rex_article_clang_id'] : ($this->args['clangId'] ?: 1);
+          $clangId = isset($row['rex_article_clang_id']) ? $row['rex_article_clang_id'] : (isset($this->args['clangId']) ? $this->args['clangId'] : 1);
           $url = rex_getUrl($row['rex_article_id'], $clangId);
           $slug = parse_url($url, PHP_URL_PATH);
           return trim($slug, '/');
