@@ -2,7 +2,7 @@
 # nested relations are handled automatically by the resolver (currently only 2 levels deep - WIP)
 type Query {
   # Retrieves a single article by ID, optionally filtered by language and content type
-  article(id: ID!, clangId: Int, ctypeId: Int): rexArticle!
+  article(id: ID!, clangId: Int, ctypeId: Int): article!
 
   # Retrieves a list of articles with optional filters for language, content type, category, status, and pagination
   articles(
@@ -14,17 +14,37 @@ type Query {
     orderBy: String
     offset: Int
     limit: Int
-  ): [rexArticle]!
+  ): [article]!
 
-  # Retrieves all routes defined in the system, if URL package is installed,
-  # this will return the routes defined in the URL package
-  routes: [route]!
+  # Retrieves a single config by namespace and key
+  config(namespace: String!, key: String!): config!
 
-  # Retrieves a single article slice by ID
-  slice(id: ID!): rexArticleSlice
+  # Retrieves all configs for a given namespace
+  configs(namespace: String!): [config]!
 
-  # Retrieves slices of an article by article ID, optionally filtered by language and content type
-  slices(articleId: ID!, clangId: Int, ctypeId: Int): [rexArticleSlice]
+  # Retrieves a single language by ID
+  language(id: ID!): language!
+
+  # Retrieves all languages
+  languages: [language]!
+
+  # Retrieves a single media item by ID
+  media(id: ID!): media!
+
+  # Retrieves a list of media items filtered by category ID
+  medias(categoryId: Int): [media]!
+
+  # Retrieves a single media category by ID
+  mediaCategory(id: ID!): mediaCategory!
+
+  # Retrieves media categories, optionally filtered by parent ID or path
+  mediaCategories(parentId: Int, path: String): [mediaCategory]!
+
+  # Retrieves a single module by ID or key
+  module(id: ID, key: String): module!
+
+  # Retrieves all modules
+  modules: [module]!
 
   # Retrieves a navigation structure based on category ID, language ID, depth, and whether to nest items
   navigation(
@@ -34,63 +54,33 @@ type Query {
     nested: Boolean
   ): [navigationItem]!
 
+  # Retrieves all routes defined in the system, if URL package is installed,
+  # this will return the routes defined in the URL package
+  routes: [route]!
+
+  # Retrieves a single article slice by ID
+  slice(id: ID!): slice
+
+  # Retrieves slices of an article by article ID, optionally filtered by language and content type
+  slices(articleId: ID!, clangId: Int, ctypeId: Int): [slice]
+
   # Retrieves system information, such as server details, version, and domain settings
-  rexSystem(host: String): rexSystem!
-
-  # Retrieves a single media item by ID
-  media(id: ID!): rexMedia!
-
-  # Retrieves a list of media items filtered by category ID
-  medias(categoryId: Int): [rexMedia]!
-
-  # Retrieves a single media category by ID
-  mediaCategory(id: ID!): rexMediaCategory!
-
-  # Retrieves media categories, optionally filtered by parent ID or path
-  mediaCategories(parentId: Int, path: String): [rexMediaCategory]!
-
-  # Retrieves a single language by ID
-  language(id: ID!): rexLanguage!
-
-  # Retrieves all languages
-  languages: [rexLanguage]!
-
-  # Retrieves a single config by namespace and key
-  config(namespace: String!, key: String!): rexConfig!
-
-  # Retrieves all configs for a given namespace
-  configs(namespace: String!): [rexConfig]!
-
-  # Retrieves a single module by ID or key
-  module(id: ID, key: String): rexModule!
-
-  # Retrieves all modules
-  modules: [rexModule]!
+  system(host: String): system!
 
   # Retrieves a single template by ID or key
-  template(id: ID, key: String): rexTemplate
+  template(id: ID, key: String): template
 
   # Retrieves all templates, optionally filtered by active status
-  templates(active: Boolean): [rexTemplate]!
+  templates(active: Boolean): [template]!
+
+  # Retrieves a single wildcard by wildcard string, language ID, and ID
+  wildcard(wildcard: String, clangId: Int, id: ID): wildcard!
+
+  # Retrieves all wildcards, optionally filtered by language ID
+  wildcards(clangId: Int): [wildcard]!
 }
 
-type route {
-  id: ID
-  parentId: Int
-  routeType: String
-  status: Boolean
-  slug: String
-  name: String
-  description: String
-  clangId: Int
-  startarticle: Boolean
-  createdate: String
-  updatedate: String
-  image: String
-  index: Boolean
-}
-
-type rexArticle {
+type article {
   id: ID!
   name: String
   slug: String
@@ -110,11 +100,80 @@ type rexArticle {
   yrewriteDescription: String
   yrewriteImage: String
   yrewriteIndex: Boolean
-  slices: [rexArticleSlice]
-  template: rexTemplate
+  slices: [slice]
+  template: template
 }
 
-type rexArticleSlice {
+type config {
+  namespace: String
+  key: String
+  value: String
+}
+
+type language {
+  id: ID!
+  name: String
+  code: String
+  status: Boolean
+}
+
+type media {
+  id: ID!
+  filename: String
+  name: String
+  categoryId: Int
+  filesize: Int
+  width: Int
+  height: Int
+  filetype: String
+  focus: String
+  createdate: String
+  updatedate: String
+  category: mediaCategory
+}
+
+type mediaCategory {
+  id: ID!
+  name: String
+  parentId: Int
+  createdate: String
+  updatedate: String
+  medias: [media]
+  children: [mediaCategory]
+}
+
+type module {
+  id: ID
+  key: String
+  name: String
+  slices: [slice]
+}
+
+type navigationItem {
+  id: ID!
+  name: String
+  parentId: Int
+  slug: String
+  children: [navigationItem]
+}
+
+type route {
+  id: ID
+  parentId: Int
+  routeType: String
+  status: Boolean
+  slug: String
+  name: String
+  description: String
+  clangId: Int
+  startarticle: Boolean
+  createdate: String
+  updatedate: String
+  image: String
+  index: Boolean
+}
+
+type slice {
   id: ID
   ctypeId: Int
   clangId: Int
@@ -182,18 +241,11 @@ type rexArticleSlice {
   linklist10: String
   createdate: String
   updatedate: String
-  module: rexModule
-  article: rexArticle
+  module: module
+  article: article
 }
 
-type rexModule {
-  id: ID
-  key: String
-  name: String
-  slices: [rexArticleSlice]
-}
-
-type rexSystem {
+type system {
   server: String
   serverName: String
   errorEmail: String
@@ -205,58 +257,12 @@ type rexSystem {
   domainUrl: String
   domainStartId: Int
   domainNotfoundId: Int
-  domainLanguages: [rexLanguage]
-  domainDefaultLanguage: rexLanguage
+  domainLanguages: [language]
+  domainDefaultLanguage: language
   startClangHidden: Boolean
 }
 
-type rexLanguage {
-  id: ID!
-  name: String
-  code: String
-  status: Boolean
-}
-
-type navigationItem {
-  id: ID!
-  name: String
-  parentId: Int
-  slug: String
-  children: [navigationItem]
-}
-
-type rexMedia {
-  id: ID!
-  filename: String
-  name: String
-  categoryId: Int
-  filesize: Int
-  width: Int
-  height: Int
-  filetype: String
-  focus: String
-  createdate: String
-  updatedate: String
-  category: rexMediaCategory
-}
-
-type rexMediaCategory {
-  id: ID!
-  name: String
-  parentId: Int
-  createdate: String
-  updatedate: String
-  media: [rexMedia]
-  children: [rexMediaCategory]
-}
-
-type rexConfig {
-  namespace: String
-  key: String
-  value: String
-}
-
-type rexTemplate {
+type template {
   id: ID!
   name: String
   key: String
@@ -264,5 +270,14 @@ type rexTemplate {
   createdate: String
   updatedate: String
   content: String
-  articles: [rexArticle]
+  articles: [article]
+}
+
+type wildcard {
+  id: ID!
+  wildcard: String
+  value: String
+  clangId: Int
+  createdate: String
+  updatedate: String
 }

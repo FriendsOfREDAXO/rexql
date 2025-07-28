@@ -13,6 +13,7 @@ use FriendsOfRedaxo\RexQL\Resolver\LanguageResolver;
 use FriendsOfRedaxo\RexQL\Resolver\ConfigResolver;
 use FriendsOfRedaxo\RexQL\Resolver\ModulesResolver;
 use FriendsOfRedaxo\RexQL\Resolver\TemplatesResolver;
+use FriendsOfRedaxo\RexQL\Resolver\WildcardResolver;
 
 class RootResolvers
 {
@@ -46,6 +47,9 @@ class RootResolvers
         'modules' => (new ModulesResolver())->resolve(),
         'template' => (new TemplatesResolver())->resolve(),
         'templates' => (new TemplatesResolver())->resolve(),
+        'wildcard' => (new WildcardResolver())->resolve(),
+        'wildcards' => (new WildcardResolver())->resolve(),
+
       ],
       'mutation' => [],
       'subscription' => [],
