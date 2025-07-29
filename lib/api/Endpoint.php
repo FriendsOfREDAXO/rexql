@@ -31,7 +31,6 @@ class Endpoint extends rex_api_function
 
   protected rex_addon $addon;
   protected bool $debugMode = false;
-  protected bool $isIntrospectionEnabled = false;
   protected float $startTime = 0;
   protected float $startMemory = 0;
   protected ?ApiKey $apiKey = null;
@@ -87,10 +86,9 @@ class Endpoint extends rex_api_function
 
     $this->addon = rex_addon::get('rexql');
     $this->debugMode = $this->addon->getConfig('debug_mode', false);
-    $this->isIntrospectionEnabled = $this->addon->getConfig('introspection_enabled', false);
 
     // Set CORS headers
-    $this->setCorsHeaders($this->addon);
+    $this->setCorsHeaders();
     $this->handlePreflightRequest();
 
     $this->startTime = microtime(true);
@@ -187,7 +185,7 @@ class Endpoint extends rex_api_function
   /**
    * Set CORS headers based on addon configuration
    */
-  protected function setCorsHeaders(rex_addon $addon): void
+  protected function setCorsHeaders(): void
   {
     $allowedOrigins = $this->addon->getConfig('cors_allowed_origins', ['*']);
     $allowedMethods = $this->addon->getConfig('cors_allowed_methods', ['GET', 'POST', 'OPTIONS']);

@@ -23,6 +23,7 @@ use GraphQL\Validator\Rules\QueryComplexity;
 use GraphQL\Validator\Rules\QueryDepth;
 use rex_addon;
 use rex_api_exception;
+use rex_backend_login;
 use rex_dir;
 use rex_extension;
 use rex_extension_point;
@@ -43,7 +44,7 @@ class RexQL
   protected Schema $schema;
 
 
-  public function __construct(rex_addon $addon, bool $debugMode = false)
+  public function __construct(rex_addon $addon, bool $debugMode = false, bool $skipConfigCheck = false)
   {
     $this->addon = $addon;
     $this->debugMode = $debugMode;
@@ -52,13 +53,15 @@ class RexQL
     self::$fieldResolvers = (new FieldResolvers())->get();
     self::$rootResolvers = (new RootResolvers())->get();
 
-    $this->checkConfig();
+    if (!$skipConfigCheck) {
+      $this->checkConfig();
+    }
 
     $this->context = new Context();
     $this->context->set('debugMode', $debugMode);
     $this->context->set('apiKey', $this->apiKey ?? null);
     $this->context->set('cachePath', $addon->getCachePath());
-    $this->context->set('cache', false);
+    $this->context->set('cache', $this->addon->getConfig('cache_enabled', true));
 
     $this->schema = $this->generateSchema();
   }
@@ -88,10 +91,10 @@ class RexQL
         }
         $this->apiKey->logUsage();
       }
-    } else {
-      // Dev mode: Log for transparency
-      if ($this->debugMode)
-        Logger::log('rexQL: API access unrestricted');
+    } else if ($this->debugMode) {
+      Logger::log('rexQL: API access unrestricted');
+    } else if (rex_backend_login::hasSession()) {
+      return;
     }
   }
 

@@ -9,6 +9,12 @@ use rex_i18n;
 use rex_logger;
 use rex_log_file;
 
+enum EndpointType: string
+{
+  case Endpoint = 'rexql';
+  case Proxy = 'rexql_proxy';
+  case Auth = 'rexql_auth';
+}
 
 class Utility
 {
@@ -30,7 +36,7 @@ class Utility
    *
    * @return string Endpoint URL
    */
-  public static function getEndpointUrl(bool $short = false): string
+  public static function getEndpointUrl(EndpointType $type = EndpointType::Endpoint, bool $short = false): string
   {
 
     if (self::$addon === null) {
@@ -38,11 +44,11 @@ class Utility
     }
 
     // Custom endpoint URL from configuration
-    $endpointUrl = self::$addon->getConfig('endpoint_url', '');
+    $endpointUrl = self::$addon->getConfig($type->value . '_url', '');
     if ($endpointUrl !== '') {
       $baseUrl = self::isYRewriteEnabled() ? rtrim(rex_yrewrite::getFullPath(), '/') : rtrim(rex::getServer(), '/');
       if ($short) {
-        return $baseUrl . '/api/rexql';
+        return $baseUrl . '/api/' . $type->value;
       }
       return $baseUrl . '/' . ltrim($endpointUrl, '/');
     }
@@ -55,9 +61,9 @@ class Utility
       $baseUrl = '';
     }
     if ($short) {
-      return $baseUrl . '/api/rexql';
+      return $baseUrl . '/api/' . $type->value;
     }
-    return $baseUrl . '/index.php?rex-api-call=rexql';
+    return $baseUrl . '/index.php?rex-api-call=' . $type->value;
   }
 
 

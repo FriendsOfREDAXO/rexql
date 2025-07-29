@@ -1,6 +1,7 @@
 rexql_title = rexQL - GraphQL API
 rexql_description = GraphQL API for REDAXO CMS
 rexql_overview = Overview
+rexql_one_per_line = One per line.
 
 # Navigation
 rexql_nav_overview = Overview
@@ -27,12 +28,18 @@ rexql_config_max_query_depth = Maximum Query Depth
 rexql_config_advanced = Advanced Settings
 rexql_config_introspection_enabled = Enable Introspection
 rexql_config_debug_mode = Debug Mode
-rexql_config_cors_origins = CORS: Allowed Origins (one per line)
-rexql_config_cors_methods = CORS: Allowed HTTP Methods
-rexql_config_cors_headers = CORS: Allowed Headers
 rexql_config_saved = Configuration saved
-rexql_config_cache_queries = Cache API Results
+rexql_config_cache_enabled = Cache active
 rexql_config_allowed_tables = Available Tables
+rexql_config_cors = CORS Configuration
+rexql_config_cors_allowed_origins = CORS: Allowed Origins
+rexql_config_cors_allowed_origins_hint = Enter allowed origins for CORS requests. Use * to allow all origins (not recommended for production).
+rexql_config_cors_allowed_methods = CORS: Allowed HTTP Methods
+rexql_config_cors_allowed_methods_hint = Select HTTP methods that are allowed for CORS requests. GET, POST, and OPTIONS recommended.
+rexql_config_cors_allowed_headers = CORS: Allowed Headers
+rexql_config_cors_allowed_headers_hint = Headers that are allowed in CORS requests. These are commonly needed for GraphQL APIs.
+rexql_config_headless_security_notice = Security through domain/IP restrictions and CORS
+
 
 # Table Configuration
 rexql_config_tables = Table Configuration
@@ -118,14 +125,6 @@ rexql_playground_query_examples = Example Queries
 rexql_playground_api_key_placeholder = Your API Key
 rexql_playground_execute = Execute Query
 
-# Public Headless CMS
-rexql_config_cors = CORS Configuration
-rexql_config_cors_allowed_origins = CORS: Allowed Origins (one per line)
-rexql_config_cors_allowed_methods = CORS: Allowed HTTP Methods
-rexql_config_cors_allowed_headers = CORS: Allowed Headers (one per line)
-rexql_config_public_headless_cms = Public Headless CMS
-rexql_config_public_headless_cms_desc = Optimized for public frontend apps without user authentication
-rexql_config_headless_security_notice = Security through domain/IP restrictions and CORS
 
 # API Key Management
 rexql_key_for_headless_cms = For Public Headless CMS
@@ -145,7 +144,6 @@ rexql_cache_status = Cache Status
 rexql_cache_actions = Cache Actions
 rexql_cache_help = Refresh the schema cache when you install/uninstall addons or modify YForm table structures.
 rexql_cache_refreshed = Cache successfully refreshed
-rexql_schema_version = Schema Version
 rexql_query_caching = Query Caching
 rexql_schema_cache_files = Schema Cache Files
 rexql_query_cache_files = Query Cache Files

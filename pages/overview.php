@@ -4,6 +4,9 @@
  * rexQL Übersichtsseite
  */
 
+use FriendsOfRedaxo\RexQL\EndpointType;
+use FriendsOfRedaxo\RexQL\Utility;
+
 $addon = rex_addon::get('rexql');
 
 $apiEnabled = $addon->getConfig('endpoint_enabled', false);
@@ -95,23 +98,77 @@ $content .= $fragment->parse('core/page/section.php');
 
 // Endpoint-URL anzeigen wenn aktiviert
 if ($apiEnabled) {
-    $endpointUrl = FriendsOfRedaxo\RexQL\Utility::getEndpointUrl();
-    $endpointUrlShort = FriendsOfRedaxo\RexQL\Utility::getEndpointUrl(true);
+    $endpointHtml = '';
+    $endpointHtml .= '<thead><tr>
+        <td>&nbsp;</td>
+        <td>
+            <strong>Standard</strong>
+        </td>
+        <td>
+            <b>Kurz</b><br />
+        </td>
+    </tr></thead>';
+    $endpointUrl = Utility::getEndpointUrl(EndpointType::Endpoint);
+    $endpointUrlShort = Utility::getEndpointUrl(EndpointType::Endpoint, true);
+    $endpointHtml .= '<tbody>';
+    $endpointHtml .= '<tr>
+        <td>
+            <strong>Endpoint</strong>
+        </td>
+        <td>
+            <div style="display: flex; gap: 10px;">
+                <span>' . $endpointUrl . '</span>
+                ' . Utility::copyToClipboardButton($endpointUrl) . '
+            </div>
+        </td>
+        <td>
+            <div style="display: flex; gap: 10px;">
+                <span>' . $endpointUrlShort . '</span>
+                ' . Utility::copyToClipboardButton($endpointUrlShort) . '
+            </div>
+        </td>
+    </tr>';
+    $endpointUrl = Utility::getEndpointUrl(EndpointType::Auth);
+    $endpointUrlShort = Utility::getEndpointUrl(EndpointType::Auth, true);
+    $endpointHtml .= '<tr>
+        <td>
+            <strong>Auth</strong>
+        </td>
+        <td>
+            <div style="display: flex; gap: 10px;">
+                <span>' . $endpointUrl . '</span>
+                ' . Utility::copyToClipboardButton($endpointUrl) . '
+            </div>
+        </td>
+        <td>
+            <div style="display: flex; gap: 10px;">
+                <span>' . $endpointUrlShort . '</span>
+                ' . Utility::copyToClipboardButton($endpointUrlShort) . '
+            </div>
+        </td>
+    </tr>';
+    $endpointUrl = Utility::getEndpointUrl(EndpointType::Proxy);
+    $endpointUrlShort = Utility::getEndpointUrl(EndpointType::Proxy, true);
+    $endpointHtml .= '<tr>
+        <td>
+            <strong>Proxy</strong>
+        </td>
+        <td>
+            <div style="display: flex; gap: 10px;">
+                <span>' . $endpointUrl . '</span>
+                ' . Utility::copyToClipboardButton($endpointUrl) . '
+            </div>
+        </td>
+        <td>
+            <div style="display: flex; gap: 10px;">
+                <span>' . $endpointUrlShort . '</span>
+                ' . Utility::copyToClipboardButton($endpointUrlShort) . '
+            </div>
+        </td>
+    </tr>';
+    $endpointHtml .= '</tbody>';
 
-    $endpointHtml = '
-    <div style="display: flex; gap: 10px;">
-        <div style="display: flex; gap: 10px; padding: 8px;">
-            <span>' . $endpointUrlShort . '</span>
-            ' . FriendsOfRedaxo\RexQL\Utility::copyToClipboardButton($endpointUrlShort) . '
-        </div>
-        <div style="display: flex; gap: 10px; padding: 8px;">
-            <span>' . $endpointUrl . '</span>
-            ' . FriendsOfRedaxo\RexQL\Utility::copyToClipboardButton($endpointUrl) . '
-        </div>
-    </div>
-    <h3><strong>Unterstützte HTTP-Methoden:</strong> GET, POST</h3>
-<p><strong>Content-Type:</strong> application/json oder application/x-www-form-urlencoded</p>
-';
+    $endpointHtml = '<table class="table table-borderless table-condensed table-hover">' . $endpointHtml . '</table>';
 
     $fragment = new rex_fragment();
     $fragment->setVar('title', 'GraphQL Endpoint');
@@ -151,7 +208,29 @@ if ($apiEnabled) {
     $fragment->setVar('title', 'Authentifizierung');
     $fragment->setVar('body', $authHtml, false);
     $content .= $fragment->parse('core/page/section.php');
+
+
+    $infosHtml = '<h3 style="margin-top:0">Unterstützte HTTP-Methoden:</h3>
+    <p>GET, POST, OPTIONS</p>
+    <h3>Content-Type:</h3>
+    <p>application/json oder application/x-www-form-urlencoded</p>
+';
+
+    $infosHtml .= '<h3>Kurze URL-Varianten:</h3>
+    <p>Anpassung an .htaccess bzw. Nginx Conf nötig!</p>
+<p><strong>Apache .htaccess:</strong></p>
+<pre><code>RewriteRule ^api/rexql(.*) %{ENV:BASE}/index.php?rex-api-call=rexql$1&%{QUERY_STRING} [L]</code></pre>
+<p><strong>Nginx Conf:</strong></p>
+<pre><code>location /api/rexql { 
+    rewrite ^/api/rexql(.*) /index.php?rex-api-call=rexql$1 last; 
+}</code></pre>';
+
+    $fragment = new rex_fragment();
+    $fragment->setVar('title', 'Detailinformationen');
+    $fragment->setVar('body', $infosHtml, false);
+    $content .= $fragment->parse('core/page/section.php');
 }
+
 
 
 echo $content;

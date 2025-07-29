@@ -32,29 +32,23 @@ rex_api_function::register('rexql_auth', 'FriendsOfRedaxo\RexQL\Api\Auth');
 // Set default configuration
 if (!$this->hasConfig()) {
   $this->setConfig([
-    'schema_version' => 1,
+    'rexql_url' => '/index.php?rex-api-call=rexql',
+    'rexql_proxy_url' => '/index.php?rex-api-call=rexql_proxy',
+    'rexql_auth_url' => '/index.php?rex-api-call=rexql_auth',
     'endpoint_enabled' => false,
     'proxy_enabled' => false,
+    'cache_enabled' => true,
     'require_authentication' => true,
-    'allow_public_access_in_dev' => true,     // In Dev-Modus ohne Auth erlauben
-    'allowed_tables' => [],
-    'rate_limit' => 100,
     'max_query_depth' => 10,
-    'introspection_enabled' => false,
     'cors_allowed_origins' => ['*'],          // CORS Origins
     'cors_allowed_methods' => ['GET', 'POST', 'OPTIONS'],
     'cors_allowed_headers' => ['Content-Type', 'Authorization', 'X-API-KEY', 'X-Public-Key'],
-    'valid_session_tokens' => [],             // For simple session tokens
     'test_users' => [                         // For test authentication
       'testuser' => 'testpass',
       'demo' => 'demo123'
     ],
     'debug_mode' => false,
   ]);
-}
-// Set endpoint URL if not configured
-if (!$this->getConfig('endpoint_url')) {
-  $this->setConfig('endpoint_url', '/index.php?rex-api-call=rexql');
 }
 
 // Register extensions - only for existing extension points

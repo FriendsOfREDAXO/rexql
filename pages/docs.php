@@ -51,23 +51,6 @@ $backendInfo = '
 <p>Die folgenden Query-Typen sind verfügbar:</p>
 <ul>';
 
-// Dynamisch verfügbare Tabellen anzeigen
-$allowedTables = $addon->getConfig('allowed_tables', []);
-if (!empty($allowedTables)) {
-  foreach ($allowedTables as $table) {
-    $typeName = str_replace(['rex_', '_'], ['', ''], ucwords($table, '_'));
-    $queryName = lcfirst($typeName);
-    $listQueryName = $queryName . 's';
-
-    $backendInfo .= '<li><code>' . $queryName . '</code> - Einzelnen Datensatz aus ' . $table . ' abfragen</li>';
-    $backendInfo .= '<li><code>' . $listQueryName . '</code> - Liste von Datensätzen aus ' . $table . ' abfragen</li>';
-  }
-} else {
-  $backendInfo .= '<li><em>Keine Tabellen freigegeben. Konfigurieren Sie die verfügbaren Tabellen in den <a href="' . rex_url::currentBackendPage(['page' => 'rexql/config']) . '">Einstellungen</a>.</em></li>';
-}
-
-$backendInfo .= '</ul>';
-
 $fragment = new rex_fragment();
 $fragment->setVar('title', 'Backend-Integration');
 $fragment->setVar('body', $backendInfo, false);

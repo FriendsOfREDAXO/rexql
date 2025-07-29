@@ -1,5 +1,7 @@
 <?php
 
+use \FriendsOfRedaxo\RexQL\RexQL;
+
 /**
  * rexQL Hauptseite
  */
@@ -17,9 +19,9 @@ $path = rex_path::frontend(rex_path::absolute($scriptUrl));
 $mtime = @filemtime($path);
 $scriptUrl .= $mtime ? '?buster=' . $mtime : '';
 
-$api = new \FriendsOfRedaxo\RexQL\RexQL($this, true);
+$api = new RexQL($this, true, true);
 $schemaFilepath = $this->getCachePath('generated.schema.graphql');
-$sdl = \FriendsOfRedaxo\RexQL\RexQL::loadSdlFile($schemaFilepath);
+$sdl = RexQL::loadSdlFile($schemaFilepath);
 ?>
 <script nonce="<?= rex_response::getNonce() ?>">
   var schema = `<?= $sdl ?>`;
