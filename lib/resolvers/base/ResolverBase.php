@@ -66,6 +66,7 @@ abstract class ResolverBase implements Resolver
       $this->query = '';
       $this->selectClause = '';
       $this->joinClause = '';
+      $this->checkPermissions();
       return $this->getData();
     };
   }
@@ -113,6 +114,8 @@ abstract class ResolverBase implements Resolver
     $offset = $this->args['offset'] ?? 0;
     $whereColumns = Utility::deconstruct($this->args, ['orderBy', 'where', 'limit', 'offset']);
 
+    $mainIdColumn = $this->getMainIdColumn($this->table);
+
     $this->setJoinClause($this->table, $this->relations);
     $this->selectClause = implode(', ', $this->getSelectArray($this->fields));
 
@@ -138,17 +141,17 @@ abstract class ResolverBase implements Resolver
       $whereClause .= $whereClause ? " AND ({$customWhere})" : "{$customWhere}";
     }
 
-    $query = "SELECT {$this->selectClause} FROM {$this->table}{$this->joinClause} {$whereClause}";
-    if ($orderBy) {
-      $query .= " ORDER BY {$orderBy}";
-    }
+    $query = "SELECT {$this->selectClause} FROM (SELECT {$mainIdColumn} FROM {$this->table}";
     if ($limit > 0) {
       $query .= " LIMIT {$limit}";
     }
     if ($offset > 0) {
       $query .= " OFFSET {$offset}";
     }
-
+    $query .= ") as s0 JOIN {$this->table} ON {$this->table}.{$mainIdColumn} = s0.{$mainIdColumn} {$this->joinClause} {$whereClause}";
+    if ($orderBy) {
+      $query .= " ORDER BY {$orderBy}";
+    }
     return $query;
   }
 
@@ -302,6 +305,7 @@ abstract class ResolverBase implements Resolver
       if (!isset($this->fields[$alias])) {
         continue;
       }
+      $this->checkPermissions($alias);
       $relationAlias = $this->findRelationByTable($this->relations, $table);
       $tableAlias = $relationAlias ? $relationAlias['alias'] : $table;
       if (!isset($this->fields[$tableAlias])) {
@@ -406,6 +410,18 @@ abstract class ResolverBase implements Resolver
       }
     }
     return null;
+  }
+
+  public function checkPermissions($typename = ''): bool
+  {
+    if (empty($typename)) {
+      $typename = $this->typeName;
+    }
+    $hasPermission = $this->context->hasPermission($typename);
+    if (!$hasPermission) {
+      $this->error('You do not have permission to access this resource.');
+    }
+    return true;
   }
 
   public function getFields(string $table, array $selection): array

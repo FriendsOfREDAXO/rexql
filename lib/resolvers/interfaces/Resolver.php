@@ -30,6 +30,13 @@ interface Resolver
   public function getData(): array;
 
   /**
+   * Checks if the resolver has permissions to access the data.
+   *
+   * @return bool
+   */
+  public function checkPermissions(): bool;
+
+  /**
    * Returns the fields of the resolver.
    *
    * @param string $table

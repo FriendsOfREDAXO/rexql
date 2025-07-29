@@ -56,6 +56,7 @@ rexql_permissions_name = Name
 rexql_permissions_api_key = API Key
 rexql_permissions_permissions = Permissions
 rexql_permissions_rate_limit = Rate Limit
+rexql_permissions_rate_limit_hint = Number of API requests allowed per minute per API key.
 rexql_permissions_active = Active
 rexql_permissions_last_used = Last Used
 rexql_permissions_usage_count = Usage

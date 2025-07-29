@@ -21,6 +21,7 @@ use GraphQL\Utils\BuildSchema;
 use GraphQL\Validator\DocumentValidator;
 use GraphQL\Validator\Rules\QueryComplexity;
 use GraphQL\Validator\Rules\QueryDepth;
+
 use rex_addon;
 use rex_api_exception;
 use rex_backend_login;
@@ -39,10 +40,10 @@ class RexQL
 
   protected bool $debugMode = false;
   protected static $fieldResolvers, $typeResolvers;
+  protected array $queryTypes = [];
+  protected array $filteredQueryTypes = [];
   protected static array $rootResolvers = [];
-
   protected Schema $schema;
-
 
   public function __construct(rex_addon $addon, bool $debugMode = false, bool $skipConfigCheck = false)
   {
@@ -53,20 +54,24 @@ class RexQL
     self::$fieldResolvers = (new FieldResolvers())->get();
     self::$rootResolvers = (new RootResolvers())->get();
 
+    $configCheckPassed = false;
     if (!$skipConfigCheck) {
-      $this->checkConfig();
+      $configCheckPassed = $this->checkConfig();
     }
 
     $this->context = new Context();
     $this->context->set('debugMode', $debugMode);
-    $this->context->set('apiKey', $this->apiKey ?? null);
+    $this->context->set('configCheckPassed', $configCheckPassed);
+    $this->context->setApiKey($this->apiKey ?? null);
     $this->context->set('cachePath', $addon->getCachePath());
     $this->context->set('cache', $this->addon->getConfig('cache_enabled', true));
 
     $this->schema = $this->generateSchema();
+    $this->context->set('queryTypes', $this->getQueryTypes());
+    $this->context->set('filteredQueryTypes', $this->getFilteredQueryTypes());
   }
 
-  protected function checkConfig(): void
+  protected function checkConfig(): bool
   {
     // Check configuration
     if (!$this->addon->getConfig('endpoint_enabled', false)) {
@@ -74,9 +79,13 @@ class RexQL
     }
 
     // Check authentication
-    if (Utility::isAuthEnabled()) {
+    $authEnabled = Utility::isAuthEnabled();
+    if ($authEnabled) {
       $this->apiKey = $this->validateAuthentication();
       $this->apiKeyId = $this->apiKey ? $this->apiKey->getId() : -1;
+      if (!$this->apiKey && !$this->debugMode) {
+        throw new rex_api_exception(rex_i18n::msg('rexql_error_invalid_api_key'));
+      }
 
       // Check domain/IP restrictions (except in dev mode)
       if (!$this->validateDomainRestrictions($this->apiKey)) {
@@ -84,22 +93,24 @@ class RexQL
       }
 
       // Check rate limiting
-
       if ($this->apiKey) {
         if ($this->apiKey->isRateLimitedExceeded()) {
           throw new rex_api_exception(rex_i18n::msg('rexql_error_rate_limit_exceeded'));
         }
         $this->apiKey->logUsage();
       }
-    } else if ($this->debugMode) {
-      Logger::log('rexQL: API access unrestricted');
+      return true;
     } else if (rex_backend_login::hasSession()) {
-      return;
+      if ($this->debugMode) {
+        Logger::log('rexQL: API access in unrestricted development mode');
+      }
+      return true; // Development mode, no authentication required
     }
+    return false;
   }
 
 
-  public function generateSchema(): Schema
+  protected function generateSchema(): Schema
   {
 
     $schemaCache = new Cache($this->context, 'schema');
@@ -227,8 +238,8 @@ class RexQL
     }
 
     $apiKey = ApiKey::findByKey($apiKeyValue);
-    if (!$apiKey && !$this->debugMode) {
-      throw new rex_api_exception(rex_i18n::msg('rexql_error_invalid_api_key'));
+    if (!$apiKey) {
+      return null;
     }
 
     return $apiKey;
@@ -253,6 +264,43 @@ class RexQL
     }
 
     return true;
+  }
+
+  public function getQueryTypes(): array
+  {
+    if (!$this->schema) {
+      throw new rex_api_exception('Schema not available. Please check error logs.');
+    }
+    if (!empty($this->queryTypes)) {
+      return $this->queryTypes;
+    }
+    $queryType = $this->schema->getQueryType();
+    $this->queryTypes = $queryType ? array_keys($queryType->getFields()) : [];
+    return $this->queryTypes;
+  }
+
+  public function getFilteredQueryTypes(): array
+  {
+    if (!empty($this->filteredQueryTypes)) {
+      return $this->filteredQueryTypes;
+    }
+    $queryTypes = $this->getQueryTypes();
+    $this->filteredQueryTypes = array_values(array_filter($queryTypes, function ($type) use ($queryTypes) {
+      $typeName = $this->context->normalizeTypeName($type);
+      return in_array($typeName, $queryTypes);
+    }));
+    return $this->filteredQueryTypes;
+  }
+
+
+  public function getCustomTypes(): array
+  {
+    if (!$this->schema) {
+      throw new rex_api_exception('Schema not available. Please check error logs.');
+    }
+    return array_values(array_filter(array_keys($this->schema->getTypeMap()), function ($typeName) {
+      return !in_array($typeName, ['Query', 'String', 'Int', 'Float', 'Boolean', 'ID', '__Schema', '__Type', '__TypeKind', '__Field', '__InputValue', '__EnumValue', '__Directive', '__DirectiveLocation']);
+    }));
   }
 
   public static function loadSdlFile($filepath): string

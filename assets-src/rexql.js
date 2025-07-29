@@ -4,7 +4,7 @@ import {
   fallbackCopyToClipboard,
   showNotification
 } from './utilities'
-import { config } from './config'
+import { permissions } from './permissions'
 
 // Globales rexQL Objekt
 window.rexQL = window.rexQL || {
@@ -12,7 +12,7 @@ window.rexQL = window.rexQL || {
   copyToClipboard,
   fallbackCopyToClipboard,
   showNotification,
-  config
+  permissions
 }
 
 console.log('rexQL Addon rex:ready')
@@ -32,7 +32,7 @@ if (window.location.href.indexOf('page=rexql/playground') !== -1) {
   rexQL.playground.init()
 }
 
-// Initialize config if on config page
-if (window.location.href.indexOf('page=rexql/config') !== -1) {
-  rexQL.config.init()
+// Initialize permissions if on permissions page
+if (window.location.href.indexOf('page=rexql/permissions&func=edit') !== -1) {
+  rexQL.permissions.init()
 }

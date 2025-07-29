@@ -31,7 +31,7 @@ if ($func == 'add' && rex_post('save', 'boolean')) {
 
     if ($keyType === 'public_private') {
       $apiKey = ApiKey::createPublicPrivateKey($name, $permissions, $rateLimit, $allowedDomains, $allowedIps, $httpsOnly);
-      echo rex_view::success(rex_i18n::msg('rexql_public_private_key_created') . ':<br>' .
+      echo rex_view::success($addon->i18n('public_private_key_created') . ':<br>' .
         '<strong>Public Key:</strong> <code>' . $apiKey->getPublicKey() . '</code><br>' .
         '<strong>Private Key:</strong> <code>' . $apiKey->getPrivateKey() . '</code>');
     } else {
@@ -49,7 +49,7 @@ if ($func == 'add' && rex_post('save', 'boolean')) {
         $sql->update();
       }
 
-      echo rex_view::success(rex_i18n::msg('rexql_api_key_created') . ': <code>' . $apiKey->getApiKey() . '</code>');
+      echo rex_view::success($addon->i18n('api_key_created') . ': <code>' . $apiKey->getApiKey() . '</code>');
     }
 
     $func = '';
@@ -90,7 +90,7 @@ if ($func == 'edit' && rex_post('save', 'boolean') && $oid > 0) {
     $sql->setValue('updatedate', date('Y-m-d H:i:s'));
     $sql->update();
 
-    echo rex_view::success(rex_i18n::msg('rexql_api_key_updated'));
+    echo rex_view::success($addon->i18n('api_key_updated'));
     $func = '';
   } catch (Exception $e) {
     echo rex_view::error($e->getMessage());
@@ -104,7 +104,7 @@ if ($func == 'delete' && $oid > 0) {
   $sql->setWhere(['id' => $oid]);
   $sql->delete();
 
-  echo rex_view::success(rex_i18n::msg('rexql_api_key_deleted'));
+  echo rex_view::success($addon->i18n('api_key_deleted'));
   $func = '';
 }
 
@@ -114,6 +114,7 @@ $content = '';
 if ($func == 'add' || $func == 'edit') {
 
   $fragment = new rex_fragment();
+  $fragment->setVar('addon', $addon);
   $fragment->setVar('func', $func);
   $fragment->setVar('oid', $oid);
   $content = $fragment->parse('form.permissions.php');
@@ -147,7 +148,7 @@ if ($func == 'add' || $func == 'edit') {
   ';
 } else {
   // Liste der API-Schlüssel
-  $list = rex_list::factory('SELECT id, name, api_key, permissions, usage_count, rate_limit, last_used, public_key, private_key, allowed_domains, allowed_ips, https_only, key_type, updatedate, created_by, active FROM ' . rex::getTable('rexql_api_keys') . ' ORDER BY createdate DESC');
+  $list = rex_list::factory('SELECT id, name, api_key, public_key, private_key, https_only, key_type, permissions, usage_count, last_used, active FROM ' . rex::getTable('rexql_api_keys') . ' ORDER BY createdate DESC');
   $list->addTableAttribute('class', 'table-striped');
 
   // Spalten definieren
@@ -156,21 +157,22 @@ if ($func == 'add' || $func == 'edit') {
   $list->setColumnSortable('name');
   $list->setColumnSortable('usage_count');
 
-  $list->setColumnLabel('name', rex_i18n::msg('rexql_permissions_name'));
-  $list->setColumnLabel('api_key', rex_i18n::msg('rexql_permissions_api_key'));
-  $list->setColumnLabel('usage_count', rex_i18n::msg('rexql_permissions_usage_count'));
-  $list->setColumnLabel('rate_limit', rex_i18n::msg('rexql_permissions_rate_limit'));
-  $list->setColumnLabel('last_used', rex_i18n::msg('rexql_permissions_last_used'));
-  $list->setColumnLabel('active', rex_i18n::msg('rexql_permissions_active'));
+  $list->setColumnLabel('name', $addon->i18n('permissions_name'));
+  $list->setColumnLabel('api_key', $addon->i18n('permissions_api_key'));
+  $list->setColumnLabel('permissions', $addon->i18n('permissions_permissions'));
+  $list->setColumnLabel('usage_count', $addon->i18n('permissions_usage_count'));
+  // $list->setColumnLabel('rate_limit', $addon->i18n('permissions_rate_limit'));
+  $list->setColumnLabel('last_used', $addon->i18n('permissions_last_used'));
+  $list->setColumnLabel('active', $addon->i18n('permissions_active'));
   $list->setColumnLabel('public_key', 'Public Key');
   $list->setColumnLabel('private_key', 'Private Key');
   $list->setColumnLabel('allowed_domains', 'Domain Whitelist');
   $list->setColumnLabel('allowed_ips', 'IP Whitelist');
   $list->setColumnLabel('https_only', 'HTTPS');
-  $list->setColumnLabel('key_type', rex_i18n::msg('rexql_permissions_type'));
-  // $list->setColumnLabel('createdate', rex_i18n::msg('rexql_permissions_created'));
-  $list->setColumnLabel('updatedate', rex_i18n::msg('rexql_permissions_updated'));
-  $list->setColumnLabel('created_by', rex_i18n::msg('rexql_permissions_created_by'));
+  $list->setColumnLabel('key_type', $addon->i18n('permissions_type'));
+  // $list->setColumnLabel('createdate', $addon->i18n('permissions_created'));
+  $list->setColumnLabel('updatedate', $addon->i18n('permissions_updated'));
+  $list->setColumnLabel('created_by', $addon->i18n('permissions_created_by'));
   $list->setColumnLabel('functions', ' ');
 
   // API-Schlüssel (teilweise anzeigen)
@@ -184,12 +186,18 @@ if ($func == 'add' || $func == 'edit') {
 
   $list->setColumnFormat('permissions', 'custom', function ($params) {
     $value = json_decode($params['list']->getValue('permissions'), true) ?: [];
+    if (in_array('read:all', $value)) {
+      $value = array_filter($value, fn($perm) => $perm === 'read:all');
+    }
     $permissionsLabel = '';
 
     if (empty($value)) {
       $permissionsLabel = '-';
     } else {
-      $permissionsLabel = '<span class="label label-info">' . implode('</span> <span class="label label-info">', $value) . '</span>';
+      $values = array_map(function ($perm) {
+        return '<span class="label label-info">' . $perm . '</span>';
+      }, $value);
+      $permissionsLabel = implode('', $values);
     }
 
     return
@@ -199,10 +207,10 @@ if ($func == 'add' || $func == 'edit') {
   });
 
 
-  $list->setColumnFormat('public_key', 'custom', function ($params) {
+  $list->setColumnFormat('public_key', 'custom', function ($params) use ($addon) {
     $value = $params['list']->getValue('public_key');
     if (empty($value) || $value === null) {
-      return '<span class="label label-warning">' . rex_i18n::msg('rexql_permissions_not_used') . '</span>';
+      return '<span class="label label-warning">' . $addon->i18n('permissions_not_used') . '</span>';
     }
     return '<div class="btn-group" style="display:flex">' .
       '<code>' . substr($value, 0, 16) . '...</code>' .
@@ -210,10 +218,10 @@ if ($func == 'add' || $func == 'edit') {
       '</div>';
   });
 
-  $list->setColumnFormat('private_key', 'custom', function ($params) {
+  $list->setColumnFormat('private_key', 'custom', function ($params) use ($addon) {
     $value = $params['list']->getValue('private_key');
     if (empty($value) || $value === null) {
-      return '<span class="label label-warning">' . rex_i18n::msg('rexql_permissions_not_used') . '</span>';
+      return '<span class="label label-warning">' . $addon->i18n('permissions_not_used') . '</span>';
     }
     return '<div class="btn-group" style="display:flex">' .
       '<code>' . substr($value, 0, 16) . '...</code>' .
@@ -252,8 +260,8 @@ if ($func == 'add' || $func == 'edit') {
   });
 
   // Status formatieren
-  $list->setColumnFormat('active', 'custom', function ($params) {
-    return $params['value'] ? '<span class="rex-online">' . rex_i18n::msg('rexql_permissions_active') . '</span>' : '<span class="rex-offline">' . rex_i18n::msg('rexql_permissions_inactive') . '</span>';
+  $list->setColumnFormat('active', 'custom', function ($params) use ($addon) {
+    return $params['value'] ? '<span class="rex-online">' . $addon->i18n('permissions_active') . '</span>' : '<span class="rex-offline">' . $addon->i18n('permissions_inactive') . '</span>';
   });
 
   // Datum formatieren
@@ -269,20 +277,21 @@ if ($func == 'add' || $func == 'edit') {
 
   $list->setColumnFormat('key_type', 'custom', function ($params) {
     $keyType = ucwords($params['list']->getValue('key_type'));
-    return '<span class="label label-info">' . $keyType . '</span>';
+    $values = explode('_', $keyType);
+    return '<span class="label label-info">' . ucwords(implode(' ', $values)) . '</span>';
   });
 
   // Funktionen
-  $list->addColumn('functions', rex_i18n::msg('rexql_permissions_functions'));
-  $list->setColumnFormat('functions', 'custom', function ($params) {
+  $list->addColumn('functions', $addon->i18n('permissions_functions'));
+  $list->setColumnFormat('functions', 'custom', function ($params) use ($addon) {
     $editUrl = rex_url::currentBackendPage(['func' => 'edit', 'oid' => $params['list']->getValue('id')]);
     $deleteUrl = rex_url::currentBackendPage(['func' => 'delete', 'oid' => $params['list']->getValue('id')]);
     return '<div class="btn-group" style="display:flex"><a href="' . $editUrl . '" class="btn btn-xs btn-default" title="' . rex_i18n::msg('edit') . '"><i class="fa fa-edit"></i></a> ' .
-      '<a href="' . $deleteUrl . '" class="btn btn-xs btn-danger" onclick="return confirm(\'' . rex_i18n::msg('delete') . ' - ' . rex_i18n::msg('rexql_permissions_delete_confirm') . '\')" title="' . rex_i18n::msg('delete') . '"><i class="fa fa-trash"></i></a></div>';
+      '<a href="' . $deleteUrl . '" class="btn btn-xs btn-danger" onclick="return confirm(\'' . rex_i18n::msg('delete') . ' - ' . $addon->i18n('permissions_delete_confirm') . '\')" title="' . rex_i18n::msg('delete') . '"><i class="fa fa-trash"></i></a></div>';
   });
 
   // Add-Button oberhalb der Liste
-  $content .= '<div class="btn-toolbar"><a href="' . rex_url::currentBackendPage(['func' => 'add']) . '" class="btn btn-primary">' . rex_i18n::msg('rexql_permissions_add') . '</a></div>';
+  $content .= '<div class="btn-toolbar"><a href="' . rex_url::currentBackendPage(['func' => 'add']) . '" class="btn btn-primary">' . $addon->i18n('permissions_add') . '</a></div>';
 
   $content .= $list->get();
 }

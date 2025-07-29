@@ -1,7 +1,17 @@
   <?php
 
+  use \FriendsOfRedaxo\RexQL\RexQL;
+
+
+  $addon = $this->getVar('addon', null);
   $func = $this->getVar('func', 'add');
   $oid = $this->getVar('oid', 0);
+
+  $api = new RexQL($addon, true, true);
+  $queryTypes = $api->getFilteredQueryTypes();
+
+  // Filter out built-in scalar types if you only want custom types
+
 
   $data = [
     'name' => '',
@@ -15,13 +25,11 @@
 
   // Permissions array
   $permissions = [
-    'read:all' => 'Alle Tabellen lesen',
-    'read:core' => 'Core-Tabellen lesen',
-    'read:yform' => 'YForm-Tabellen lesen',
-    'read:media' => 'Medien lesen',
-    'read:structure' => 'Strukturdaten lesen',
-    'api:statistics' => 'Statistik-API aufrufen'
+    'read:all' => 'Alle Daten lesen',
   ];
+  foreach ($queryTypes as $type) {
+    $permissions['read:' . $type] = '<code>' . ucfirst($type) . '</code> lesen';
+  }
 
 
   if ($func === 'add') {
@@ -63,7 +71,19 @@
   <fieldset>
 
     <div class="form-group">
-      <label class="col-sm-2 control-label"><?= rex_i18n::msg('rexql_permissions_name') ?> *</label>
+      <label class="col-sm-2 control-label"><?= $addon->i18n('permissions_active') ?></label>
+      <div class="col-sm-10">
+        <div class="checkbox">
+          <label>
+            <input type="checkbox" name="active" value="1" <?php if (isset($data['active']) && $data['active']) echo 'checked'; ?>>
+            <?= $addon->i18n('permissions_active') ?>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="col-sm-2 control-label"><?= $addon->i18n('permissions_name') ?> *</label>
       <div class="col-sm-10">
         <input class="form-control" type="text" name="name" value="<?= $data['name'] ?>" required>
       </div>
@@ -88,6 +108,15 @@
         </div>
       </div>
     </div>
+
+    <div class="form-group">
+      <label class="col-sm-2 control-label"><?= $addon->i18n('permissions_rate_limit') ?></label>
+      <div class="col-sm-10">
+        <input class="form-control rexql-config-input" type="number" name="rate_limit" value="<?= $data['rate_limit'] ?>" min="1" max="10000">
+        <small class="rexql-field-hint"><?= $addon->i18n('permissions_rate_limit_hint') ?></small>
+      </div>
+    </div>
+
 
     <div class="form-group">
       <label class="col-sm-2 control-label">Sicherheitsbeschränkungen</label>
@@ -149,7 +178,7 @@
     </script>
 
     <div class="form-group">
-      <label class="col-sm-2 control-label"><?= rex_i18n::msg('rexql_permissions_permissions') ?></label>
+      <label class="col-sm-2 control-label"><?= $addon->i18n('permissions_permissions') ?></label>
       <div class="col-sm-10">
         <?php
         foreach ($permissions as $perm => $label) {
@@ -166,24 +195,4 @@
       </div>
     </div>
 
-    <div class="form-group">
-      <label class="col-sm-2 control-label"><?= rex_i18n::msg('rexql_permissions_rate_limit') ?></label>
-      <div class="col-sm-10">
-        <input class="form-control" type="number" name="rate_limit" value="<?= $data['rate_limit'] ?>" min="1" max="10000">
-      </div>
-    </div>
-
-    <?php if ($func === 'edit'): ?>
-      <div class="form-group">
-        <label class="col-sm-2 control-label"><?= rex_i18n::msg('rexql_permissions_active') ?></label>
-        <div class="col-sm-10">
-          <div class="checkbox">
-            <label>
-              <input type="checkbox" name="active" value="1" <?php if (isset($data['active']) && $data['active']) echo 'checked'; ?>>
-              <?= rex_i18n::msg('rexql_permissions_active') ?>
-            </label>
-          </div>
-        </div>
-      </div>
-    <?php endif; ?>
   </fieldset>
