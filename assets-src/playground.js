@@ -91,7 +91,7 @@ export const playground = {
     new lib.GraphQLEditor(schemaContainer, {
       schema,
       initialValue: '',
-      height: '400px',
+      height: '600px',
       readOnly: true,
       renderSchema: true,
       onChange: (content) => {
