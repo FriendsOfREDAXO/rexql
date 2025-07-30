@@ -46,9 +46,14 @@ class Webhook
 
     $success = true;
     foreach ($sql->getArray() as $webhook) {
-      $payload = self::buildPayload($params['extension_point'], $params);
-      $result = self::sendToWebhook($webhook, $payload);
-      if (!$result['success']) {
+      try {
+        $payload = self::buildPayload($params['extension_point'], $params);
+        $result = self::sendToWebhook($webhook, $payload);
+        if (!$result['success']) {
+          $success = false;
+        }
+      } catch (\Exception $e) {
+        self::$logger->log('error', 'Webhook error: ' . $e->getMessage() . self::$loggerContext, [], __FILE__, __LINE__);
         $success = false;
       }
     }
@@ -100,7 +105,7 @@ class Webhook
       case 'YFORM_DATA_ADDED':
       case 'YFORM_DATA_UPDATED':
       case 'YFORM_DATA_DELETED':
-        $payload['data']['table_name'] = $params['subject']->getTableName();
+        $payload['data']['table_name'] = $params['table']->getTableName();
         break;
       default:
         $payload['data']['tag'] = 'all';
@@ -233,52 +238,6 @@ class Webhook
       $sql->setValue('last_error', $error);
     }
     $sql->update();
-  }
-
-  /**
-   * Send HTTP request to webhook endpoint (legacy method for backward compatibility)
-   * 
-   * @param string $url The webhook URL
-   * @param string $secret The webhook secret
-   * @param array $payload The data to send
-   * @return bool Success status
-   */
-  private static function sendRequest(string $url, string $secret, array $payload): bool
-  {
-    $jsonPayload = json_encode($payload);
-    $signature = hash_hmac('sha256', $jsonPayload, $secret);
-
-    $headers = [
-      'Content-Type: application/json',
-      'X-Webhook-Signature: sha256=' . $signature,
-      'X-Webhook-Secret: ' . $secret,
-      'User-Agent: REDAXO-rexQL-Webhook/1.0',
-    ];
-
-    $timeout = self::$addon->getConfig('webhook_timeout', 30);
-    $retryAttempts = self::$addon->getConfig('webhook_retry_attempts', 3);
-
-    for ($attempt = 1; $attempt <= $retryAttempts; $attempt++) {
-      $success = self::performRequest($url, $jsonPayload, $headers, $attempt === 1 ? 0 : $timeout);
-
-      if ($success) {
-        if (self::$isDevMode && self::$logger) {
-          self::$logger->log('info', "Webhook sent successfully (attempt {$attempt})" . self::$loggerContext . '; url: ' . $url, [], __FILE__, __LINE__);
-        }
-        rex_response::cleanOutputBuffers();
-        return true;
-      }
-
-      if ($attempt < $retryAttempts) {
-        // Wait before retry (exponential backoff)
-        sleep(pow(2, $attempt - 1));
-      }
-    }
-    if (self::$isDevMode && self::$logger)
-      self::$logger->log('info', "Failed to send webhook after {$retryAttempts}" . self::$loggerContext . '; url: ' . $url, [], __FILE__, __LINE__);
-    rex_response::cleanOutputBuffers();
-
-    return false;
   }
 
   /**
