@@ -14,6 +14,9 @@ use FriendsOfRedaxo\RexQL\Resolver\ConfigResolver;
 use FriendsOfRedaxo\RexQL\Resolver\ModulesResolver;
 use FriendsOfRedaxo\RexQL\Resolver\TemplatesResolver;
 use FriendsOfRedaxo\RexQL\Resolver\WildcardResolver;
+use FriendsOfRedaxo\RexQL\Resolver\YformTableResolver;
+use rex_addon;
+
 
 class RootResolvers
 {
@@ -55,6 +58,10 @@ class RootResolvers
       'subscription' => [],
       'deferred' => [],
     ];
+
+    if (rex_addon::get('yform')->isAvailable()) {
+      YformTableResolver::registerResolvers();
+    }
   }
 
   public function get(): array
