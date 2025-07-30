@@ -124,7 +124,7 @@ class Endpoint extends rex_api_function
     QueryLogger::cleanup();
     $queryRaw = str_replace(["\n", "\r"], ' ', $this->query);
     QueryLogger::log(
-      $response['apiKeyId'],
+      $response['apiKeyId'] ?? null,
       $queryRaw,
       $this->variables,
       $executionTime,
@@ -132,6 +132,8 @@ class Endpoint extends rex_api_function
       empty($response['errors']),
       empty($response['errors']) ? null : implode(', ', array_column($response['errors'], 'message'))
     );
+
+    unset($response['apiKeyId']); // Remove apiKeyId from response
 
     rex_response::cleanOutputBuffers();
     rex_response::setStatus($status);
