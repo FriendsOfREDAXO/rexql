@@ -445,7 +445,9 @@ abstract class ResolverBase implements Resolver
 
   public function log(string $message): void
   {
-    Logger::log($message, 'info', __FILE__, __LINE__);
+    if ($this->context->get('debugMode', false)) {
+      Logger::log($message, 'debug', __FILE__, __LINE__);
+    }
   }
 
   public function error(string $message): void
