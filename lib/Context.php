@@ -42,10 +42,7 @@ class Context
   public function hasPermission(string $typeName, string $type = 'read'): bool
   {
     $configCheckPassed = $this->get('configCheckPassed', false);
-    $queryTypes = $this->get('queryTypes', []);
-    if (!in_array($typeName, $queryTypes)) {
-      return false; // Type not found in query types
-    }
+
     if (!$configCheckPassed) {
       return false; // Configuration check failed, skip permission check
     }

@@ -12,6 +12,7 @@
   --rexql-light-bg-light: #f3f6fb;
   --rexql-light-bg-code: #dfe3e9;
   --rexql-light-border-color: #9ca5b2;
+  --rexql-light-border-color-light: #c1c9d3;
   --rexql-light-text-color: #324050;
   --rexql-light-text-muted: #9ca5b2;
   --rexql-light-text-light: #324050;
@@ -28,11 +29,12 @@
   --rexql-dark-bg-light: #202b35;
   --rexql-dark-bg-code: #282c34;
   --rexql-dark-border-color: #2e3b4a;
+  --rexql-dark-border-color-light: #3e4955;
   --rexql-dark-text-color: rgba(255, 255, 255, 0.75);
   --rexql-dark-text-muted: rgba(255, 255, 255, 0.45);
   --rexql-dark-text-light: rgba(255, 255, 255, 0.75);
-  --rexql-dark-status-success: #0d6a38;
-  --rexql-dark-status-danger: #801919;
+  --rexql-dark-status-success: #5bb585;
+  --rexql-dark-status-danger: #d9534f;
   --rexql-dark-primary: #4b9ad9;
   --rexql-dark-primary-light: #0b304d;
   --rexql-dark-warning: #78641e;
@@ -45,6 +47,7 @@
     --rexql-bg-light: var(--rexql-light-bg-light);
     --rexql-bg-code: var(--rexql-light-bg-code);
     --rexql-border-color: var(--rexql-light-border-color);
+    --rexql-border-color-light: var(--rexql-light-border-color-light);
     --rexql-text-color: var(--rexql-light-text-color);
     --rexql-text-muted: var(--rexql-light-text-muted);
     --rexql-text-light: var(--rexql-light-text-light);
@@ -62,6 +65,7 @@
     --rexql-bg-light: var(--rexql-dark-bg-light);
     --rexql-bg-code: var(--rexql-dark-bg-code);
     --rexql-border-color: var(--rexql-dark-border-color);
+    --rexql-border-color-light: var(--rexql-dark-border-color-light);
     --rexql-text-color: var(--rexql-dark-text-color);
     --rexql-text-muted: var(--rexql-dark-text-muted);
     --rexql-text-light: var(--rexql-dark-text-light);
@@ -79,6 +83,7 @@ body.rex-theme-light .rex-page-rexql {
   --rexql-bg-light: var(--rexql-light-bg-light);
   --rexql-bg-code: var(--rexql-light-bg-code);
   --rexql-border-color: var(--rexql-light-border-color);
+  --rexql-border-color-light: var(--rexql-light-border-color-light);
   --rexql-text-color: var(--rexql-light-text-color);
   --rexql-text-muted: var(--rexql-light-text-muted);
   --rexql-text-light: var(--rexql-light-text-light);
@@ -94,6 +99,7 @@ body.rex-theme-dark .rex-page-rexql {
   --rexql-bg-light: var(--rexql-dark-bg-light);
   --rexql-bg-code: var(--rexql-dark-bg-code);
   --rexql-border-color: var(--rexql-dark-border-color);
+  --rexql-border-color-light: var(--rexql-dark-border-color-light);
   --rexql-text-color: var(--rexql-dark-text-color);
   --rexql-text-muted: var(--rexql-dark-text-muted);
   --rexql-text-light: var(--rexql-dark-text-light);
@@ -106,6 +112,77 @@ body.rex-theme-dark .rex-page-rexql {
 }
 
 /* Playground Styles - scoped to rexQL pages */
+.rex-page-rexql {
+  .row.border-top {
+    margin-top: 15px;
+    padding-bottom: 15px;
+    border-top: 1px solid var(--rexql-border-color-light);
+  }
+}
+.rexql-tile {
+  display: flex;
+  gap: 10px;
+  h5 {
+    margin: 0;
+    line-height: 1.46667;
+  }
+}
+
+.rexql-simple-table {
+  display: grid;
+  grid-template-columns: 1fr min-content;
+  border-top: 1px solid var(--rexql-border-color);
+  &.single-column {
+    grid-template-columns: 1fr;
+  }
+  dt,
+  dd {
+    padding: 5px 0;
+    border-bottom: 1px solid var(--rexql-border-color);
+  }
+  dt {
+    padding-right: 10px;
+    color: var(--rexql-text-muted);
+    font-weight: bold;
+  }
+  dd {
+    margin: 0;
+    white-space: nowrap;
+    text-align: right;
+  }
+  .success {
+    color: var(--rexql-status-success);
+  }
+  .danger {
+    color: var(--rexql-status-danger);
+  }
+}
+
+.rexql-query-list {
+  margin-top: 20px;
+  background-color: var(--rexql-bg-light);
+  .rexql-query-item {
+    margin-bottom: 15px;
+    padding: 10px;
+    background-color: var(--rexql-bg-code);
+    border: 1px solid var(--rexql-border-color);
+    border-radius: var(--rexql-border-radius);
+    pre {
+      margin: 0;
+      color: var(--rexql-text-color);
+      font-size: 12px;
+      font-family: var(--rexql-font-mono);
+      line-height: 1.4;
+    }
+    small {
+      display: block;
+      margin-top: 5px;
+      color: var(--rexql-text-muted);
+      font-size: 11px;
+    }
+  }
+}
+
 .rex-page-rexql .rexql-playground {
   margin: 20px 0;
 }

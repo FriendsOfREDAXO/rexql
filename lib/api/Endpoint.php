@@ -33,8 +33,6 @@ class Endpoint extends rex_api_function
   protected bool $debugMode = false;
   protected float $startTime = 0;
   protected float $startMemory = 0;
-  protected ?ApiKey $apiKey = null;
-  protected ?int $apiKeyId = null;
   protected string $query = '';
   protected array $variables = [];
 
@@ -93,9 +91,6 @@ class Endpoint extends rex_api_function
 
     $this->startTime = microtime(true);
     $this->startMemory = memory_get_usage();
-
-    $this->apiKey = null;
-    $this->apiKeyId = null;
   }
 
   protected function castVariables(array $variables): array
@@ -129,7 +124,7 @@ class Endpoint extends rex_api_function
     QueryLogger::cleanup();
     $queryRaw = str_replace(["\n", "\r"], ' ', $this->query);
     QueryLogger::log(
-      $this->apiKeyId,
+      $response['apiKeyId'],
       $queryRaw,
       $this->variables,
       $executionTime,

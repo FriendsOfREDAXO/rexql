@@ -2,6 +2,12 @@
 
 namespace FriendsOfRedaxo\RexQL;
 
+use InvalidArgumentException;
+
+use GraphQL\Language\Parser;
+use GraphQL\Language\Printer;
+use GraphQL\Error\SyntaxError;
+
 use rex;
 use rex_yrewrite;
 use rex_addon;
@@ -232,5 +238,51 @@ class Utility
   {
     // Remove specified keys from the args array and return the rest
     return array_keys($args) !== range(0, count($args) - 1) ? array_diff_key($args, array_flip($keys)) : array_diff($args, $keys);
+  }
+
+  public static function formatGraphQLQuery($query)
+  {
+    try {
+      // Extract comments and separate GraphQL content
+      $comments = [];
+      $lines = explode("\n", $query);
+      $graphqlContent = [];
+
+      foreach ($lines as $line) {
+        $line = trim($line);
+        if (empty($line)) continue;
+
+        if (strpos($line, '#') === 0) {
+          // This is a comment line
+          // Check if there's GraphQL content after the comment
+          if (preg_match('/^#.*?:\s*(.+)$/', $line, $matches)) {
+            $comments[] = substr($line, 0, strpos($line, ':') + 1);
+            $graphqlContent[] = trim($matches[1]);
+          } else {
+            $comments[] = $line;
+          }
+        } else {
+          $graphqlContent[] = $line;
+        }
+      }
+
+      $cleanQuery = implode(' ', $graphqlContent);
+      $cleanQuery = trim($cleanQuery);
+
+      // Parse the query into an AST
+      $ast = Parser::parse($cleanQuery);
+
+      // Print the AST back to a formatted string
+      $formatted = Printer::doPrint($ast);
+
+      // Prepend comments if they existed
+      if (!empty($comments)) {
+        $formatted = implode("\n", $comments) . "\n" . $formatted;
+      }
+
+      return $formatted;
+    } catch (SyntaxError $e) {
+      throw new InvalidArgumentException("Invalid GraphQL query: " . $e->getMessage());
+    }
   }
 }

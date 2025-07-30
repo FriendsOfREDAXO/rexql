@@ -4,14 +4,10 @@ rexql_overview = Overview
 rexql_one_per_line = One per line.
 
 # Navigation
-rexql_nav_overview = Overview
-rexql_nav_config = Configuration  
-rexql_nav_permissions = Permissions
-rexql_nav_playground = Playground
-rexql_nav_docs = Documentation
 rexql_config = Configuration
 rexql_permissions = Permissions
 rexql_endpoint = API Endpoint
+rexql_stats = Stats
 rexql_docs = Documentation
 rexql_save = Save
 rexql_cancel = Cancel

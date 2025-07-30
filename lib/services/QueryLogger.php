@@ -70,7 +70,6 @@ class QueryLogger
                 COUNT(*) as query_count
             FROM ' . \rex::getTable('rexql_query_log') . ' ql
             LEFT JOIN ' . \rex::getTable('rexql_api_keys') . ' ak ON ql.api_key_id = ak.id
-            WHERE ql.createdate >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
             GROUP BY ql.api_key_id
             ORDER BY query_count DESC
             LIMIT 5
@@ -91,6 +90,38 @@ class QueryLogger
         ');
 
     $stats['top_errors'] = $sql->getArray();
+
+    // Most expensive queries
+    $sql->setQuery('
+            SELECT 
+                query,
+                execution_time,
+                memory_usage,
+                createdate
+            FROM ' . \rex::getTable('rexql_query_log') . '
+            WHERE createdate >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
+            ORDER BY execution_time DESC
+            LIMIT 5
+        ');
+    $stats['expensive_queries'] = $sql->getArray();
+
+    // Most recent queries
+    $sql->setQuery('
+            SELECT 
+                ak.name,
+                ql.query,
+                ql.execution_time,
+                ql.memory_usage,
+                ql.createdate,
+                ql.success,
+                ql.error_message
+            FROM ' . \rex::getTable('rexql_query_log') . ' ql
+            LEFT JOIN ' . \rex::getTable('rexql_api_keys') . ' ak ON ql.api_key_id = ak.id
+            WHERE ql.createdate >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
+            ORDER BY ql.createdate DESC
+            LIMIT 5
+        ');
+    $stats['recent_queries'] = $sql->getArray();
 
     return $stats;
   }

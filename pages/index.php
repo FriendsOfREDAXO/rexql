@@ -2,6 +2,16 @@
 
 use \FriendsOfRedaxo\RexQL\RexQL;
 
+$scriptUrl = $this->getAssetsUrl('rexql.js');
+$path = rex_path::frontend(rex_path::absolute($scriptUrl));
+$mtime = @filemtime($path);
+$scriptUrl .= $mtime ? '?buster=' . $mtime : '';
+
+$api = new RexQL($this, true, true);
+rex::setProperty('rexql', $api);
+$schemaFilepath = $this->getCachePath('generated.schema.graphql');
+$sdl = RexQL::loadSdlFile($schemaFilepath);
+
 /**
  * rexQL Hauptseite
  */
@@ -14,14 +24,6 @@ rex_be_controller::includeCurrentPageSubPath();
 
 echo '</div>';
 
-$scriptUrl = $this->getAssetsUrl('rexql.js');
-$path = rex_path::frontend(rex_path::absolute($scriptUrl));
-$mtime = @filemtime($path);
-$scriptUrl .= $mtime ? '?buster=' . $mtime : '';
-
-$api = new RexQL($this, true, true);
-$schemaFilepath = $this->getCachePath('generated.schema.graphql');
-$sdl = RexQL::loadSdlFile($schemaFilepath);
 ?>
 <script nonce="<?= rex_response::getNonce() ?>">
   var schema = `<?= $sdl ?>`;

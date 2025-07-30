@@ -50,7 +50,6 @@ class RexQL
     $this->addon = $addon;
     $this->debugMode = $debugMode;
 
-
     self::$fieldResolvers = (new FieldResolvers())->get();
     self::$rootResolvers = (new RootResolvers())->get();
 
@@ -67,8 +66,6 @@ class RexQL
     $this->context->set('cache', $this->addon->getConfig('cache_enabled', true));
 
     $this->schema = $this->generateSchema();
-    $this->context->set('queryTypes', $this->getQueryTypes());
-    $this->context->set('filteredQueryTypes', $this->getFilteredQueryTypes());
   }
 
   protected function checkConfig(): bool
@@ -210,6 +207,7 @@ class RexQL
         $operationName,
       )->toArray($this->debugMode ? DebugFlag::INCLUDE_DEBUG_MESSAGE | DebugFlag::INCLUDE_TRACE : DebugFlag::NONE);
       $queryCache->set('results', $result);
+      $result['apiKeyId'] = $this->apiKey ? $this->apiKey->getId() : null;
       return $result;
     } catch (SyntaxError $e) {
       // Handle syntax errors

@@ -28,6 +28,10 @@ page:
       title: 'Webhooks'
       icon: fa fa-bell
       perm: rexql[webhooks]
+    stats:
+      title: 'translate:rexql_stats'
+      icon: fa fa-chart-bar
+      perm: rexql[stats]
     docs:
       title: 'translate:rexql_docs'
       itemClass: 'pull-right'

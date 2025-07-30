@@ -4,10 +4,16 @@
  * rexQL Übersichtsseite
  */
 
+
 use FriendsOfRedaxo\RexQL\EndpointType;
 use FriendsOfRedaxo\RexQL\Utility;
+use FriendsOfRedaxo\RexQL\RexQL;
+
 
 $addon = rex_addon::get('rexql');
+
+/** @var RexQL $api */
+$api = rex::getProperty('rexql', null);
 
 $apiEnabled = $addon->getConfig('endpoint_enabled', false);
 
@@ -44,9 +50,9 @@ $statusContent = '<div class="row">';
 
 // API Status
 $statusContent .= '<div class="col-sm-3">
-    <div class="rex-tile">
+    <div class="rexql-tile">
         <h5>API Status</h5>
-        <p class="rex-tile-text">' .
+        <p>' .
     ($apiEnabled ? '<span class="rex-online">Aktiv</span>' : '<span class="rex-offline">Inaktiv</span>') .
     '</p>
     </div>
@@ -58,37 +64,33 @@ $sql->setQuery('SELECT COUNT(*) as count FROM ' . rex::getTable('rexql_api_keys'
 $apiKeyCount = $sql->getValue('count');
 
 $statusContent .= '<div class="col-sm-3">
-    <div class="rex-tile">
+    <div class="rexql-tile">
         <h5>API-Schlüssel</h5>
-        <p class="rex-tile-text">' . $apiKeyCount . '</p>
+        <p>' . $apiKeyCount . '</p>
     </div>
 </div>';
 
-// Verfügbare Tabellen
-$allowedTables = count($addon->getConfig('allowed_tables', []));
-$statusContent .= '<div class="col-sm-3">
-    <div class="rex-tile">
-        <h5>Verfügbare Tabellen</h5>
-        <p class="rex-tile-text">' . $allowedTables . '</p>
+if ($api) {
+    $queryTypes = $api->getQueryTypes();
+    $numQueryTypes = count($queryTypes);
+    $statusContent .= '<div class="col-sm-3">
+    <div class="rexql-tile">
+        <h5>Verfügbare Queries</h5>
+        <p>' . $numQueryTypes . '</p>
     </div>
 </div>';
 
-// Queries heute
-if ($apiEnabled) {
-    $sql->setQuery('SELECT COUNT(*) as count FROM ' . rex::getTable('rexql_query_log') . ' WHERE DATE(createdate) = CURDATE()');
-    $todayQueries = $sql->getValue('count');
-} else {
-    $todayQueries = 0;
+    $types = $api->getCustomTypes();
+    $numTypes = count($types);
+    $statusContent .= '<div class="col-sm-3">
+    <div class="rexql-tile">
+        <h5>Verfügbare Typen</h5>
+        <p>' . $numTypes . '</p>
+    </div>
+</div>';
 }
-
-$statusContent .= '<div class="col-sm-3">
-    <div class="rex-tile">
-        <h5>Queries heute</h5>
-        <p class="rex-tile-text">' . $todayQueries . '</p>
-    </div>
-</div>';
-
 $statusContent .= '</div>';
+
 
 $fragment = new rex_fragment();
 $fragment->setVar('title', 'Status-Übersicht');
