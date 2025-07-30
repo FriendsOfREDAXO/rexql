@@ -2,7 +2,6 @@
 
 namespace FriendsOfRedaxo\RexQL\Resolver;
 
-
 use FriendsOfRedaxo\RexQL\Resolver\ResolverBase;
 use FriendsOfRedaxo\RexQL\Utility;
 use GraphQL\Type\Definition\Type;
@@ -25,7 +24,6 @@ class YformTableResolver extends ResolverBase
   protected array $tableFields = [];
   protected bool $isUrlAvailable = false;
 
-
   public function getData(): array
   {
 
@@ -47,12 +45,13 @@ class YformTableResolver extends ResolverBase
     // Get table fields and field selection
     $this->tableFields = self::$yformTables[$this->typeName]['fields'] ?? [];
     $fieldSelection = $this->info->getFieldSelection(5);
-    $this->fields = $this->getFields($this->typeName, $fieldSelection);
+
+    $this->fields = array_keys($fieldSelection);
 
     // Prepare dataset relations
     foreach ($this->tableFields as $fieldName => $field) {
       if ($field['orgType'] === 'be_manager_relation') {
-        $this->datasetRelations[$fieldName] = $field['orgName'];
+        $this->datasetRelations[$fieldName] = ['name' => $field['orgName'], 'relatedTypename' => $field['relatedTypename'], 'relatedTablename' => $field['relatedTablename'], 'relationType' => $field['relationType'], 'fields' => array_keys($fieldSelection[$fieldName])];
       }
     }
 
@@ -87,8 +86,8 @@ class YformTableResolver extends ResolverBase
        */
       $results = $query->find();
       foreach ($this->datasetRelations as $fieldName => $relation) {
-        if (isset($this->fields[$this->typeName][$fieldName])) {
-          $query->populateRelation($relation);
+        if (isset($this->fields[$fieldName])) {
+          $results->populateRelation($relation['name']);
         }
       }
       foreach ($results as $dataset) {
@@ -113,36 +112,58 @@ class YformTableResolver extends ResolverBase
   protected function populateData(rex_yform_manager_dataset $dataset): array
   {
     $item = [];
-    foreach ($this->fields[$this->typeName] as $field) {
-      if (isset($this->tableFields[$field])) {
-        $fieldType = $this->tableFields[$field]['orgType'];
-        if ($dataset->hasValue($field)) {
-          $this->log("Processing field: $field with type: $fieldType");
+
+    foreach ($this->fields as $subTypename => $field) {
+      $fieldName = !is_array($field) ? $field : $subTypename;
+
+      if (isset($this->tableFields[$fieldName])) {
+        $fieldType = $this->tableFields[$fieldName]['orgType'];
+
+        if ($dataset->hasValue($fieldName)) {
+
           switch ($fieldType) {
             case 'id':
               $item['id'] = $dataset->getId();
               break;
             case 'be_manager_relation':
-              $relatedCollection = $dataset->getRelatedCollection($this->datasetRelations[$field]);
-              $data = [];
-              foreach ($relatedCollection as $relatedDataset) {
-                $datasetFields = $relatedDataset->getFields();
-                foreach ($datasetFields as $datasetField) {
-                  if (in_array($datasetField->getType(), ['validate', 'action'])) {
-                    continue; // Skip validate and action fields
+              if ($this->datasetRelations[$fieldName]['relationType'] === 'single') {
+                $relatedDataset = $dataset->getRelatedDataset($this->datasetRelations[$fieldName]['name']);
+                if (!$relatedDataset) {
+                  $item[$fieldName] = null;
+                  break;
+                }
+                $fields = $this->datasetRelations[$fieldName]['fields'];
+                $data = [];
+                foreach ($fields as $relatedField) {
+                  if ($relatedDataset->hasValue($relatedField)) {
+                    $data[$relatedField] = $relatedDataset->getValue($relatedField);
                   }
-                  $data[$datasetField->getName()] = $relatedDataset->getValue($datasetField->getName());
+                }
+                $item[$fieldName] = $data;
+              } else {
+                $relatedCollection = $dataset->getRelatedCollection($this->datasetRelations[$fieldName]['name']);
+                if (!$relatedCollection || !$relatedCollection->count()) {
+                  $item[$fieldName] = [];
+                  break;
+                }
+                $fields = $this->datasetRelations[$fieldName]['fields'];
+                foreach ($relatedCollection as $relatedDataset) {
+                  $data = [];
+                  foreach ($fields as $relatedField) {
+                    if ($relatedDataset->hasValue($relatedField)) {
+                      $data[$relatedField] = $relatedDataset->getValue($relatedField);
+                    }
+                  }
+                  $item[$fieldName][] = $data;
                 }
               }
-              $this->log("Processing be_manager_relation field: $field " . json_encode($data, JSON_PRETTY_PRINT));
-              $item[$field] = json_encode($data);
               break;
             default:
-              $item[$field] = $dataset->getValue($field);
+              $item[$fieldName] = $dataset->getValue($fieldName);
               break;
           }
         } else {
-          switch ($field) {
+          switch ($fieldName) {
             case 'slug':
               $slug = '';
               if ($this->isUrlAvailable) {
@@ -188,17 +209,17 @@ class YformTableResolver extends ResolverBase
           'type' => $tableTypeName,
           'fields' => [],
         ];
-        $fields = $table->getFields();
+        $fields = $table->getValueFields();
 
         $sdlEntries[$key]['fields']['id'] = ['type' => Type::id(), 'orgType' => 'integer', 'orgName' => 'id']; // Ensure 'id' is always present
         $sdlEntries[$key]['fields']['slug'] = ['type' => Type::string(), 'orgType' => 'text', 'orgName' => 'slug']; // Ensure 'slug' is always present
 
+        /**
+         * @var rex_yform_manager_field $field
+         */
         foreach ($fields as $field) {
           $fieldTypeId = $field->getType();
           $orgFieldType = $field->getTypeName();
-          if (in_array($fieldTypeId, ['validate', 'action'])) {
-            continue; // Skip validate and action fields
-          }
           $fieldName = $field->getName();
 
           $mappedFieldType = $instance->mapYFormTypeToGraphQL($orgFieldType, $fieldTypeId);
@@ -206,7 +227,12 @@ class YformTableResolver extends ResolverBase
           if ($fieldTypeName === 'type') {
             $fieldTypeName = 'typeName'; // Avoid conflict with GraphQL reserved keyword
           }
-          $sdlEntries[$key]['fields'][$fieldTypeName] = ['type' => $mappedFieldType, 'orgType' => $orgFieldType, 'orgName' => $fieldName];
+          $relatedTablename = $orgFieldType === 'be_manager_relation' ? $field->getElement('table') : null;
+          $relatedTypename = $relatedTablename ? Utility::snakeCaseToCamelCase($relatedTablename) : null;
+          $relatedRelation = $relatedTablename ? (int)$field->getElement('type') : 0;
+          $relationType = $relatedRelation === 0 || $relatedRelation === 2 ? 'single' : 'multiple';
+
+          $sdlEntries[$key]['fields'][$fieldTypeName] = ['type' => $mappedFieldType, 'orgType' => $orgFieldType, 'orgName' => $fieldName, 'relatedTablename' => $relatedTablename, 'relatedTypename' => $relatedTypename, 'relationType' => $relationType];
           $extensions['rootResolvers']['query'][$tableTypeName . 'Dataset'] = $instance->resolve();
           $extensions['rootResolvers']['query'][$tableTypeName . 'Collection'] = $instance->resolve();
         }
@@ -222,7 +248,15 @@ class YformTableResolver extends ResolverBase
         }
         $sdl .= "type " . $entry['type'] . " {\n";
         foreach ($entry['fields'] as $fieldName => $field) {
-          $sdl .= "  " . $fieldName . ": " . $field['type'] . "\n";
+          if ($field['relatedTypename'] ?? null) {
+            if ($field['relationType'] === 'multiple') {
+              $sdl .= "  " . $fieldName . ": [" . $field['relatedTypename'] . "]!\n";
+            } else {
+              $sdl .= "  " . $fieldName . ": " . $field['relatedTypename'] . "\n";
+            }
+          } else {
+            $sdl .= "  " . $fieldName . ": " . $field['type'] . "\n";
+          }
         }
         $sdl .= "}\n\n";
       }
