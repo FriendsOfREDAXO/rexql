@@ -50,7 +50,7 @@ class RoutesResolver extends ResolverBase
     $results = $this->query();
 
     $redaxo_url = rex_addon::get('url');
-    if ($redaxo_url->isAvailable() && $redaxo_url->isInstalled()) {
+    if ($redaxo_url->isAvailable()) {
       $this->table = 'rex_url_generator_url';
       $this->args['orderBy'] = 'id';
       $this->fieldsMap = [
