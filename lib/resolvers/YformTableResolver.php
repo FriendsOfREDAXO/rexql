@@ -24,7 +24,7 @@ class YformTableResolver extends ResolverBase
   protected array $tableFields = [];
   protected bool $isUrlAvailable = false;
 
-  public function getData(): array
+  public function getData(): array|null
   {
 
     $redaxo_url = rex_addon::get('url');
@@ -50,6 +50,9 @@ class YformTableResolver extends ResolverBase
 
     // Prepare dataset relations
     foreach ($this->tableFields as $fieldName => $field) {
+      if (!isset($fieldSelection[$fieldName])) {
+        continue; // Skip fields not in selection
+      }
       if ($field['orgType'] === 'be_manager_relation') {
         $this->datasetRelations[$fieldName] = ['name' => $field['orgName'], 'relatedTypename' => $field['relatedTypename'], 'relatedTablename' => $field['relatedTablename'], 'relationType' => $field['relationType'], 'fields' => array_keys($fieldSelection[$fieldName])];
       }
@@ -103,7 +106,7 @@ class YformTableResolver extends ResolverBase
         $this->error('YForm dataset not found: ' . $this->args['id']);
       }
       $item = $this->populateData($dataset);
-      $data = $item;
+      $data = $item ?? null;
     }
 
     return $data;
@@ -126,6 +129,7 @@ class YformTableResolver extends ResolverBase
               $item['id'] = $dataset->getId();
               break;
             case 'be_manager_relation':
+              $this->checkPermissions($this->tableFields[$fieldName]['relatedTypename']);
               if ($this->datasetRelations[$fieldName]['relationType'] === 'single') {
                 $relatedDataset = $dataset->getRelatedDataset($this->datasetRelations[$fieldName]['name']);
                 if (!$relatedDataset) {
@@ -297,5 +301,16 @@ class YformTableResolver extends ResolverBase
       default:
         return Type::string();
     }
+  }
+
+  public function checkPermissions(string $typeName): bool
+  {
+    $this->log('Checking permissions for type: ' . $typeName);
+
+    $hasPermission = $this->context->hasPermission($typeName);
+    if (!$hasPermission) {
+      $this->error("You do not have permission to access {$typeName}.");
+    }
+    return true;
   }
 }

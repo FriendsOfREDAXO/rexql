@@ -6,7 +6,7 @@ use function rex_getUrl;
 
 class ArticleResolver extends ResolverBase
 {
-  public function getData(): array
+  public function getData(): array|null
   {
     $this->table = 'rex_article';
     $this->excludeFieldsFromSQL = [
@@ -51,6 +51,6 @@ class ArticleResolver extends ResolverBase
 
     $results = $this->query();
 
-    return $this->typeName === 'articles' ? $results : $results[0];
+    return $this->typeName === 'articles' ? $results : $results[0] ?? null;
   }
 }

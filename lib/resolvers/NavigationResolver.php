@@ -6,10 +6,10 @@ use rex_category;
 
 class NavigationResolver extends ResolverBase
 {
-  public function getData(): array
+  public function getData(): array|null
   {
     $rootCategoryId = $this->args['categoryId'] ?? null;
-    $clangId = $this->args['clangId'] ?? null;
+    $clangId = $this->args['clangId'] ?? 1;
     $depth = $this->args['depth'] ?? 1;
     $nested = $this->args['nested'] ?? false;
 

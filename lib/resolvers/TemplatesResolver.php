@@ -4,7 +4,7 @@ namespace FriendsOfRedaxo\RexQL\Resolver;
 
 class TemplatesResolver extends ResolverBase
 {
-  public function getData(): array
+  public function getData(): array|null
   {
     $this->table = 'rex_template';
     $this->args['orderBy'] = 'rex_template.`name`';
@@ -38,6 +38,6 @@ class TemplatesResolver extends ResolverBase
 
     $results = $this->query();
 
-    return $this->typeName === 'templates' ? $results : $results[0];
+    return $this->typeName === 'templates' ? $results : $results[0] ?? null;
   }
 }

@@ -9,7 +9,7 @@ use rex_config;
 
 class RexSystemResolver extends ResolverBase
 {
-  public function getData(): array
+  public function getData(): array|null
   {
     $addonStructureIsAvailable = rex_addon::get('structure')->isAvailable();
     $addonStructureConfig = rex_config::get('structure');

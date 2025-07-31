@@ -12,6 +12,7 @@ use FriendsOfRedaxo\RexQL\Services\Logger;
 use FriendsOfRedaxo\RexQL\Utility;
 use GraphQL\Error\Error;
 use GraphQL\Type\Definition\ResolveInfo;
+use GraphQL\Type\Definition\Type;
 use GraphQL\Error\UserError;
 use rex_sql;
 
@@ -54,7 +55,7 @@ abstract class ResolverBase implements Resolver
   public function resolve(): Closure
   {
 
-    return function (array $root, array $args, Context $context, ResolveInfo $info): array {
+    return function (array $root, array $args, Context $context, ResolveInfo $info): array|null {
 
       // Log the resolver call
       $this->root = $root;
@@ -66,12 +67,15 @@ abstract class ResolverBase implements Resolver
       $this->query = '';
       $this->selectClause = '';
       $this->joinClause = '';
-      $this->checkPermissions();
+      $returnType = Type::getNamedType($this->info->returnType);
+      $returnTypeName = $returnType->name ?? '';
+      $this->log('Base Resolver: resolve called for type: ' . json_encode(Type::getNamedType($this->info->returnType), JSON_PRETTY_PRINT));
+      $this->checkPermissions($returnTypeName);
       return $this->getData();
     };
   }
 
-  public function getData(): array
+  public function getData(): array|null
   {
     // This method should be implemented in the child class to fetch data based on the arguments
     throw new BadMethodCallException('fetchData method must be implemented in the child class.');
@@ -97,7 +101,8 @@ abstract class ResolverBase implements Resolver
     }
 
     if ($this->sql->getRows() === 0) {
-      $this->error('No entries found matching the criteria.');
+      $this->log('No entries found matching the criteria.');
+      return []; // Return empty array on error
     }
 
     $result = $this->buildResult($this->sql->getArray());
@@ -141,14 +146,14 @@ abstract class ResolverBase implements Resolver
       $whereClause .= $whereClause ? " AND ({$customWhere})" : "{$customWhere}";
     }
 
-    $query = "SELECT {$this->selectClause} FROM (SELECT {$mainIdColumn} FROM {$this->table}";
+    $query = "SELECT {$this->selectClause} FROM (SELECT `{$mainIdColumn}` FROM {$this->table}";
     if ($limit > 0) {
       $query .= " LIMIT {$limit}";
     }
     if ($offset > 0) {
       $query .= " OFFSET {$offset}";
     }
-    $query .= ") as s0 JOIN {$this->table} ON {$this->table}.{$mainIdColumn} = s0.{$mainIdColumn} {$this->joinClause} {$whereClause}";
+    $query .= ") as `s0` JOIN {$this->table} ON {$this->table}.`{$mainIdColumn}` = `s0`.`{$mainIdColumn}` {$this->joinClause} {$whereClause}";
     if ($orderBy) {
       $query .= " ORDER BY {$orderBy}";
     }
@@ -412,14 +417,14 @@ abstract class ResolverBase implements Resolver
     return null;
   }
 
-  public function checkPermissions($typename = ''): bool
+  public function checkPermissions(string $typeName): bool
   {
-    if (empty($typename)) {
-      $typename = $this->typeName;
-    }
-    $hasPermission = $this->context->hasPermission($typename);
+    $normalizedTypeName = $this->context->normalizeTypeName($typeName);
+
+    $this->log('Checking permissions for type: ' . $normalizedTypeName);
+    $hasPermission = $this->context->hasPermission($normalizedTypeName);
     if (!$hasPermission) {
-      $this->error('You do not have permission to access this resource.');
+      $this->error("You do not have permission to access {$normalizedTypeName}.");
     }
     return true;
   }
@@ -445,9 +450,7 @@ abstract class ResolverBase implements Resolver
 
   public function log(string $message): void
   {
-    if ($this->context->get('debugMode', false)) {
-      Logger::log($message, 'debug', __FILE__, __LINE__);
-    }
+    Logger::log($message, 'debug', __FILE__, __LINE__);
   }
 
   public function error(string $message): void

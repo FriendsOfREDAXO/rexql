@@ -18,7 +18,7 @@ class FieldResolvers
   protected function registerResolvers(): void
   {
     self::$resolvers = [];
-    self::$resolvers = rex_extension::registerPoint(new rex_extension_point('REXQL_EXTEND_TYPE_RESOLVERS', self::$resolvers));
+    self::$resolvers = rex_extension::registerPoint(new rex_extension_point('REXQL_EXTEND_FIELD_RESOLVERS', self::$resolvers));
   }
 
   public function get(): Closure

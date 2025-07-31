@@ -2,7 +2,7 @@
 # nested relations are handled automatically by the resolver (currently only 2 levels deep - WIP)
 type Query {
   # Retrieves a single article by ID, optionally filtered by language and content type
-  article(id: ID!, clangId: Int, ctypeId: Int): article!
+  article(id: ID!, clangId: Int, ctypeId: Int): article
 
   # Retrieves a list of articles with optional filters for language, content type, category, status, and pagination
   articles(
@@ -14,37 +14,37 @@ type Query {
     orderBy: String
     offset: Int
     limit: Int
-  ): [article]!
+  ): [article]
 
   # Retrieves a single config by namespace and key
-  config(namespace: String!, key: String!): config!
+  config(namespace: String!, key: String!): config
 
   # Retrieves all configs for a given namespace
-  configs(namespace: String!): [config]!
+  configs(namespace: String!): [config]
 
   # Retrieves a single language by ID
-  language(id: ID!): language!
+  language(id: ID!): language
 
   # Retrieves all languages
-  languages: [language]!
+  languages: [language]
 
   # Retrieves a single media item by ID
-  media(id: ID!): media!
+  media(id: ID!): media
 
   # Retrieves a list of media items filtered by category ID
-  medias(categoryId: Int): [media]!
+  medias(categoryId: Int): [media]
 
   # Retrieves a single media category by ID
-  mediaCategory(id: ID!): mediaCategory!
+  mediaCategory(id: ID!): mediaCategory
 
   # Retrieves media categories, optionally filtered by parent ID or path
-  mediaCategories(parentId: Int, path: String): [mediaCategory]!
+  mediaCategories(parentId: Int, path: String): [mediaCategory]
 
   # Retrieves a single module by ID or key
-  module(id: ID, key: String): module!
+  module(id: ID, key: String): module
 
   # Retrieves all modules
-  modules: [module]!
+  modules: [module]
 
   # Retrieves a navigation structure based on category ID, language ID, depth, and whether to nest items
   navigation(
@@ -52,11 +52,11 @@ type Query {
     clangId: Int
     depth: Int
     nested: Boolean
-  ): [navigationItem]!
+  ): [navigationItem]
 
   # Retrieves all routes defined in the system, if URL package is installed,
   # this will return the routes defined in the URL package
-  routes: [route]!
+  routes: [route]
 
   # Retrieves a single article slice by ID
   slice(id: ID!): slice
@@ -71,13 +71,13 @@ type Query {
   template(id: ID, key: String): template
 
   # Retrieves all templates, optionally filtered by active status
-  templates(active: Boolean): [template]!
+  templates(active: Boolean): [template]
 
   # Retrieves a single wildcard by wildcard string, language ID, and ID
-  wildcard(wildcard: String, clangId: Int, id: ID): wildcard!
+  wildcard(wildcard: String, clangId: Int, id: ID): wildcard
 
   # Retrieves all wildcards, optionally filtered by language ID
-  wildcards(clangId: Int): [wildcard]!
+  wildcards(clangId: Int): [wildcard]
 }
 
 type article {

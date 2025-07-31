@@ -25,16 +25,16 @@ interface Resolver
   /**
    * Returns the data.
    *
-   * @return array
+   * @return array|null
    */
-  public function getData(): array;
+  public function getData(): array|null;
 
   /**
    * Checks if the resolver has permissions to access the data.
    *
    * @return bool
    */
-  public function checkPermissions(): bool;
+  public function checkPermissions(string $typename): bool;
 
   /**
    * Returns the fields of the resolver.

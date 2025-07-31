@@ -4,7 +4,7 @@ namespace FriendsOfRedaxo\RexQL\Resolver;
 
 class MediaCategoryResolver extends ResolverBase
 {
-  public function getData(): array
+  public function getData(): array|null
   {
     $this->table = 'rex_media_category';
     $this->args['orderBy'] = 'rex_media_category.`name`';
@@ -28,6 +28,6 @@ class MediaCategoryResolver extends ResolverBase
 
     $results = $this->query();
 
-    return $this->typeName === 'mediaCategories' ? $results : $results[0];
+    return $this->typeName === 'mediaCategories' ? $results : $results[0] ?? null;
   }
 }

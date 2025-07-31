@@ -4,10 +4,10 @@ namespace FriendsOfRedaxo\RexQL\Resolver;
 
 class MediaResolver extends ResolverBase
 {
-  public function getData(): array
+  public function getData(): array|null
   {
     $this->table = 'rex_media';
-    $this->args['orderBy'] = 'id';
+    $this->args['orderBy'] = "{$this->table}.`id`";
 
     $this->fieldsMap = [
       $this->table => [
@@ -30,6 +30,6 @@ class MediaResolver extends ResolverBase
 
 
 
-    return $this->typeName === 'medias' ? $results : $results[0];
+    return $this->typeName === 'medias' ? $results : $results[0] ?? null;
   }
 }

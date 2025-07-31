@@ -46,15 +46,16 @@ class Context
     if (!$configCheckPassed) {
       return false; // Configuration check failed, skip permission check
     }
-    $normalizedTypeName = $type . ':' . $this->normalizeTypeName($typeName);
+    $permissionName = $type . ':' . $typeName;
     $apiKey = $this->getApiKey();
     if ($apiKey) {
       $permissions = $apiKey->getPermissions();
-      Logger::log('Checking permissions for type: ' . $normalizedTypeName . ' permissions: ' . print_r($permissions, true), 'debug', __FILE__, __LINE__);
+      Logger::log('Checking permissions for type: ' . $permissionName . ' permissions: ' . print_r($permissions, true), 'debug', __FILE__, __LINE__);
       if (empty($permissions)) {
         return false; // No permissions set for the API key
       }
-      if (!in_array($normalizedTypeName, $permissions)) {
+      if ($permissionName === $type . ':all') return true;
+      if (!in_array($permissionName, $permissions)) {
         return false; // Type not allowed by API key permissions
       }
     }
@@ -64,11 +65,11 @@ class Context
   public function normalizeTypeName(string $typeName): string
   {
     // Normalize type names to match GraphQL conventions
-    if (str_ends_with($typeName, 's')) {
-      return $typeName;
-    } elseif (str_ends_with($typeName, 'y')) {
-      return substr($typeName, 0, -1) . 'ies';
-    } else
-      return substr($typeName, 0, -1) . 's'; // Default pluralization
+    if (str_ends_with($typeName, 'ies')) {
+      return substr($typeName, 0, -3) . 'y';
+    } elseif (str_ends_with($typeName, 's')) {
+      return substr($typeName, 0, -1); // Remove 's' suffix
+    }
+    return $typeName; // Return as is if no suffix matches
   }
 }

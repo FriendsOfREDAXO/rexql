@@ -6,7 +6,7 @@ use rex_addon;
 
 class WildcardResolver extends ResolverBase
 {
-  public function getData(): array
+  public function getData(): array|null
   {
     $sprogAddon = rex_addon::get('sprog');
     if (!$sprogAddon->isAvailable()) {
@@ -24,6 +24,6 @@ class WildcardResolver extends ResolverBase
 
     $results = $this->query();
 
-    return $this->typeName === 'wildcards' ? $results : $results[0];
+    return $this->typeName === 'wildcards' ? $results : $results[0] ?? null;
   }
 }

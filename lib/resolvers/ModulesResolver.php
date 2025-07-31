@@ -4,7 +4,7 @@ namespace FriendsOfRedaxo\RexQL\Resolver;
 
 class ModulesResolver extends ResolverBase
 {
-  public function getData(): array
+  public function getData(): array|null
   {
     $this->table = 'rex_module';
     $this->args['orderBy'] = 'rex_module.`name`';
@@ -30,6 +30,6 @@ class ModulesResolver extends ResolverBase
 
     $results = $this->query();
 
-    return $this->typeName === 'modules' ? $results : $results[0];
+    return $this->typeName === 'modules' ? $results : $results[0] ?? null;
   }
 }

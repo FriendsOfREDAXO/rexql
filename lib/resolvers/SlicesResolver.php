@@ -4,7 +4,7 @@ namespace FriendsOfRedaxo\RexQL\Resolver;
 
 class SlicesResolver extends ResolverBase
 {
-  public function getData(): array
+  public function getData(): array|null
   {
     $this->table = 'rex_article_slice';
 
@@ -19,6 +19,6 @@ class SlicesResolver extends ResolverBase
 
     $results = $this->query();
 
-    return $this->typeName === 'slices' ? $results : $results[0];
+    return $this->typeName === 'slices' ? $results : $results[0] ?? null;
   }
 }

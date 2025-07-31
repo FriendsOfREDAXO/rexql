@@ -7,7 +7,7 @@ use function rex_getUrl;
 
 class RoutesResolver extends ResolverBase
 {
-  public function getData(): array
+  public function getData(): array|null
   {
     $this->table = 'rex_article';
     $orderBy = "CASE ";
@@ -52,7 +52,7 @@ class RoutesResolver extends ResolverBase
     $redaxo_url = rex_addon::get('url');
     if ($redaxo_url->isAvailable()) {
       $this->table = 'rex_url_generator_url';
-      $this->args['orderBy'] = 'id';
+      $this->args['orderBy'] = "{$this->table}.`id`";
       $this->fieldsMap = [
         $this->table => [
           'parentId' => 'article_id',
