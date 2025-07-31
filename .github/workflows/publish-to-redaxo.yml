@@ -25,6 +25,7 @@ jobs:
         run: |
           # Create ZIP file directly, excluding unwanted files
           zip -r rexql.zip . \
+            -x "*to-do.md" \
             -x "*.git*" \
             -x "*node_modules*" \
             -x "*.env*" \
