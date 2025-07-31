@@ -37,7 +37,7 @@
   --rexql-dark-status-danger: #d9534f;
   --rexql-dark-primary: #4b9ad9;
   --rexql-dark-primary-light: #0b304d;
-  --rexql-dark-warning: #78641e;
+  --rexql-dark-warning: #f0ad4e;
   --rexql-dark-warning-light: #1a3332;
 }
 
@@ -118,6 +118,18 @@ body.rex-theme-dark .rex-page-rexql {
     padding-bottom: 15px;
     border-top: 1px solid var(--rexql-border-color-light);
   }
+  .primary {
+    color: var(--rexql-primary);
+  }
+  .success {
+    color: var(--rexql-status-success);
+  }
+  .danger {
+    color: var(--rexql-status-danger);
+  }
+  .warning {
+    color: var(--rexql-warning);
+  }
 }
 .rexql-tile {
   display: flex;
@@ -150,12 +162,6 @@ body.rex-theme-dark .rex-page-rexql {
     white-space: nowrap;
     text-align: right;
   }
-  .success {
-    color: var(--rexql-status-success);
-  }
-  .danger {
-    color: var(--rexql-status-danger);
-  }
 }
 
 .rexql-query-list {
@@ -174,12 +180,22 @@ body.rex-theme-dark .rex-page-rexql {
       font-family: var(--rexql-font-mono);
       line-height: 1.4;
     }
-    small {
-      display: block;
-      margin-top: 5px;
-      color: var(--rexql-text-muted);
-      font-size: 11px;
-    }
+  }
+}
+
+.rexql-query-meta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 5px;
+  color: var(--rexql-text-color);
+}
+.rexql-query-meta-item {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  .fa {
+    color: var(--rexql-text-muted);
   }
 }
 
@@ -200,9 +216,7 @@ body.rex-theme-dark .rex-page-rexql {
 }
 
 .rexql-playground-actions {
-  position: absolute;
   display: flex;
-  inset: auto 10px 0 10px;
   .btn-group {
     display: flex;
   }
