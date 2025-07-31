@@ -15,14 +15,59 @@ $endpointUrl = FriendsOfRedaxo\RexQL\Utility::getEndpointUrl();
 
 $content = '';
 $example = '
-# Beispiel-Query:
+# Beispiel-Queries:
 {
-  articles(limit: 5) {
+  article(id:1) {
+    id
+    slices {
+      id
+      module {
+        id
+      }
+    }
+  }
+
+  config (namespace:"developer", key:"actions") {
+    key
+  }
+
+  languages {
     id
     name
-    createdate
   }
-  
+
+  media(id:1) {
+    filename
+  }
+
+  mediaCategory(id: 1) {
+    name
+  }
+
+  module(id:1) {
+    name
+  }
+
+  navigation {
+    id
+    name
+  }
+
+  routes {
+    name
+  }
+
+  template (id:1) {
+    name
+    articles {
+      name
+    }
+  }
+
+  wildcard(wildcard:"test", clangId: 1) {
+    clangId
+    wildcard
+  }
 }';
 
 // GraphQL Playground Interface
