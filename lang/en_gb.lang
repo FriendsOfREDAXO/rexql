@@ -3,6 +3,12 @@ rexql_description = GraphQL API for REDAXO CMS
 rexql_overview = Overview
 rexql_one_per_line = One per line.
 
+# Redaxo Permissions
+perm_general_rexql[] = RexQL
+perm_general_rexql[permissions] = RexQL: Manage API keys
+perm_general_rexql[config] = RexQL: Endpoint configuration
+perm_general_rexql[webhooks] = RexQL: Manage Webhooks
+
 # Navigation
 rexql_config = Configuration
 rexql_permissions = Permissions
@@ -62,6 +68,9 @@ rexql_permissions_updated = Updated
 rexql_permissions_type = Type
 rexql_permissions_created_by = By
 rexql_permissions_not_used = Not used
+rexql_key_type = API Key Type
+rexql_permissions_allowed_domains_hint = Enter allowed domains (one per line)
+rexql_permissions_allowed_ips_hint = Enter allowed IP addresses (one per line)
 
 # Missing permission strings
 rexql_permissions_all = All
@@ -130,10 +139,6 @@ rexql_key_generate_for_domain = Generate Key for Domain
 rexql_key_domain_placeholder = e.g. app.your-domain.com
 rexql_key_ip_placeholder = e.g. 192.168.1.100
 
-# Additional permission strings
-rexql_key_type = API Key Type
-rexql_permissions_allowed_domains_hint = Enter allowed domains (one per line)
-rexql_permissions_allowed_ips_hint = Enter allowed IP addresses (one per line)
 
 # Cache Management
 rexql_cache_management = Cache Management
@@ -148,3 +153,19 @@ rexql_refresh_schema_cache = Refresh Schema Cache
 rexql_refresh_all_cache = Clear All Caches
 rexql_enabled = Enabled
 rexql_disabled = Disabled
+
+# Stats
+rexql_stats_avg = Average
+rexql_stats_max = Maximum
+rexql_stats_no_data = No data available
+rexql_stats_last_24h = Queries last 24 hours
+rexql_stats_total_queries = Total
+rexql_stats_successful_queries = Successful
+rexql_stats_from_cache = From cache
+rexql_stats_failed_queries = Failed
+rexql_stats_top_api_keys = Top 5 API keys
+rexql_stats_execution_time = Execution time
+rexql_stats_memory_usage = Memory usage
+rexql_stats_top_errors = Top errors
+rexql_stats_recent_queries = Last queries (5)
+rexql_stats_expensive_queries = Top 5 expensive queries

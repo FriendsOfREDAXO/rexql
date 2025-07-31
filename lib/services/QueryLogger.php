@@ -17,7 +17,8 @@ class QueryLogger
     float $executionTime,
     float $memoryUsage,
     bool $success,
-    ?string $errorMessage = null
+    ?string $errorMessage = null,
+    bool $fromCache = false
   ): void {
     $sql = \rex_sql::factory();
     $sql->setTable(\rex::getTable('rexql_query_log'));
@@ -30,6 +31,7 @@ class QueryLogger
     $sql->setValue('error_message', $errorMessage);
     $sql->setValue('ip_address', $_SERVER['REMOTE_ADDR'] ?? '');
     $sql->setValue('user_agent', $_SERVER['HTTP_USER_AGENT'] ?? '');
+    $sql->setValue('from_cache', $fromCache ? 1 : 0);
     $sql->setValue('createdate', date('Y-m-d H:i:s'));
 
     try {
@@ -56,7 +58,8 @@ class QueryLogger
                 AVG(execution_time) as avg_execution_time,
                 MAX(execution_time) as max_execution_time,
                 AVG(memory_usage) as avg_memory_usage,
-                MAX(memory_usage) as max_memory_usage
+                MAX(memory_usage) as max_memory_usage,
+                SUM(CASE WHEN from_cache = 1 THEN 1 ELSE 0 END) as cached_queries
             FROM ' . \rex::getTable('rexql_query_log') . '
             WHERE createdate >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
         ');

@@ -5,7 +5,6 @@
  */
 
 
-use FriendsOfRedaxo\RexQL\EndpointType;
 use FriendsOfRedaxo\RexQL\Utility;
 use FriendsOfRedaxo\RexQL\RexQL;
 use FriendsOfRedaxo\RexQL\Services\QueryLogger;
@@ -13,13 +12,13 @@ use FriendsOfRedaxo\RexQL\Services\QueryLogger;
 
 $addon = rex_addon::get('rexql');
 if (!$addon->getConfig('endpoint_enabled', false)) {
-  echo rex_view::warning(rex_i18n::msg('rexql_endpoint_not_enabled'));
-  return;
+    echo rex_view::warning($addon->i18n('endpoint_not_enabled'));
+    return;
 }
 
 
 /** @var RexQL $api */
-$api = rex::getProperty('rexql', null);
+$api = rex::getProperty('rexql_api', null);
 
 $apiEnabled = $addon->getConfig('endpoint_enabled', false);
 
@@ -28,109 +27,157 @@ $content = $statusContent = '';
 // Status-Übersicht
 
 $stats = QueryLogger::getStats();
-// dump($stats);
-//  array:11 [▼
-//     "total_queries" => 121
-//     "successful_queries" => "83"
-//     "failed_queries" => "38"
-//     "avg_execution_time" => "25.2024793"
-//     "max_execution_time" => "67.638"
-//     "avg_memory_usage" => "832.0579"
-//     "max_memory_usage" => 1915
-//     "top_api_keys" => array:2 [▶]
-//     "top_errors" => array:4 [▶]
-//     "expensive_queries" => array:5 [▶]
-//     "recent_queries" => array:5 [▶]
-// ]
+
 $statusContent .= '<div class="row">';
 
 // Letzte 24 Stunden
-$statusContent .= '<div class="col-sm-3">
-    <h3>Letzte 24 Stunden</h3>
-    <dl class="rexql-simple-table">
-        <dt>Anzahl Queries:</dt><dd>' . $stats['total_queries'] . '</dd>
-        <dt>Erfolgreiche:</dt><dd class="success">' . $stats['successful_queries'] . '</dd>
-        <dt>Fehlgeschlagene:</dt><dd class="danger">' . $stats['failed_queries'] . '</dd>
-    </dl>
-</div>';
+$fragmentData = [
+    'name' => $addon->i18n('stats_last_24h'),
+    'icon' => 'fa fa-clock primary',
+    'cols' => 3,
+    'data' => [
+        'stats' => [
+            [
+                'value' => $stats['total_queries'],
+                'label' => $addon->i18n('stats_total_queries'),
+                'icon' => 'rex-icon fa-hashtag primary'
+            ],
+            [
+                'value' => $stats['successful_queries'],
+                'label' => $addon->i18n('stats_successful_queries'),
+                'class' => 'success',
+                'icon' => 'rex-icon fa-check success'
+            ],
+            [
+                'value' => $stats['cached_queries'],
+                'label' => $addon->i18n('stats_from_cache'),
+                'class' => 'warning',
+                'icon' => 'rex-icon fa-history warning'
+            ],
+            [
+                'value' => $stats['failed_queries'],
+                'label' => $addon->i18n('stats_failed_queries'),
+                'class' => 'danger',
+                'icon' => 'rex-icon fa-times danger'
+            ],
+        ]
+    ]
+];
+$statusContent .= Utility::getFragment('stats.data', $fragmentData);
 
 // Top API-Schlüssel
-$statusContent .= '<div class="col-sm-3">
-        <h3>Top 5 API-Schlüssel</h3>
-        <dl class="rexql-simple-table">';
+$data = [];
 foreach ($stats['top_api_keys'] as $key) {
-  $statusContent .= '<dt>' . htmlspecialchars($key['name'] ?? '[PUBLIC]') . '</dt><dd>' . $key['query_count'] . ' Queries</dd>';
+    $data[] = [
+        'label' => htmlspecialchars($key['name'] ?? '[PUBLIC]'),
+        'value' => $key['query_count'],
+    ];
 }
-$statusContent .= '</dl>
-</div>';
+$fragmentdata = [
+    'name' => $addon->i18n('stats_top_api_keys'),
+    'icon' => 'fa fa-key primary',
+    'cols' => 3,
+    'data' => [
+        'stats' => $data,
+    ]
+];
+$statusContent .= Utility::getFragment('stats.data', $fragmentdata);
 
 // Ausführungszeit
-$statusContent .= '<div class="col-sm-3">
-        <h3>Ausführungszeit</h3>
-    <dl class="rexql-simple-table">
-        <dt>Durchschnitt:</dt><dd>' . round($stats['avg_execution_time'], 2) . ' ms</dd>
-        <dt>Maximale:</dt><dd>' . round($stats['max_execution_time'], 2) . ' ms</dd>
-    </dl>
-</div>';
+$fragmentData = [
+    'name' => $addon->i18n('stats_execution_time'),
+    'icon' => 'rex-icon fa-clock primary',
+    'cols' => 3,
+    'data' => [
+        'stats' => [
+            [
+                'value' => $stats['avg_execution_time'],
+                'type' => 'ms',
+                'label' => $addon->i18n('stats_avg'),
+            ],
+            [
+                'value' => $stats['max_execution_time'],
+                'type' => 'ms',
+                'label' => $addon->i18n('stats_max'),
+            ],
+        ]
+    ]
+];
+$statusContent .= Utility::getFragment('stats.data', $fragmentData);
+
 
 // Speicherverbrauch
-$statusContent .= '<div class="col-sm-3">
-        <h3>Speicherverbrauch</h3>
-    <dl class="rexql-simple-table">
-        <dt>Durchschnitt:</dt><dd>' . rex_formatter::bytes($stats['avg_memory_usage']) . '</dd>
-        <dt>Maximal:</dt><dd>' . rex_formatter::bytes($stats['max_memory_usage']) . '</dd>
-    </dl>
-</div>';
-
+$fragmentData = [
+    'name' => $addon->i18n('stats_memory_usage'),
+    'icon' => 'rex-icon fa-memory primary',
+    'cols' => 3,
+    'data' => [
+        'stats' => [
+            [
+                'value' => $stats['avg_memory_usage'],
+                'type' => 'bytes',
+                'label' => $addon->i18n('stats_avg'),
+                'icon' => 'rex-icon rex-icon-memory'
+            ],
+            [
+                'value' => $stats['max_memory_usage'],
+                'type' => 'bytes',
+                'label' => $addon->i18n('stats_max'),
+                'icon' => 'rex-icon rex-icon-memory'
+            ],
+        ]
+    ]
+];
+$statusContent .= Utility::getFragment('stats.data', $fragmentData);
 
 $statusContent .= '</div>';
 $statusContent .= '<div class="row">';
 
 // Häufigste Fehler
-$statusContent .= '<div class="col-sm-12">
-        <h3>Häufigste Fehler</h3>
-            <dl class="rexql-simple-table single-column">';
+$data = [];
 foreach ($stats['top_errors'] as $error) {
-  $statusContent .= '<dt>' . $error['error_count'] . ' x <span class="danger">' . htmlspecialchars($error['error_message']) . '</span></dt>';
+    $data[] = [
+        'label' => $error['error_count'] . ' x <span class="danger">' . htmlspecialchars($error['error_message']) . '</span>',
+    ];
 }
-$statusContent .= '</dl>
-</div>';
+$fragmentData = [
+    'name' => $addon->i18n('stats_top_errors'),
+    'icon' => 'fa fa-exclamation-triangle danger',
+    'cols' => 12,
+    'data' => [
+        'class' => 'single-column',
+        'stats' => $data,
+    ]
+];
+$statusContent .= Utility::getFragment('stats.data', $fragmentData);
+
 $statusContent .= '</div>';
 
 $statusContent .= '<div class="row">';
 
 // Letzte Abfragen
-$statusContent .= '<div class="col-sm-6">
-    <div>
-        <h3>Letzte Abfragen</h3>';
-$statusContent .= '<div class="rexql-query-list">';
-foreach ($stats['recent_queries'] as $query) {
-  $key = htmlspecialchars($query['name'] ?? '[PUBLIC]');
-  $formattedQuery = Utility::formatGraphQLQuery($query['query'] ?? '');
-  $statusContent .= '<div class="rexql-query-item">
-    <pre style="margin:0"><code>' . $formattedQuery . '</code></pre>
-        <small>API-Schlüssel: ' . $key . ', Datum: ' . $query['createdate'] . '</small>
-        </div>';
-}
-$statusContent .= '</div>
-    </div>
-</div>';
+$fragmentData = [
+    'name' => html_entity_decode($addon->i18n('stats_recent_queries'), ENT_QUOTES),
+    'icon' => 'fa fa-history success',
+    'cols' => 6,
+    'data' => [
+        'class' => 'single-column',
+        'queries' => $stats['recent_queries'],
+    ]
+];
+$statusContent .= Utility::getFragment('stats.data', $fragmentData);
 
 // Teuerste Abfragen
-$statusContent .= '<div class="col-sm-6">
-    <div>
-        <h3>Teuerste Abfragen</h3>';
-$statusContent .= '<div class="rexql-query-list">';
-foreach ($stats['expensive_queries'] as $query) {
-  $formattedQuery = Utility::formatGraphQLQuery($query['query'] ?? '');
-  $statusContent .= '<div class="rexql-query-item">
-    <pre style="margin:0"><code>' . $formattedQuery . '</code></pre>
-        <small>API-Schlüssel: ' . $key . ',  Ausführungszeit: ' . round($query['execution_time'], 2) . ' ms, Speicher: ' . rex_formatter::bytes($query['memory_usage']) . ', Datum: ' . $query['createdate'] . '</small>
-        </div>';
-}
-$statusContent .= '</div>
-</div>
-    </div>';
+$fragmentData = [
+    'name' => html_entity_decode($addon->i18n('stats_expensive_queries'), ENT_QUOTES),
+    'icon' => 'fa fa-money success',
+    'cols' => 6,
+    'data' => [
+        'class' => 'single-column',
+        'queries' => $stats['expensive_queries'],
+    ]
+];
+$statusContent .= Utility::getFragment('stats.data', $fragmentData);
 
 $statusContent .= '</div>';
 

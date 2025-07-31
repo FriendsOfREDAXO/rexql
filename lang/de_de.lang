@@ -3,6 +3,12 @@ rexql_description = GraphQL API für REDAXO CMS
 rexql_overview = Übersicht
 rexql_one_per_line = Einer pro Zeile.
 
+# Redaxo Permissions
+perm_general_rexql[] = RexQL
+perm_general_rexql[permissions] = RexQL: API-Schlüssel verwalten
+perm_general_rexql[config] = RexQL: Endpoint-Konfiguration
+perm_general_rexql[webhooks] = RexQL: Webhooks verwalten
+
 # Navigation
 rexql_config = Konfiguration
 rexql_permissions = Berechtigungen
@@ -44,7 +50,7 @@ rexql_config_yform_tables = YForm-Tabellen
 rexql_config_custom_tables = Benutzerdefinierte Tabellen
 rexql_config_select_all = Alle auswählen
 
-# Berechtigungen
+# Permissions
 rexql_permissions_title = API-Schlüssel Verwaltung
 rexql_permissions_add = API-Schlüssel hinzufügen
 rexql_permissions_name = Name
@@ -61,6 +67,18 @@ rexql_permissions_updated = Aktualisiert
 rexql_permissions_type = Typ
 rexql_permissions_created_by = Von
 rexql_permissions_not_used = Nicht verwendet
+rexql_permissions_add_key = API-Schlüssel hinzufügen
+rexql_public_private_key_created = Public/Private Schlüsselpaar erstellt
+rexql_domain_restricted_key_created = Domain-beschränkter API-Schlüssel erstellt
+rexql_permissions_all = Alle
+rexql_permissions_inactive = Inaktiv
+rexql_permissions_functions = Funktionen
+rexql_permissions_delete_confirm = Wirklich löschen?
+rexql_permissions_edit_key = API-Schlüssel bearbeiten
+rexql_key_type = API-Schlüssel Typ
+rexql_permissions_allowed_domains_hint = Geben Sie erlaubte Domains ein (eine pro Zeile)
+rexql_permissions_allowed_ips_hint = Geben Sie erlaubte IP-Adressen ein (eine pro Zeile)
+
 
 # API Key Types
 rexql_key_type_standard = Standard API-Schlüssel
@@ -120,20 +138,6 @@ rexql_key_generate_for_domain = Schlüssel für Domain generieren
 rexql_key_domain_placeholder = z.B. app.ihre-domain.de
 rexql_key_ip_placeholder = z.B. 192.168.1.100
 
-# Missing permission strings
-rexql_permissions_add_key = API-Schlüssel hinzufügen
-rexql_public_private_key_created = Public/Private Schlüsselpaar erstellt
-rexql_domain_restricted_key_created = Domain-beschränkter API-Schlüssel erstellt
-rexql_permissions_all = Alle
-rexql_permissions_inactive = Inaktiv
-rexql_permissions_functions = Funktionen
-rexql_permissions_delete_confirm = Wirklich löschen?
-rexql_permissions_edit_key = API-Schlüssel bearbeiten
-
-# Additional permission strings
-rexql_key_type = API-Schlüssel Typ
-rexql_permissions_allowed_domains_hint = Geben Sie erlaubte Domains ein (eine pro Zeile)
-rexql_permissions_allowed_ips_hint = Geben Sie erlaubte IP-Adressen ein (eine pro Zeile)
 
 # Cache Management
 rexql_cache_management = Cache-Verwaltung
@@ -145,6 +149,22 @@ rexql_query_caching = Query-Caching
 rexql_schema_cache_files = Schema-Cache-Dateien
 rexql_query_cache_files = Query-Cache-Dateien
 rexql_refresh_schema_cache = Schema-Cache aktualisieren
-rexql_refresh_all_cache = Alle Caches löschen
+rexql_refresh_all_cache = Alle RexQL-Caches löschen
 rexql_enabled = Aktiviert
 rexql_disabled = Deaktiviert
+
+# Stats
+rexql_stats_avg = Durchschnitt
+rexql_stats_max = Maximal
+rexql_stats_no_data = Keine Daten vorhanden
+rexql_stats_last_24h = Queries letzte 24 Stunden
+rexql_stats_total_queries = Anzahl
+rexql_stats_successful_queries = Erfolgreiche
+rexql_stats_from_cache = Aus cache
+rexql_stats_failed_queries = Fehlgeschlagene
+rexql_stats_top_api_keys = Top 5 API-Schlüssel
+rexql_stats_execution_time = Ausführungszeit
+rexql_stats_memory_usage = Speicherverbrauch
+rexql_stats_top_errors = Häufigste Fehler
+rexql_stats_recent_queries = Letzte Abfragen (5)
+rexql_stats_expensive_queries = 5 teuersten Abfragen

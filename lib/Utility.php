@@ -12,6 +12,7 @@ use rex;
 use rex_yrewrite;
 use rex_addon;
 use rex_i18n;
+use rex_fragment;
 use rex_logger;
 use rex_log_file;
 
@@ -284,5 +285,14 @@ class Utility
     } catch (SyntaxError $e) {
       throw new InvalidArgumentException("Invalid GraphQL query: " . $e->getMessage());
     }
+  }
+
+  public static function getFragment($file, $vars = [])
+  {
+    $fragment = new rex_fragment();
+    foreach ($vars as $key => $value) {
+      $fragment->setVar($key, $value, false);
+    }
+    return $fragment->parse($file . ".php");
   }
 }
