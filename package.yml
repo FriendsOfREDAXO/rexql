@@ -3,6 +3,7 @@ version: '1.0.0-beta'
 license: MIT
 author: 'Friends Of REDAXO'
 supportpage: 'https://github.com/FriendsOfREDAXO/rexql/issues'
+perm: rexql[]
 
 page:
   title: 'translate:rexql_title'
@@ -11,14 +12,12 @@ page:
     overview:
       title: 'Übersicht'
       icon: fa fa-home
-      perm: uploader[bulk_rework]
     playground:
       title: 'Playground'
       icon: fa fa-play
-      perm: rexql[playground]
     permissions:
       title: 'translate:rexql_permissions'
-      icon: rex-icon rex-icon-user
+      icon: rex-icon fa-key
       perm: rexql[permissions]
     config:
       title: 'translate:rexql_config'
@@ -31,7 +30,6 @@ page:
     stats:
       title: 'translate:rexql_stats'
       icon: fa fa-chart-bar
-      perm: rexql[stats]
     docs:
       title: 'translate:rexql_docs'
       itemClass: 'pull-right'

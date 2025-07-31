@@ -2,6 +2,8 @@
 
 namespace FriendsOfRedaxo\RexQL\Services;
 
+use rex;
+use rex_addon;
 use rex_logger;
 
 /**
@@ -9,6 +11,8 @@ use rex_logger;
  */
 class Logger
 {
+
+  private static bool $debugMode = false;
   private static ?rex_logger $instance = null;
 
   /**
@@ -20,7 +24,15 @@ class Logger
   {
     if (self::$instance === null) {
       self::$instance = rex_logger::factory();
+      return self::$instance;
     }
+
+    /** @var rex_addon $addon */
+    $addon = rex::getProperty('rexql_addon', null);
+    if ($addon) {
+      self::$debugMode = $addon->getConfig('debug_mode', false);
+    }
+
     return self::$instance;
   }
 
@@ -36,14 +48,16 @@ class Logger
   public static function log($message, string $level = 'debug', string $file = '', int $line = 0, array $context = []): void
   {
     $logger = self::getInstance();
-    // Use rex_logger to log the message with correct parameter order
-    $logger->log(
-      $level,
-      $message,
-      $context,
-      $file ?: __FILE__,
-      $line ?: __LINE__
-    );
+    if (self::$debugMode || $level === 'error') {
+      // Use rex_logger to log the message with correct parameter order
+      $logger->log(
+        $level,
+        $message,
+        $context,
+        $file ?: __FILE__,
+        $line ?: __LINE__
+      );
+    }
   }
 
   /**

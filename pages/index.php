@@ -7,8 +7,6 @@ $path = rex_path::frontend(rex_path::absolute($scriptUrl));
 $mtime = @filemtime($path);
 $scriptUrl .= $mtime ? '?buster=' . $mtime : '';
 
-$api = new RexQL($this, true, true);
-rex::setProperty('rexql', $api);
 $schemaFilepath = $this->getCachePath('generated.schema.graphql');
 $sdl = RexQL::loadSdlFile($schemaFilepath);
 

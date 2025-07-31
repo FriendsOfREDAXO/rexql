@@ -22,6 +22,7 @@ use GraphQL\Validator\DocumentValidator;
 use GraphQL\Validator\Rules\QueryComplexity;
 use GraphQL\Validator\Rules\QueryDepth;
 
+use rex;
 use rex_addon;
 use rex_api_exception;
 use rex_backend_login;
@@ -45,10 +46,14 @@ class RexQL
   protected static array $rootResolvers = [];
   protected Schema $schema;
 
-  public function __construct(rex_addon $addon, bool $debugMode = false, bool $skipConfigCheck = false)
+  public function __construct(bool $skipConfigCheck = false)
   {
+
+    /** @var rex_addon $addon */
+    $addon = rex::getProperty('rexql_addon', null);
+
     $this->addon = $addon;
-    $this->debugMode = $debugMode;
+    $this->debugMode = $this->addon->getConfig('debug_mode', false);
 
     self::$fieldResolvers = (new FieldResolvers())->get();
     self::$rootResolvers = (new RootResolvers())->get();
@@ -59,7 +64,7 @@ class RexQL
     }
 
     $this->context = new Context();
-    $this->context->set('debugMode', $debugMode);
+    $this->context->set('debugMode', $this->debugMode);
     $this->context->set('configCheckPassed', $configCheckPassed);
     $this->context->setApiKey($this->apiKey ?? null);
     $this->context->set('cachePath', $addon->getCachePath());
@@ -146,10 +151,12 @@ class RexQL
       'sdl' => '',
       'rootResolvers' => [],
     ];
+
     $extensions = rex_extension::registerPoint(new rex_extension_point('REXQL_EXTEND', $extensions, [
       'context' => $this->context,
       'addon' => $this->addon,
     ]));
+
     if (isset($extensions['sdl']) && is_string($extensions['sdl']) && !empty($extensions['sdl'])) {
       $sdl .= "\n" . $extensions['sdl'];
     }
@@ -184,6 +191,7 @@ class RexQL
     $cachedResults = $queryCache->get('results', null);
     if ($cachedResults) {
       Logger::log('rexQL: API: Cache hit for query');
+      $cachedResults['fromCache'] = true;
       return $cachedResults;
     }
 
@@ -208,6 +216,8 @@ class RexQL
       )->toArray($this->debugMode ? DebugFlag::INCLUDE_DEBUG_MESSAGE | DebugFlag::INCLUDE_TRACE : DebugFlag::NONE);
       $queryCache->set('results', $result);
       $result['apiKeyId'] = $this->apiKey ? $this->apiKey->getId() : null;
+      $result['fromCache'] = false;
+
       return $result;
     } catch (SyntaxError $e) {
       // Handle syntax errors
@@ -283,9 +293,11 @@ class RexQL
       return $this->filteredQueryTypes;
     }
     $queryTypes = $this->getQueryTypes();
-    $this->filteredQueryTypes = array_values(array_filter($queryTypes, function ($type) use ($queryTypes) {
+    $customTypes = $this->getCustomTypes();
+
+    $this->filteredQueryTypes = array_values(array_filter($queryTypes, function ($type) use ($queryTypes, $customTypes) {
       $typeName = $this->context->normalizeTypeName($type);
-      return in_array($typeName, $queryTypes);
+      return in_array($typeName, $queryTypes) || in_array($typeName, $customTypes);
     }));
     return $this->filteredQueryTypes;
   }

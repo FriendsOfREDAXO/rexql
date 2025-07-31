@@ -6,10 +6,10 @@
 
 namespace FriendsOfRedaxo\RexQL\Api;
 
-use FriendsOfRedaxo\RexQL\ApiKey;
 use FriendsOfRedaxo\RexQL\RexQL;
 use FriendsOfRedaxo\RexQL\Services\QueryLogger;
 
+use rex;
 use rex_addon;
 use rex_api_function;
 use rex_api_exception;
@@ -56,7 +56,7 @@ class Endpoint extends rex_api_function
       // Cast variables to correct types
       $this->variables = $this->castVariables($this->variables);
 
-      $rexql = new RexQL($this->addon, $this->debugMode);
+      $rexql = new RexQL();
       $response = $rexql->executeQuery($this->query, $this->variables, $operationName);
 
       // Send JSON response
@@ -82,7 +82,10 @@ class Endpoint extends rex_api_function
     // Prevent normal REDAXO response cycle from executing
     rex_response::cleanOutputBuffers();
 
-    $this->addon = rex_addon::get('rexql');
+    /** @var rex_addon $addon */
+    $addon = rex::getProperty('rexql_addon', null);
+
+    $this->addon = $addon;
     $this->debugMode = $this->addon->getConfig('debug_mode', false);
 
     // Set CORS headers
@@ -130,10 +133,12 @@ class Endpoint extends rex_api_function
       $executionTime,
       $memoryUsage,
       empty($response['errors']),
-      empty($response['errors']) ? null : implode(', ', array_column($response['errors'], 'message'))
+      empty($response['errors']) ? null : implode(', ', array_column($response['errors'], 'message')),
+      $response['fromCache'],
     );
 
     unset($response['apiKeyId']); // Remove apiKeyId from response
+    unset($response['fromCache']); // Remove extensions from response
 
     rex_response::cleanOutputBuffers();
     rex_response::setStatus($status);

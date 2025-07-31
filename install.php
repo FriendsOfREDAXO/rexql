@@ -55,6 +55,7 @@ if (!$error) {
     ->ensureColumn(new rex_sql_column('error_message', 'text', true)) // nullable
     ->ensureColumn(new rex_sql_column('ip_address', 'varchar(45)', false))
     ->ensureColumn(new rex_sql_column('user_agent', 'text', true)) // nullable
+    ->ensureColumn(new rex_sql_column('from_cache', 'tinyint(1)', false, 0))
     ->ensureColumn(new rex_sql_column('createdate', 'datetime', false))
     ->ensureIndex(new rex_sql_index('api_key_id', ['api_key_id']))
     ->ensureIndex(new rex_sql_index('createdate', ['createdate']))

@@ -7,10 +7,17 @@
  * @psalm-scope-this rex_addon
  */
 
-use FriendsOfRedaxo\RexQL\Cache;
-use FriendsOfRedaxo\RexQL\Webhook;
+namespace FriendsOfRedaxo\RexQL;
+
+use FriendsOfRedaxo\RexQL\Api\Endpoint;
+use FriendsOfRedaxo\RexQL\Api\Proxy;
+use FriendsOfRedaxo\RexQL\Api\Auth;
+use FriendsOfRedaxo\RexQL\RexQL;
+use FriendsOfRedaxo\RexQL\Services\Extensions;
+
 use rex;
 use rex_api_function;
+use rex_be_controller;
 use rex_extension;
 use rex_fragment;
 use rex_perm;
@@ -18,16 +25,16 @@ use rex_view;
 
 rex_fragment::addDirectory(\rex_path::src('fragments'));
 
-
 // Register permissions
-rex_perm::register('rexql[graphql]', null, rex_perm::OPTIONS);
-rex_perm::register('rexql[admin]', 'rexql[graphql]');
-rex_perm::register('rexql[webhooks]', 'rexql[admin]');
+rex_perm::register('rexql[]');
+rex_perm::register('rexql[config]');
+rex_perm::register('rexql[permissions]');
+rex_perm::register('rexql[webhooks]');
 
 // Register API classes
-rex_api_function::register('rexql', 'FriendsOfRedaxo\RexQL\Api\Endpoint');
-rex_api_function::register('rexql_proxy', 'FriendsOfRedaxo\RexQL\Api\Proxy');
-rex_api_function::register('rexql_auth', 'FriendsOfRedaxo\RexQL\Api\Auth');
+rex_api_function::register('rexql', Endpoint::class);
+rex_api_function::register('rexql_proxy', Proxy::class);
+rex_api_function::register('rexql_auth', Auth::class);
 
 // Set default configuration
 if (!$this->hasConfig()) {
@@ -51,63 +58,22 @@ if (!$this->hasConfig()) {
   ]);
 }
 
-// Register extensions - only for existing extension points
-rex_extension::register('PACKAGES_INCLUDED', function () {
 
-  $extensionPoints = [
-    'ART_ADDED',
-    'ART_DELETED',
-    'ART_MOVED',
-    'ART_STATUS',
-    'ART_UPDATED',
-    'ART_SLICES_COPY',
-    'SLICE_ADDED',
-    'SLICE_UPDATE',
-    'SLICE_MOVE',
-    'SLICE_DELETE',
-    'SLICE_STATUS',
-    'CAT_ADDED',
-    'CAT_DELETED',
-    'CAT_MOVED',
-    'CAT_STATUS',
-    'CAT_UPDATED',
-    'CLANG_ADDED',
-    'CLANG_DELETED',
-    'CLANG_UPDATED',
-    'CACHE_DELETED',
-    'REX_FORM_SAVED',
-    'REX_YFORM_SAVED',
-    'YFORM_DATA_ADDED',
-    'YFORM_DATA_DELETED',
-    'YFORM_DATA_UPDATED',
-  ];
+rex::setProperty('rexql_addon', $this);
 
-  foreach ($extensionPoints as $extensionPoint) {
-
-    rex_extension::register($extensionPoint, function ($ep) {
-      // Send webhook
-      switch ($ep->getName()) {
-        case 'CLANG_ADDED':
-        case 'CLANG_DELETED':
-        case 'CLANG_UPDATED':
-        case 'CACHE_DELETED':
-        case 'REX_FORM_SAVED':
-          Cache::invalidate();
-          break;
-        default:
-          Cache::invalidate('query');
-          break;
-      }
-      $params = $ep->getParams();
-      $params['subject'] = $ep->getSubject();
-      $params['extension_point'] = $ep->getName();
-      Webhook::send($params);
-    }, rex_extension::LATE);
-  }
-});
+// Register extension points for Webhooks
+rex_extension::register('PACKAGES_INCLUDED', Extensions::registerWebhookEps(...));
 
 // Load backend assets only in backend
 if (rex::isBackend() && rex::getUser()) {
 
   rex_view::addCssFile($this->getAssetsUrl('rexql.css'));
+
+  $currentPage = rex_be_controller::getCurrentPage();
+  $isRexQLPage = str_starts_with($currentPage, 'rexql');
+
+  if ($isRexQLPage) {
+    $api = new RexQL(true);
+    rex::setProperty('rexql_api', $api);
+  }
 }

@@ -7,8 +7,9 @@
   $func = $this->getVar('func', 'add');
   $oid = $this->getVar('oid', 0);
 
-  $api = new RexQL($addon, true, true);
-  $queryTypes = $api->getFilteredQueryTypes();
+  /** @var RexQL $api */
+  $api = rex::getProperty('rexql_api', null);
+  $queryTypes = $api->getCustomTypes();
 
   // Filter out built-in scalar types if you only want custom types
 

@@ -13,7 +13,7 @@ use FriendsOfRedaxo\RexQL\RexQL;
 $addon = rex_addon::get('rexql');
 
 /** @var RexQL $api */
-$api = rex::getProperty('rexql', null);
+$api = rex::getProperty('rexql_api', null);
 
 $apiEnabled = $addon->getConfig('endpoint_enabled', false);
 
