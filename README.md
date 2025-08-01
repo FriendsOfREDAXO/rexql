@@ -1,563 +1,749 @@
 # rexQL - GraphQL API für REDAXO CMS
 
-rexQL erweitert REDAXO CMS um eine vollständige GraphQL-API, die speziell für **Public Headless CMS** Nutzung optimiert ist.
+**Version 1.0** - Eine vollständige, erweiterbare GraphQL-API für REDAXO CMS mit SDL-basierter Schema-Definition.
 
 ## 🎯 Hauptfeatures
 
-- 🌐 **Public Headless CMS** - Direkte API-Nutzung ohne Benutzer-Authentifizierung
-- 🔒 **Domain/IP-Beschränkungen** - API-Keys beschränkt auf spezifische Domains/IPs
-- ⚡ **CORS-Support** - Vollständige CORS-Konfiguration für Frontend-Apps
-- 🛠️ **Dev-Mode** - Offener Zugriff in Development-Umgebungen
-- 🔑 **Optionale Authentifizierung** - Für sensible Daten über Proxy-Modus
-- 📊 **YForm-Integration** - Automatische API-Generierung für YForm-Tabellen
-- 🚀 **Rate Limiting** und **Query-Tiefe-Begrenzung** für Sicherheit
-- 🌍 **Mehrsprachigkeit** - Native Unterstützung für REDAXO Sprachen
-- 🔗 **URL-Addon Integration** - URLs für Datensätze abfragen
-- 🌐 **YRewrite-Integration** - Domain-Management über GraphQL
-- 📈 **Query-Logging** und **Statistiken**
-- 🎯 **GraphQL Playground** im Backend
-- 💾 **Intelligentes Caching** für bessere Performance
+- 🧩 **SDL-basierte Schema-Erweiterung** - Definiere GraphQL-Schemas mit SDL-Dateien
+- 🔄 **Unbegrenzte Query-Verschachtelung** - 1:n und n:1 Beziehungen automatisch aufgelöst
+- 📊 **Automatische YForm-Integration** - Alle YForm-Tabellen werden automatisch als GraphQL-Typen verfügbar
+- 🔗 **Intelligente Slug-Generierung** - Automatische URL-Generierung über das URL-Addon
+- 🌐 **Public Headless CMS** - Direkte API-Nutzung ohne Backend-Authentifizierung
+- 🔒 **Granulare Berechtigungen** - Typ-basierte Zugriffskontrolle mit automatischer Schema-Generierung
+- 📡 **Webhooks** - Cache-Invalidierung und externe Benachrichtigungen
+- ⚡ **Intelligentes Caching** - Schema- und Query-Caching für optimale Performance
+- 🎯 **Erweiterte GraphQL Playground** - CodeMirror-Integration mit Autovervollständigung
+- 📈 **Detaillierte Statistiken** - Query-Logging und Performance-Monitoring
+- 🔒 **CORS & Domain-Beschränkungen** - Sichere API-Nutzung in Frontend-Anwendungen
 
-## � Intelligentes Caching und Fehlerberichte
+## 🚀 Installation & Schnellstart
 
-rexQL bietet ein ausgeklügeltes Caching-System, das die Leistung erheblich verbessert und gleichzeitig detaillierte Fehlerberichte liefert:
+### 1. Installation
 
-- **Query-Caching**: Ergebnisse werden für schnelle Antwortzeiten zwischengespeichert (5 Minuten)
-- **Schema-Caching**: Das GraphQL-Schema wird für schnelle API-Initialisierung zwischengespeichert
-- **Selektives Error-Caching**:
-  - ✅ Validierungsfehler (Abfragesyntax) werden gecacht für konsistente Fehlerberichte
-  - ❌ Systemfehler (DB-Fehler, Berechtigungsprobleme) werden nie gecacht, für aktuelle Fehlerberichte
-- **Cache-Steuerung**:
-  - `?noCache=1` Parameter zum Deaktivieren des Cachings für Entwicklung/Testing
-  - Debug-Modus zeigt Cache-Status und Leistungsmetriken
+Installieren Sie das Addon über den REDAXO Installer oder manuell:
 
-**Beispiel mit Cache-Bypass:**
+#### Manuelle Installation
 
-```bash
-curl -X POST "https://ihre-domain.de/index.php?rex-api-call=rexql&noCache=1" \
-  -H "Content-Type: application/json" \
-  -d '{"query": "{ rexArticleList { id name } }"}'
-```
+Lade das Addon von GitHub herunter und entpacke es in den `src/addons/rexql` Ordner deines REDAXO-Projekts.
 
-## �🚀 Schnellstart für Public Headless CMS
+#### Abhängigkeiten installieren
 
-### 1. Installation & Setup
+Installiere die Abhängigkeiten im `src/addons/rexql` Ordner mit Composer:
 
 ```bash
 cd src/addons/rexql
 composer install
 ```
 
-Aktivieren Sie das Addon im REDAXO Backend und konfigurieren Sie:
+Aktiviere das Addon im REDAXO Backend.
+
+### 2. Minimale Konfiguration
 
 1. **rexQL → Konfiguration**:
    - ✅ API-Endpoint aktivieren
-   - ✅ CORS-Origins für Ihre Frontend-Domain(s) eintragen
-   - ✅ Query-Caching aktivieren (für bessere Performance)
-   - ❌ "Authentifizierung erforderlich" deaktivieren (für Public CMS)
+   - ✅ CORS-Origins für deine Domain(s) eintragen
 
 2. **rexQL → Berechtigungen**:
-   - Erstellen Sie einen API-Key mit Domain-Beschränkung
-   - Wählen Sie die Tabellen aus, die öffentlich verfügbar sein sollen
+   - Erstelle einen API-Key ODER deaktiviere die Authentifizierung für öffentliche APIs
+   - Wähle Berechtigung für gewünschte Typen (z.B. `article`, `media`)
 
-### 2. Frontend Integration (React Beispiel)
+3. **Testen**:
+   - Öffne **rexQL → Playground**
+   - Führe eine Test-Query aus:
 
-```javascript
-import { RexQLClient } from './rexql-client.js'
-
-const cmsClient = new RexQLClient({
-  baseUrl: 'https://cms.ihre-domain.de',
-  apiKey: 'rexql_abc123...', // Domain-beschränkter API Key
-  useProxy: false, // Direkter API-Zugriff
-  enableAuth: false // Keine Benutzer-Authentifizierung
-})
-
-// React Hook für Artikel
-function useArticles(limit = 10) {
-  const [articles, setArticles] = useState([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    async function loadArticles() {
-      try {
-        const result = await cmsClient.getArticles(limit)
-        setArticles(result.data.rexArticleList)
-      } catch (err) {
-        console.error('Failed to load articles:', err)
-      } finally {
-        setLoading(false)
-      }
-    }
-    loadArticles()
-  }, [limit])
-
-  return { articles, loading }
-}
-
-function ArticleList() {
-  const { articles, loading } = useArticles(10)
-
-  if (loading) return <div>Loading...</div>
-
-  return (
-    <div>
-      {articles.map((article) => (
-        <article key={article.id}>
-          <h2>{article.name}</h2>
-          <time>{new Date(article.createdate).toLocaleDateString()}</time>
-        </article>
-      ))}
-    </div>
-  )
+```graphql
+{
+  articles(limit: 3) {
+    id
+    name
+    createdate
+  }
 }
 ```
 
-## 🔒 Sicherheitskonzept
+### Backend-Tools (nur im REDAXO Backend verfügbar)
 
-### Public Headless CMS (Standard)
+- **GraphQL Playground** - Interaktives Query-Tool mit Schema-Explorer
+- **Berechtigungen verwalten** - API-Keys und Typ-Berechtigungen konfigurieren
+- **Konfiguration** - CORS, Caching und Sicherheitseinstellungen
 
-- **Domain-/IP-Beschränkungen**: API-Keys nur von erlaubten Domains/IPs nutzbar
-- **CORS-Konfiguration**: Kontrolliert welche Frontend-Domains API zugreifen können
-- **Tabellen-Whitelist**: Nur explizit freigegebene Tabellen verfügbar
-- **Rate Limiting**: Schutz vor API-Missbrauch
-- **Dev-Mode**: Automatisch offener Zugriff in Development-Umgebung
+## 📡 API-Endpoints
 
-### Optionale Authentifizierung (für sensible Daten)
-
-- **Proxy-Modus**: API-Zugriff über Custom Session Tokens
-- **Public/Private Key Pairs**: Sichere Authentifizierung
-- **Granulare Berechtigungen**: Pro-API-Key Zugriffskontrolle
-
-## 📡 API Endpoints
-
-### Hauptendpoint
+### Haupt-Endpoint
 
 ```
 POST /index.php?rex-api-call=rexql
 ```
 
-### Authentifizierung (Public Headless CMS)
+### Kurz-URL (mit .htaccess/.nginx Regel)
 
-```bash
-# API Key im Header
-curl -H "X-API-KEY: rexql_abc123..." \
-     -H "Content-Type: application/json" \
-     -d '{"query": "{ rexArticleList { id name } }"}' \
-     https://cms.ihre-domain.de/index.php?rex-api-call=rexql
+```
+POST /api/rexql/
 ```
 
-> **Hinweis**: rexQL nutzt ein eigenständiges API-Key System und ist **nicht** in REDAXO's Backend-Benutzerverwaltung integriert. Dies ermöglicht sichere Public Headless CMS Nutzung ohne Backend-Zugriff.
+**Beispiel .htaccess-Regel:**
 
-## 📝 Query-Namenskonvention
+```apache
+RewriteRule ^api/rexql/?$ index.php?rex-api-call=rexql [L,QSA]
+```
 
-rexQL verwendet eine konsistente Namenskonvention für alle GraphQL-Queries:
+**Beispiel Nginx-Regel:**
 
-- **Einzelne Datensätze**: `rexTableName(id: Int!)` - z.B. `rexArticle(id: 1)`
-- **Listen von Datensätzen**: `rexTableNameList(limit: Int, offset: Int)` - z.B. `rexArticleList(limit: 10)`
+```nginx
+location /api/rexql {
+    rewrite ^/api/rexql(.*) /index.php?rex-api-call=rexql$1 last;
+}
+```
 
-**Beispiele:**
+## 🧩 Schema-Erweiterung mit SDL
 
-- `rex_article` → `rexArticle` (einzeln) / `rexArticleList` (Liste)
-- `rex_clang` → `rexClang` (einzeln) / `rexClangList` (Liste)
-- `rex_yf_news` → `rexYfNews` (einzeln) / `rexYfNewsList` (Liste)
+Die wichtigste Neuerung in v1.0 ist die SDL-basierte Schema-Definition. Erweitere die GraphQL-API über REDAXO Extension Points:
 
-## 📋 Beispiel-Queries
+### Basis-SDL Schema
+
+Das Core-Schema in `data/schema.graphql` definiert alle REDAXO Core-Typen:
 
 ```graphql
-# Artikel abfragen (Liste)
+type Query {
+  # Artikel-Queries
+  article(id: ID!, clangId: Int, ctypeId: Int): article
+  articles(
+    clangId: Int
+    categoryId: Int
+    status: Boolean
+    limit: Int
+  ): [article]
+
+  # Media-Queries
+  media(id: ID!): media
+  medias(categoryId: Int): [media]
+
+  # System-Informationen
+  system(host: String): system!
+
+  # Navigation
+  navigation(
+    categoryId: Int
+    clangId: Int
+    depth: Int
+    nested: Boolean
+  ): [navigationItem]
+}
+```
+
+### Custom Schema-Erweiterung
+
+Erweitere das Schema über den `REXQL_EXTEND` Extension Point.
+Der ExtensionPoint sollte einen Array zurückgeben, der die `sdl` und `rootResolvers` enthält.
+Desweitern kann man mit `$ep->getParams()` auf die Parameter des ExtensionPoints zugreifen, welcher den aktuellen Kontext sowie das Addon selbst enthält.
+
+```php
+<?php
+// In deinem Addon's boot.php
+
+rex_extension::register('REXQL_EXTEND', function (rex_extension_point $ep) {
+    $extensions = $ep->getSubject();
+
+    // Erweitere das SDL-Schema
+    $extensions['sdl'] .= '
+        extend type Query {
+            customData(filter: String): [CustomType]
+        }
+
+        type CustomType {
+            id: ID!
+            title: String
+            content: String
+            publishedAt: String
+        }
+    ';
+
+    // Registriere Custom Resolver
+    $extensions['rootResolvers']['query']['customData'] = function($root, $args) {
+        // Deine Custom Logic hier
+        return [
+            ['id' => 1, 'title' => 'Test', 'content' => 'Beispiel'],
+        ];
+    };
+
+    return $extensions;
+});
+```
+
+### Custom Resolver mit ResolverBase
+
+Für komplexere Anforderungen erweitere die `ResolverBase` Klasse:
+
+```php
+<?php
+
+use FriendsOfRedaxo\RexQL\Resolver\ResolverBase;
+
+class CustomResolver extends ResolverBase
 {
-  rexArticleList(limit: 5, clang_id: 1) {
-    id
-    name
-    createdate
-    status
-  }
+    public function getData(): array|null
+    {
+        $this->table = 'custom_table';
+
+        // Automatische Relation-Definition
+        $this->relations = [
+            'rex_media' => [
+                'alias' => 'image',
+                'type' => 'hasOne',
+                'localKey' => 'image_id',
+                'foreignKey' => 'id',
+            ]
+        ];
+
+        // Field Resolver für berechnete Felder
+        $this->fieldResolvers = [
+            $this->table => [
+                'fullUrl' => function($row): string {
+                    return rex::getServer() . $row['custom_table_path'];
+                }
+            ]
+        ];
+
+        $results = $this->query();
+        return $this->typeName === 'customList' ? $results : $results[0] ?? null;
+    }
+}
+```
+
+```php
+// Schema-Registrierung
+rex_extension::register('REXQL_EXTEND', function (rex_extension_point $ep) {
+    $extensions = $ep->getSubject();
+
+    $extensions['sdl'] .= '
+        extend type Query {
+            customItem(id: ID!): CustomItem
+            customList(limit: Int): [CustomItem]
+        }
+
+        type CustomItem {
+            id: ID!
+            name: String
+            fullUrl: String
+            image: media
+        }
+    ';
+
+    $resolver = new CustomResolver();
+    $extensions['rootResolvers']['query']['customItem'] = $resolver->resolve();
+    $extensions['rootResolvers']['query']['customList'] = $resolver->resolve();
+
+    return $extensions;
+});
+```
+
+Selbstverständlich kann man auch komplexere Logik in den Resolvern implementieren, wie z.B. Datenbankabfragen, externe API-Calls oder komplexe Berechnungen.
+Wenn man komplett eigene Resolver-Klassen erstellen möchte, dann hilft ev. folgendes:
+
+- das Interface `FriendsOfRedaxo\RexQL\Resolver\Interface`, welches die Methoden `getData()` und `getTypeName()` definiert.
+- die Klasse `FriendsOfRedaxo\RexQL\Resolver\ResolverBase`, die bereits viele nützliche Methoden und Eigenschaften bereitstellt, wie z.B. `query()`, `checkPermissions()`, `log()`, `error()` und `getFields()`.
+- die Bibliothek `webonyx/graphql-php`, die `rexql` integriert. Darin spezielle die Klasse `GraphQL\Type\Definition\ResolveInfo`, die Informationen über die GraphQL-Query enthält, wie z.B. die angeforderten Felder und Argumente.
+- [GraphQL.org](https://graphql.org/learn/) für allgemeine GraphQL-Konzepte und Best Practices.
+
+## 📊 Automatische YForm-Integration
+
+Alle YForm-Tabellen werden automatisch als GraphQL-Typen verfügbar gemacht:
+
+### Automatische Schema-Generierung
+
+```graphql
+# YForm-Tabelle "rex_news" wird automatisch zu:
+
+extend type Query {
+  rexNewsDataset(id: ID!, slugNamespace: String): rexNews
+  rexNewsCollection(
+    status: Boolean
+    where: String
+    orderBy: String
+    offset: Int
+    limit: Int
+    slugNamespace: String
+  ): [rexNews]
 }
 
-# Einzelnen Artikel abfragen
-{
-  rexArticle(id: 1) {
-    id
-    name
-    createdate
-  }
+type rexNews {
+  id: ID
+  slug: String # Automatisch generiert via URL-Addon
+  title: String
+  content: String
+  publishDate: String
+  status: String
+  author: rexUser # YForm-Relationen werden automatisch aufgelöst
 }
+```
 
-# Artikel mit Inhalten (Slices)
+### YForm-Query Beispiele
+
+```graphql
+# Einzelnen Datensatz abrufen
 {
-  rexArticle(id: 1) {
+  rexNewsDataset(id: 1) {
     id
-    name
-    slices: rexArticleSliceList(limit: 10) {
-      id
-      module_id
-      value1
-      value2
+    title
+    content
+    slug
+    author {
+      name
+      email
     }
   }
 }
 
-# YForm-Tabelle abfragen (Liste)
+# Collection mit Filterung
 {
-  rexYfNewsList(limit: 10) {
+  rexNewsCollection(
+    status: true
+    where: "publish_date > '2024-01-01'"
+    orderBy: "publish_date DESC"
+    limit: 10
+  ) {
+    id
+    title
+    slug
+    publishDate
+  }
+}
+```
+
+### Slug-Generierung
+
+Wenn das URL-Addon installiert ist, generiert rexQL automatisch Slugs:
+
+```graphql
+{
+  rexNewsDataset(id: 1, slugNamespace: "news") {
+    id
+    title
+    slug # Automatisch: "/news/mein-artikel-titel"
+  }
+}
+```
+
+## 🔄 Unbegrenzte Query-Verschachtelung
+
+Das v1.0 Resolver-System löst automatisch 1:n und n:1 Beziehungen auf:
+
+```graphql
+{
+  article(id: 1) {
     id
     name
-    topic
-    description
-    pub_date
+    template {
+      id
+      name
+    }
+    slices {
+      id
+      value1
+      module {
+        id
+        name
+      }
+    }
+  }
+}
+```
+
+### Automatische Relation-Definition
+
+```php
+// In deinem Custom Resolver
+$this->relations = [
+    'rex_article_slice' => [
+        'alias' => 'slices',
+        'type' => 'hasMany',
+        'localKey' => 'id',
+        'foreignKey' => 'article_id',
+        'relations' => [
+            'rex_module' => [
+                'alias' => 'module',
+                'type' => 'hasOne',
+                'localKey' => 'module_id',
+                'foreignKey' => 'id',
+            ]
+        ]
+    ]
+];
+```
+
+## 📡 Webhooks
+
+Webhooks ermöglichen Cache-Invalidierung und externe Benachrichtigungen:
+
+### Webhook-Konfiguration
+
+1. **rexQL → Webhooks**
+2. Webhook-URL hinzufügen: `https://ihre-app.de/api/webhook`
+3. Events auswählen: `article_update`, `media_update`, etc.
+
+### Webhook-Payload
+
+```json
+{
+  "event": "article_update",
+  "timestamp": "2024-08-01T10:00:00Z",
+  "data": {
+    "id": 1,
+    "table": "rex_article",
+    "action": "update"
+  }
+}
+```
+
+### Webhook-Handler Beispiel
+
+```javascript
+// In deiner Frontend-App
+app.post('/api/webhook', (req, res) => {
+  const { event, data } = req.body
+
+  if (event === 'article_update') {
+    // Cache invalidieren
+    cache.del(`article:${data.id}`)
+
+    // Static Site Regeneration triggern
+    regeneratePage(`/articles/${data.id}`)
+  }
+
+  res.json({ success: true })
+})
+```
+
+## 🔒 Berechtigungen & Sicherheit
+
+### Typ-basierte Berechtigungen
+
+Berechtigungen werden automatisch für alle Schema-Typen generiert:
+
+**Verfügbare Berechtigungen:**
+
+- `article` - Artikel-Zugriff
+- `media` - Medien-Zugriff
+- `template` - Template-Zugriff
+- `rexNews` - YForm-Tabelle (automatisch generiert)
+- `system` - System-Informationen
+
+### API-Key Konfiguration
+
+1. **rexQL → Berechtigungen → Hinzufügen**
+2. **Domain-Beschränkungen:** `ihre-domain.de,localhost`
+3. **Berechtigungen auswählen:** `article`, `media`, `rexNews`
+4. **API-Key kopieren:** `rexql_abc123...`
+
+### Sichere Frontend-Integration
+
+```javascript
+// Domain-beschränkter API-Key (Frontend-sicher)
+const client = new GraphQLClient('/api/rexql/', {
+  headers: {
+    'X-API-KEY': 'rexql_abc123...',
+    'Content-Type': 'application/json'
+  }
+})
+
+const { data } = await client.request(
+  `
+  query GetArticles($limit: Int) {
+    articles(limit: $limit) {
+      id
+      name
+      slug
+    }
+  }
+`,
+  { limit: 10 }
+)
+```
+
+### Proxy-Modus (für sensible Daten)
+
+```javascript
+// Für Backend-authentifizierte Requests
+const proxyClient = new GraphQLClient('/index.php?rex-api-call=proxy', {
+  headers: {
+    Authorization: 'Bearer ' + sessionToken,
+    'X-Public-Key': 'rexql_pub_xyz789...'
+  }
+})
+```
+
+## 💾 Intelligentes Caching
+
+### Schema-Caching
+
+Das GraphQL-Schema wird automatisch gecacht und nur bei Änderungen neu generiert.
+
+### Query-Caching
+
+Wiederholte Queries werden gecacht (Standard: 5 Minuten):
+
+```bash
+# Cache umgehen für Entwicklung
+curl -X POST "/api/rexql/?noCache=1" \
+  -H "X-API-KEY: rexql_abc123..." \
+  -d '{"query": "{ articles { id name } }"}'
+```
+
+### Cache-Management
+
+```php
+// Programmatische Cache-Kontrolle
+use FriendsOfRedaxo\RexQL\Cache;
+
+// Kompletten Cache löschen
+Cache::invalidateAll();
+
+// Nur Schema-Cache löschen
+Cache::invalidateSchema();
+
+// Nur Query-Cache löschen
+Cache::invalidateQueries();
+```
+
+## 🎯 GraphQL Playground
+
+Der erweiterte Playground bietet:
+
+- **Schema-Explorer:** Vollständige Schema-Dokumentation
+- **CodeMirror-Editor:** Syntax-Highlighting und Autovervollständigung
+- **Query-Validation:** Echtzeit-Fehlerprüfung
+- **Variable-Support:** JSON-Variablen für Queries
+
+### Playground-Nutzung
+
+1. **rexQL → Playground** öffnen
+2. API-Key eingeben
+3. Query schreiben mit Autovervollständigung:
+
+```graphql
+query GetArticleWithContent($id: ID!) {
+  article(id: $id) {
+    id
+    name
+    slices {
+      id
+      value1
+      module {
+        name
+      }
+    }
+  }
+}
+```
+
+4. **Variablen** definieren:
+
+```json
+{
+  "id": "1"
+}
+```
+
+## 📋 Query-Beispiele
+
+### Core-Queries
+
+```graphql
+# Artikel mit verschachtelten Beziehungen
+{
+  articles(limit: 5, status: true) {
+    id
+    name
+    slug
+    template {
+      name
+    }
+    slices {
+      value1
+      value2
+      module {
+        name
+      }
+    }
   }
 }
 
-# Sprachen abfragen
+# Medien mit Kategorien
 {
-  rexClangList {
-    id
-    name
-    code
-  }
-}
-
-# Medien abfragen
-{
-  rexMediaList(limit: 20) {
+  medias(categoryId: 1) {
     id
     filename
     title
-    category_id
+    category {
+      name
+      parentId
+    }
   }
 }
-```
 
-## Verfügbare Tabellen
-
-### Core-Tabellen
-
-- `rex_article` - Artikel
-- `rex_article_slice` - Artikel-Inhalte
-- `rex_clang` - Sprachen
-- `rex_media` - Medien
-- `rex_media_category` - Medien-Kategorien
-- `rex_module` - Module
-- `rex_template` - Templates
-- `rex_user` - Benutzer
-
-### Addon-Tabellen
-
-- Alle YForm-Tabellen (konfigurierbar)
-- URL-Addon Tabellen
-- YRewrite-Addon Tabellen
-
-## Sicherheit
-
-- **API-Schlüssel-basierte Authentifizierung**
-- **Granulare Berechtigungen** pro API-Schlüssel
-- **Rate Limiting** (konfigurierbar)
-- **Query-Tiefe-Begrenzung** gegen DoS-Angriffe
-- **Audit-Logging** aller API-Zugriffe
-
-### JavaScript Client Sicherheit
-
-⚠️ **Wichtig**: API-Schlüssel sollten niemals direkt in JavaScript-Client-Anwendungen verwendet werden, da sie öffentlich sichtbar sind.
-
-**Verfügbare Sicherheitsansätze:**
-
-#### 1. Backend-Proxy (Empfohlen) ✅ Implementiert
-
-```javascript
-// rexQL Client mit Proxy-Unterstützung verwenden
-const client = new RexQLClient({
-  baseUrl: 'https://ihre-domain.de',
-  publicKey: 'rexql_pub_abc123...', // Public Key (sicher exponierbar)
-  sessionToken: 'your_session_token', // Session Token
-  useProxy: true
-})
-
-// Query ausführen
-const result = await client.query(`{
-    rexArticleList(limit: 5) { id name }
-}`)
-```
-
-**Funktionsweise:**
-
-- **Public Key** kann sicher im Frontend verwendet werden
-- **Private Key** bleibt auf dem Server und wird nie exponiert
-- **Custom Session Token** für Benutzer-Authentifizierung in Ihrer Anwendung
-- **Proxy-Endpoint**: `POST /index.php?rex-api-call=rexql_proxy`
-
-**Setup:**
-
-1. Erstellen Sie einen **Public/Private Key Pair** im Backend
-2. Aktivieren Sie den **Proxy** in der Konfiguration
-3. Implementieren Sie **Custom Session Token Management** in Ihrer Anwendung
-
-#### 2. Domain-Restrictions ✅ Implementiert
-
-API-Schlüssel können auf bestimmte Domains/IPs beschränkt werden:
-
-**Konfigurierbare Restrictions:**
-
-- **Allowed Domains**: Nur von bestimmten Domains zugänglich
-- **Allowed IP Addresses**: IP-Adress-Beschränkungen
-- **HTTPS-Only**: Nur über sichere Verbindungen
-
-```javascript
-// Domain-beschränkter API Key (weniger sicher als Proxy)
-const client = new RexQLClient({
-  baseUrl: 'https://ihre-domain.de',
-  publicKey: 'rexql_restricted_xyz789...', // Domain-beschränkter Key
-  useProxy: false
-})
-```
-
-### API-Schlüssel Typen
-
-#### Standard API-Schlüssel
-
-```
-rexql_abc123def456...
-```
-
-- Klassischer API-Schlüssel
-- Für Server-zu-Server Kommunikation
-- Sollte nie im Frontend exponiert werden
-
-#### Public/Private Key Pair
-
-```
-Public Key:  rexql_pub_abc123...    (Frontend-sicher)
-Private Key: rexql_priv_xyz789...   (Server-only)
-```
-
-- **Public Key** kann sicher im Frontend verwendet werden
-- **Private Key** nur auf dem Server für Proxy-Calls
-- Funktioniert nur mit aktiviertem Proxy
-
-#### Domain-Restricted Key
-
-```
-rexql_abc123def456...
-```
-
-- Standard API-Schlüssel mit zusätzlichen Restrictions
-- Domain/IP/HTTPS Einschränkungen
-- Reduziert Risiko bei versehentlicher Exposition
-
-## Konfiguration
-
-### Allgemeine Einstellungen
-
-- API-Endpoint aktivieren/deaktivieren
-- Authentifizierung erforderlich (ja/nein)
-- Rate Limit (Anfragen pro Minute)
-- Maximale Query-Tiefe
-- Introspection aktivieren
-- Debug-Modus
-
-### Berechtigungen
-
-- `read:all` - Alle Tabellen lesen
-- `read:core` - Nur Core-Tabellen lesen
-- `read:yform` - Nur YForm-Tabellen lesen
-- `read:media` - Nur Medien lesen
-- `*` - Alle Berechtigungen
-
-## GraphQL Playground
-
-Das Addon enthält einen integrierten GraphQL Playground im Backend unter "rexQL" > "Playground". Hier können Sie:
-
-- Queries interaktiv testen
-- Schema-Dokumentation einsehen (Introspection)
-- API-Schlüssel testen
-- Die konsistente Namenskonvention kennenlernen
-
-**Tipp:** Verwenden Sie die Schema-Dokumentation (Introspection), um alle verfügbaren Felder und Query-Namen zu erkunden.
-
-## Client-Beispiele
-
-### JavaScript (Empfohlen: Proxy-Modus)
-
-```javascript
-// RexQL Client verwenden (inkludiert in assets/rexql-client.js)
-const client = new RexQLClient({
-  baseUrl: 'https://ihre-domain.de',
-  publicKey: 'rexql_pub_abc123...', // Public Key
-  useProxy: true // Proxy verwenden
-})
-
-// 1. Login (generiert Session Token automatisch)
-await client.login('testuser', 'testpass')
-
-// 2. Artikel abfragen
-const articles = await client.getArticles(5)
-console.log(articles.data.rexArticleList)
-
-// 3. Custom Query
-const result = await client.query(`{
-    rexArticleList(limit: 5) {
-        id
-        name
-        createdate
-    }
-}`)
-
-// 4. Logout
-await client.logout()
-```
-
-### Kompletter Workflow für Frontend-Apps
-
-**1. Backend Setup (einmalig):**
-
-```
-1. Gehen Sie zu "rexQL" > "Berechtigungen"
-2. Klicken Sie "Hinzufügen"
-3. Wählen Sie "Public/Private Key Pair"
-4. Notieren Sie sich den Public Key (z.B. rexql_pub_abc123...)
-5. Aktivieren Sie den Proxy unter "rexQL" > "Konfiguration"
-```
-
-**2. Frontend Integration:**
-
-```javascript
-// Client initialisieren
-const client = new RexQLClient({
-  baseUrl: 'https://ihre-domain.de',
-  publicKey: 'rexql_pub_abc123...',
-  useProxy: true
-})
-
-// Login-Flow
-try {
-  await client.login(username, password)
-  // Jetzt können Sie GraphQL Queries ausführen
-  const data = await client.query('{ rexArticleList { id name } }')
-} catch (error) {
-  console.error('Authentication failed:', error)
-}
-```
-
-**3. Test-Client:**
-Öffnen Sie `assets/test-client.html` in Ihrem Browser für eine vollständige Demo-Anwendung.
-
-### JavaScript (Legacy: Direkter Zugriff)
-
-```javascript
-// Nur für Server-zu-Server Kommunikation empfohlen
-const query = `{
-  rexArticleList(limit: 5) {
+# Navigation-Struktur
+{
+  navigation(categoryId: 1, depth: 2, nested: true) {
     id
     name
-    createdate
+    slug
+    children {
+      id
+      name
+      slug
+    }
   }
-}`
+}
 
-fetch('/index.php?rex-api-call=rexql', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'X-API-KEY': 'your_api_key'
-  },
-  body: JSON.stringify({ query })
-})
-  .then((response) => response.json())
-  .then((data) => console.log(data))
+# System-Informationen
+{
+  system {
+    version
+    serverName
+    startArticleId
+    domainLanguages {
+      id
+      name
+      code
+    }
+  }
+}
 ```
 
-### PHP
-
-```php
-$query = '{ rexArticleList(limit: 5) { id name createdate } }';
-
-$ch = curl_init();
-curl_setopt($ch, CURLOPT_URL, "https://ihre-domain.de/index.php?rex-api-call=rexql");
-curl_setopt($ch, CURLOPT_POST, 1);
-curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode(['query' => $query]));
-curl_setopt($ch, CURLOPT_HTTPHEADER, [
-    "Content-Type: application/json",
-    "X-API-KEY: your_api_key"
-]);
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-
-$result = curl_exec($ch);
-$data = json_decode($result, true);
-curl_close($ch);
-```
-
-## Entwicklung
-
-### Cache-Verwaltung und Debugging
-
-Während der Entwicklung können Sie:
-
-1. **Debug-Modus aktivieren** in der rexQL-Konfiguration für detaillierte Infos
-2. **Cache umgehen** mit dem URL-Parameter `?noCache=1`
-3. **Cache manuell zurücksetzen** über den Button in der rexQL-Konfiguration
-4. **Cache-Status prüfen** auf der rexQL-Statusseite
-
-In PHP-Code können Sie den Cache direkt verwalten:
-
-```php
-// Cache komplett zurücksetzen
-FriendsOfRedaxo\RexQL\Cache::invalidateAll();
-
-// Nur Schema-Cache zurücksetzen
-FriendsOfRedaxo\RexQL\Cache::invalidateSchema();
-
-// Nur Query-Cache zurücksetzen
-FriendsOfRedaxo\RexQL\Cache::invalidateQueries();
-
-// Cache-Status abrufen
-$status = FriendsOfRedaxo\RexQL\Cache::getStatus();
-```
-
-### Migration von älteren Versionen
-
-Wenn Sie von einer älteren Version upgraden, müssen Sie Ihre GraphQL-Queries aktualisieren:
+### YForm-Queries
 
 ```graphql
-# Alte Namenskonvention (funktioniert nicht mehr):
+# News-Artikel mit Autor und Kategorien
 {
-  rexArticles(limit: 5) { ... }    # ❌
-  rexClangs { ... }                # ❌
+  rexNewsCollection(status: true, orderBy: "publish_date DESC", limit: 10) {
+    id
+    title
+    slug
+    publishDate
+    author {
+      name
+      email
+    }
+    categories {
+      name
+    }
+  }
 }
 
-# Neue Namenskonvention:
+# Event-Details mit Location
 {
-  rexArticleList(limit: 5) { ... } # ✅
-  rexClangList { ... }             # ✅
+  rexEventDataset(id: 1) {
+    id
+    title
+    description
+    startDate
+    endDate
+    location {
+      name
+      address
+      city
+    }
+  }
 }
 ```
 
-### Abhängigkeiten
+## 📈 Statistiken & Monitoring
 
-- PHP 8.1+
-- REDAXO 5.17+
-- webonyx/graphql-php ^15.0
-- YForm Addon (für YForm-Integration)
-- URL Addon (für URL-Integration)
-- YRewrite Addon (für Domain-Integration)
+### Query-Statistiken
 
-### Tests ausführen
+**rexQL → Statistiken** zeigt:
 
-```bash
-cd src/addons/rexql
-composer test
+- Häufigste Queries
+- Performance-Metriken
+- API-Key Nutzung
+- Fehler-Logs
+
+### Performance-Monitoring
+
+```graphql
+# Debug-Informationen in Antworten
+{
+  "data": { ... },
+  "extensions": {
+    "executionTime": "25.57ms",
+    "memoryUsage": "1.29 KiB",
+    "cacheStatus": "hit"
+  }
+}
 ```
 
-## Support
+## 🛠️ Entwicklung & Extension Points
 
-- **GitHub Issues**: [GitHub Repository](https://github.com/FriendsOfREDAXO/rexql)
-- **REDAXO Slack**: [friendsofredaxo.slack.com](friendsofredaxo.slack.com)
-- **Community**: [REDAXO Community](https://redaxo.org/community/)
+### Extension Points
 
-## Lizenz
+- **`REXQL_EXTEND`** - Haupt-Extension Point für Schema und Resolver
+- **`REXQL_EXTEND_FIELD_RESOLVERS`** - Custom Field Resolver
+- **`REXQL_EXTEND_TYPE_RESOLVERS`** - Custom Type Resolver
+
+### ResolverBase Methoden
+
+Die `ResolverBase` Klasse bietet hilfreiche Methoden:
+
+```php
+// Automatische Query-Generierung
+$results = $this->query();
+
+// Berechtigungsprüfung
+$this->checkPermissions($typeName);
+
+// Logging
+$this->log('Debug-Nachricht');
+
+// Fehler-Behandlung
+$this->error('Fehlermeldung');
+
+// Field-Selection aus GraphQL-Query
+$fields = $this->getFields($table, $selection);
+```
+
+## 🔧 Konfiguration
+
+### Backend-Einstellungen
+
+**rexQL → Konfiguration:**
+
+- **API-Endpoint aktivieren** - Ein/Aus
+- **Authentifizierung erforderlich** - Für geschützte APIs
+- **CORS-Origins** - `domain1.de,domain2.de,localhost:3000`
+- **Rate Limiting** - Anfragen pro Minute
+- **Query-Tiefe-Limit** - Schutz vor DoS-Angriffen
+- **Debug-Modus** - Detaillierte Logs und Timing
+- **Cache aktivieren** - Schema- und Query-Caching
+
+### .htaccess Kurz-URLs
+
+```apache
+# Kurze API-URLs aktivieren
+RewriteRule ^api/rexql/?$ index.php?rex-api-call=rexql [L,QSA]
+RewriteRule ^api/rexql/proxy/?$ index.php?rex-api-call=proxy [L,QSA]
+RewriteRule ^api/rexql/auth/?$ index.php?rex-api-call=auth [L,QSA]
+```
+
+## � Migration & Breaking Changes
+
+Da v1.0 ein kompletter Rewrite ist, sind keine Migrations-Pfade verfügbar. Neu aufsetzen empfohlen.
+
+## 📚 Weiterführende Ressourcen
+
+- **GraphQL Spezifikation:** https://graphql.org/
+- **REDAXO Dokumentation:** https://redaxo.org/doku/main
+- **YForm Addon:** https://github.com/yakamara/redaxo_yform
+
+## 🤝 Support & Community
+
+- **GitHub Issues:** https://github.com/FriendsOfREDAXO/rexql
+- **REDAXO Slack:** #addon-rexql
+- **REDAXO Community:** https://redaxo.org/community/
+
+## 📄 Lizenz
 
 MIT License - siehe [LICENSE](LICENSE) Datei
 
-## Credits
+---
 
-Entwickelt von der REDAXO Community mit ❤️
-**[Yves Torres](https://github.com/ynamite)**
-
-Basiert auf [webonyx/graphql-php](https://github.com/webonyx/graphql-php)
+**Entwickelt von [Yves Torres](https://github.com/ynamite) für die REDAXO Community**
