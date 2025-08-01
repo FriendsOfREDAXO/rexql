@@ -19,11 +19,8 @@ use rex;
 use rex_api_function;
 use rex_be_controller;
 use rex_extension;
-use rex_fragment;
 use rex_perm;
 use rex_view;
-
-rex_fragment::addDirectory(\rex_path::src('fragments'));
 
 // Register permissions
 rex_perm::register('rexql[]');
