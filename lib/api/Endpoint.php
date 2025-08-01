@@ -134,7 +134,7 @@ class Endpoint extends rex_api_function
       $memoryUsage,
       empty($response['errors']),
       empty($response['errors']) ? null : implode(', ', array_column($response['errors'], 'message')),
-      $response['fromCache'],
+      $response['fromCache'] ?? false,
     );
 
     unset($response['apiKeyId']); // Remove apiKeyId from response
