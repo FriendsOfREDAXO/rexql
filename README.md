@@ -16,6 +16,10 @@
 - 📈 **Detaillierte Statistiken** - Query-Logging und Performance-Monitoring
 - 🔒 **CORS & Domain-Beschränkungen** - Sichere API-Nutzung in Frontend-Anwendungen
 
+## 🗓️ Geplante Features
+
+- 🔄 **Mutationen** - Unterstützung für GraphQL-Mutationen zur Datenmanipulation
+
 ## 🚀 Installation & Schnellstart
 
 ### 1. Installation
