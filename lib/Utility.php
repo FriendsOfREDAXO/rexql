@@ -15,6 +15,7 @@ use rex_i18n;
 use rex_fragment;
 use rex_logger;
 use rex_log_file;
+use rex_request;
 
 enum EndpointType: string
 {
@@ -102,7 +103,9 @@ class Utility
       return true; // No restrictions
     }
 
-    $origin = $_SERVER['HTTP_ORIGIN'] ?? $_SERVER['HTTP_REFERER'] ?? '';
+    $serverOrigin = rex_request::server('HTTP_ORIGIN', 'string', '');
+    $serverReferer = rex_request::server('HTTP_REFERER', 'string', '');
+    $origin = $serverOrigin ?: $serverReferer;
     if (empty($origin)) {
       return false;
     }
@@ -162,13 +165,14 @@ class Utility
     ];
 
     foreach ($headers as $header) {
-      if (!empty($_SERVER[$header])) {
-        $ips = explode(',', $_SERVER[$header]);
+      $serverVar = rex_request::server($header, 'string', '');
+      if (!empty($serverVar)) {
+        $ips = explode(',', $serverVar);
         return trim($ips[0]);
       }
     }
 
-    return $_SERVER['REMOTE_ADDR'] ?? '';
+    return rex_request::server('REMOTE_ADDR', 'string', '');
   }
 
   /**
@@ -180,7 +184,9 @@ class Utility
       return true; // HTTPS not required
     }
 
-    return isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+    $https = rex_request::server('HTTPS', 'string', '');
+
+    return $https !== 'off';
   }
 
   /**

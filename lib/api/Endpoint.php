@@ -16,6 +16,7 @@ use rex_api_exception;
 use rex_api_result;
 use rex_formatter;
 use rex_i18n;
+use rex_request;
 use rex_response;
 
 use Exception;
@@ -31,6 +32,7 @@ class Endpoint extends rex_api_function
 
   protected rex_addon $addon;
   protected bool $debugMode = false;
+  protected array $serverVars = [];
   protected float $startTime = 0;
   protected float $startMemory = 0;
   protected string $query = '';
@@ -87,6 +89,10 @@ class Endpoint extends rex_api_function
 
     $this->addon = $addon;
     $this->debugMode = $this->addon->getConfig('debug_mode', false);
+
+    $this->serverVars['REQUEST_METHOD'] = rex_request::server('REQUEST_METHOD', 'string', '');
+    $this->serverVars['HTTP_ORIGIN'] = rex_request::server('HTTP_ORIGIN', 'string', '');
+    $this->serverVars['CONTENT_TYPE'] = rex_request::server('CONTENT_TYPE', 'string', '');
 
     // Set CORS headers
     $this->setCorsHeaders();
@@ -150,7 +156,7 @@ class Endpoint extends rex_api_function
   {
 
     // Handle preflight request (OPTIONS)
-    if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    if ($this->serverVars['REQUEST_METHOD'] === 'OPTIONS') {
       rex_response::setStatus(rex_response::HTTP_OK);
       rex_response::sendContent('', 'text/plain');
       return new rex_api_result(true);
@@ -164,8 +170,8 @@ class Endpoint extends rex_api_function
   protected function getGraphQLInput(): void
   {
     // POST Request (Standard)
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-      $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+    if ($this->serverVars['REQUEST_METHOD'] === 'POST') {
+      $contentType = $this->serverVars['CONTENT_TYPE'] ?? '';
 
       if (str_contains($contentType, 'application/json')) {
         $input = json_decode(file_get_contents('php://input'), true);
@@ -193,7 +199,7 @@ class Endpoint extends rex_api_function
     $allowedMethods = $this->addon->getConfig('cors_allowed_methods', ['GET', 'POST', 'OPTIONS']);
     $allowedHeaders = $this->addon->getConfig('cors_allowed_headers', ['Content-Type', 'Authorization', 'X-API-KEY', 'X-Public-Key']);
 
-    $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+    $origin = $this->serverVars['HTTP_ORIGIN'];
 
     if (in_array('*', $allowedOrigins) || in_array($origin, $allowedOrigins)) {
       rex_response::setHeader('Access-Control-Allow-Origin', in_array('*', $allowedOrigins) ? '*' : $origin);

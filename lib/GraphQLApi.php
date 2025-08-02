@@ -31,6 +31,7 @@ use rex_extension;
 use rex_extension_point;
 use rex_file;
 use rex_i18n;
+use rex_request;
 
 class RexQL
 {
@@ -41,13 +42,17 @@ class RexQL
 
   protected bool $debugMode = false;
   protected static $fieldResolvers, $typeResolvers;
-  protected array $queryTypes = [];
   protected array $filteredQueryTypes = [];
+  protected array $queryTypes = [];
   protected static array $rootResolvers = [];
+  protected array $serverVars = [];
   protected Schema $schema;
 
   public function __construct(bool $skipConfigCheck = false)
   {
+
+    $this->serverVars['HTTP_X_API_KEY'] = rex_request::server('HTTP_X_API_KEY', 'string', '');
+    $this->serverVars['HTTP_AUTHORIZATION'] = rex_request::server('HTTP_AUTHORIZATION', 'string', '');
 
     /** @var rex_addon $addon */
     $addon = rex::getProperty('rexql_addon', null);
@@ -235,7 +240,7 @@ class RexQL
   {
     // Check if API Key is provided in request
     $apiKeyValue =
-      rex_request('api_key', 'string') ?: ($_SERVER['HTTP_X_API_KEY'] ?? '') ?: (isset($_SERVER['HTTP_AUTHORIZATION']) ? str_replace('Bearer ', '', $_SERVER['HTTP_AUTHORIZATION']) : '');
+      rex_request('api_key', 'string') ?: $this->serverVars['HTTP_X_API_KEY'] ?: ($this->serverVars['HTTP_AUTHORIZATION'] ? str_replace('Bearer ', '', $this->serverVars['HTTP_AUTHORIZATION']) : '');
 
     if (empty($apiKeyValue)) {
       if ($this->debugMode) {

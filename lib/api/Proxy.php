@@ -11,6 +11,7 @@ use rex_addon;
 use rex_api_function;
 use rex_api_exception;
 use rex_api_result;
+use rex_request;
 use rex_response;
 
 
@@ -24,11 +25,17 @@ use rex_response;
 class Proxy extends rex_api_function
 {
   protected $published = true;
+  protected array $serverVars = [];
 
   public function execute()
   {
     // Prevent normal REDAXO response cycle from executing
     rex_response::cleanOutputBuffers();
+
+    $this->serverVars['HTTP_AUTHORIZATION'] = rex_request::server('HTTP_AUTHORIZATION', 'string', '');
+    $this->serverVars['HTTP_X_PUBLIC_KEY'] = rex_request::server('HTTP_X_PUBLIC_KEY', 'string', '');
+    $this->serverVars['REQUEST_METHOD'] = rex_request::server('REQUEST_METHOD', 'string', '');
+    $this->serverVars['CONTENT_TYPE'] = rex_request::server('CONTENT_TYPE', 'string', '');
 
     try {
       $addon = rex_addon::get('rexql');
@@ -93,7 +100,7 @@ class Proxy extends rex_api_function
   private function validateSession(): string
   {
     // Custom Session Token (ex. frontend login)
-    $sessionToken = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+    $sessionToken = $this->serverVars['HTTP_AUTHORIZATION'];
     $sessionToken = str_replace('Bearer ', '', $sessionToken);
 
     if (empty($sessionToken)) {
@@ -123,7 +130,7 @@ class Proxy extends rex_api_function
    */
   private function getPublicKey(): ?string
   {
-    return rex_request('public_key', 'string') ?: ($_SERVER['HTTP_X_PUBLIC_KEY'] ?? null);
+    return rex_request('public_key', 'string') ?: ($this->serverVars['HTTP_X_PUBLIC_KEY'] ?? null);
   }
 
   /**
@@ -131,11 +138,11 @@ class Proxy extends rex_api_function
    */
   private function getGraphQLInput(): array
   {
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    if ($this->serverVars['REQUEST_METHOD'] !== 'POST') {
       throw new rex_api_exception('Nur POST Requests erlaubt');
     }
 
-    $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+    $contentType = $this->serverVars['CONTENT_TYPE'];
     if (!str_contains($contentType, 'application/json')) {
       throw new rex_api_exception('Content-Type application/json erforderlich');
     }

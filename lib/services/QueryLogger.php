@@ -2,6 +2,10 @@
 
 namespace FriendsOfRedaxo\RexQL\Services;
 
+use rex;
+use rex_request;
+use rex_sql;
+
 /**
  * Query-Logger für rexQL
  */
@@ -20,8 +24,10 @@ class QueryLogger
     ?string $errorMessage = null,
     bool $fromCache = false
   ): void {
-    $sql = \rex_sql::factory();
-    $sql->setTable(\rex::getTable('rexql_query_log'));
+    $serverRemoteAddr = rex_request::server('REMOTE_ADDR', 'string', '');
+    $serverUserAgent = rex_request::server('HTTP_USER_AGENT', 'string', '');
+    $sql = rex_sql::factory();
+    $sql->setTable(rex::getTable('rexql_query_log'));
     $sql->setValue('api_key_id', $apiKeyId);
     $sql->setValue('query', $query);
     $sql->setValue('variables', $variables ? json_encode($variables) : null);
@@ -29,8 +35,8 @@ class QueryLogger
     $sql->setValue('memory_usage', $memoryUsage);
     $sql->setValue('success', $success ? 1 : 0);
     $sql->setValue('error_message', $errorMessage);
-    $sql->setValue('ip_address', $_SERVER['REMOTE_ADDR'] ?? '');
-    $sql->setValue('user_agent', $_SERVER['HTTP_USER_AGENT'] ?? '');
+    $sql->setValue('ip_address', $serverRemoteAddr);
+    $sql->setValue('user_agent', $serverUserAgent);
     $sql->setValue('from_cache', $fromCache ? 1 : 0);
     $sql->setValue('createdate', date('Y-m-d H:i:s'));
 
@@ -47,7 +53,7 @@ class QueryLogger
    */
   public static function getStats(): array
   {
-    $sql = \rex_sql::factory();
+    $sql = rex_sql::factory();
 
     // Gesamtstatistiken
     $sql->setQuery('
@@ -60,7 +66,7 @@ class QueryLogger
                 AVG(memory_usage) as avg_memory_usage,
                 MAX(memory_usage) as max_memory_usage,
                 SUM(CASE WHEN from_cache = 1 THEN 1 ELSE 0 END) as cached_queries
-            FROM ' . \rex::getTable('rexql_query_log') . '
+            FROM ' . rex::getTable('rexql_query_log') . '
             WHERE createdate >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
         ');
 
@@ -71,8 +77,8 @@ class QueryLogger
             SELECT 
                 ak.name,
                 COUNT(*) as query_count
-            FROM ' . \rex::getTable('rexql_query_log') . ' ql
-            LEFT JOIN ' . \rex::getTable('rexql_api_keys') . ' ak ON ql.api_key_id = ak.id
+            FROM ' . rex::getTable('rexql_query_log') . ' ql
+            LEFT JOIN ' . rex::getTable('rexql_api_keys') . ' ak ON ql.api_key_id = ak.id
             GROUP BY ql.api_key_id
             ORDER BY query_count DESC
             LIMIT 5
@@ -85,7 +91,7 @@ class QueryLogger
             SELECT 
                 error_message,
                 COUNT(*) as error_count
-            FROM ' . \rex::getTable('rexql_query_log') . '
+            FROM ' . rex::getTable('rexql_query_log') . '
             WHERE success = 0 AND createdate >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
             GROUP BY error_message
             ORDER BY error_count DESC
@@ -101,7 +107,7 @@ class QueryLogger
                 execution_time,
                 memory_usage,
                 createdate
-            FROM ' . \rex::getTable('rexql_query_log') . '
+            FROM ' . rex::getTable('rexql_query_log') . '
             WHERE createdate >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
             ORDER BY execution_time DESC
             LIMIT 5
@@ -118,8 +124,8 @@ class QueryLogger
                 ql.createdate,
                 ql.success,
                 ql.error_message
-            FROM ' . \rex::getTable('rexql_query_log') . ' ql
-            LEFT JOIN ' . \rex::getTable('rexql_api_keys') . ' ak ON ql.api_key_id = ak.id
+            FROM ' . rex::getTable('rexql_query_log') . ' ql
+            LEFT JOIN ' . rex::getTable('rexql_api_keys') . ' ak ON ql.api_key_id = ak.id
             WHERE ql.createdate >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
             ORDER BY ql.createdate DESC
             LIMIT 5
@@ -134,9 +140,9 @@ class QueryLogger
    */
   public static function cleanup(int $daysToKeep = 30): int
   {
-    $sql = \rex_sql::factory();
+    $sql = rex_sql::factory();
     $sql->setQuery(
-      'DELETE FROM ' . \rex::getTable('rexql_query_log') . ' 
+      'DELETE FROM ' . rex::getTable('rexql_query_log') . ' 
              WHERE createdate < DATE_SUB(NOW(), INTERVAL ? DAY)',
       [$daysToKeep]
     );
