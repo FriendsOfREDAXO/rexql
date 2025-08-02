@@ -3,9 +3,7 @@
   "singleQuote": true,
   "trailingComma": "none",
   "plugins": [
-    "prettier-plugin-style-order",
     "prettier-plugin-css-order",
-    "prettier-plugin-organize-attributes",
-    "prettier-plugin-tailwindcss"
+    "prettier-plugin-organize-attributes"
   ]
 }
