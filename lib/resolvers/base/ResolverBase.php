@@ -10,11 +10,11 @@ use FriendsOfRedaxo\RexQL\Context;
 use FriendsOfRedaxo\RexQL\Resolver\Interface\Resolver;
 use FriendsOfRedaxo\RexQL\Services\Logger;
 use FriendsOfRedaxo\RexQL\Utility;
-use GraphQL\Error\Error;
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
 use GraphQL\Error\UserError;
 use rex_sql;
+use rex_sql_exception;
 
 use function array_map;
 use function array_values;
@@ -95,8 +95,9 @@ abstract class ResolverBase implements Resolver
     $this->log('Base Resolver: query: ' . $query);
 
     try {
+      // @phpstan-ignore rexstan.rexSqlInjection
       $this->sql->setQuery($query, $this->whereParams);
-    } catch (Error $e) {
+    } catch (rex_sql_exception $e) {
       $this->error('Error creating query: ' . $e->getMessage());
     }
 
@@ -162,6 +163,7 @@ abstract class ResolverBase implements Resolver
 
   protected function buildResult(array $result): array
   {
+    $resultArray = [];
     $tmpMainArray = [];
     $usedIds = [];
     $mainIdColumn = $this->getMainIdColumn($this->table);
@@ -252,7 +254,7 @@ abstract class ResolverBase implements Resolver
       * nested relations
       */
 
-      if (empty($options['relations']) || empty($entry)) {
+      if (empty($options['relations'])) {
         continue; // No relations to process
       }
 

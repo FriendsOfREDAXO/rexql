@@ -218,14 +218,18 @@ if ($func == 'add' || $func == 'edit') {
 
   // Format URL column
   $list->setColumnFormat('url', 'custom', function ($params) {
-    $url = $params['list']->getValue('url');
+    /** @var \rex_list $list */
+    $list = $params['list'];
+    $url = $list->getValue('url');
     $domain = parse_url($url, PHP_URL_HOST);
     return '<a href="' . rex_escape($url) . '" target="_blank" title="' . rex_escape($url) . '">' . rex_escape($domain) . '</a>';
   });
 
   // Format secret column with copy button
   $list->setColumnFormat('secret', 'custom', function ($params) {
-    $secret = $params['list']->getValue('secret');
+    /** @var \rex_list $list */
+    $list = $params['list'];
+    $secret = $list->getValue('secret');
     return '<div class="btn-group" style="display:flex">' .
       '<code>' . substr($secret, 0, 16) . '...</code>' .
       Utility::copyToClipboardButton($secret) .
@@ -239,7 +243,9 @@ if ($func == 'add' || $func == 'edit') {
 
   // Format last status column
   $list->setColumnFormat('last_status', 'custom', function ($params) {
-    $status = $params['list']->getValue('last_status');
+    /** @var \rex_list $list */
+    $list = $params['list'];
+    $status = $list->getValue('last_status');
     if (empty($status)) {
       return '<span class="text-muted">-</span>';
     }
@@ -250,7 +256,9 @@ if ($func == 'add' || $func == 'edit') {
   // Format date columns
   foreach (['last_called', 'createdate', 'updatedate'] as $column) {
     $list->setColumnFormat($column, 'custom', function ($params) use ($column) {
-      $value = $params['list']->getValue($column);
+      /** @var \rex_list $list */
+      $list = $params['list'];
+      $value = $list->getValue($column);
       if (empty($value) || $value === '0000-00-00 00:00:00') {
         return '<span class="text-muted">-</span>';
       }
@@ -261,7 +269,9 @@ if ($func == 'add' || $func == 'edit') {
   // Actions column
   $list->addColumn('functions', 'Actions');
   $list->setColumnFormat('functions', 'custom', function ($params) {
-    $id = $params['list']->getValue('id');
+    /** @var \rex_list $list */
+    $list = $params['list'];
+    $id = $list->getValue('id');
     $editUrl = rex_url::currentBackendPage(['func' => 'edit', 'oid' => $id]);
     $deleteUrl = rex_url::currentBackendPage(['func' => 'delete', 'oid' => $id]);
     $testUrl = rex_url::currentBackendPage(['func' => 'test', 'oid' => $id]);

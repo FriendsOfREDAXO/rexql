@@ -20,6 +20,7 @@ class Cache
   private CacheItemPoolInterface $cache;
   protected bool $cacheActive = true; // Flag to enable/disable caching
   protected string $cacheKey = '';
+  /** @var array<string> */
   protected static array $cacheKeys = [];
   protected string $cacheDirectory = '';
   protected bool $debugMode = false;
@@ -53,6 +54,9 @@ class Cache
     }
   }
 
+  /**
+   * @api
+   */
   public function getCacheKey(): string
   {
     return $this->cacheKey;
@@ -63,7 +67,15 @@ class Cache
     return $this->cacheKey . '_' . $key;
   }
 
-  public function get(string $key, $item = null): mixed
+  /**
+   * Get an item from the cache by key
+   *
+   * @api
+   * @param string $key The cache key to retrieve
+   * @param mixed $item Optional item to return if cache is disabled or item is not found
+   * @return mixed The cached item or the provided item if cache is disabled or not found
+   */
+  public function get(string $key, mixed $item = null): mixed
   {
     if (!$this->cacheActive) {
       Logger::log('rexQL: Cache: Caching is disabled, returning item');
@@ -80,7 +92,14 @@ class Cache
     return $item;
   }
 
-  public function set(string $key, $item): void
+  /**
+   * Set an item in the cache by key
+   *
+   * @api
+   * @param string $key The cache key to set
+   * @param mixed $item The item to cache
+   */
+  public function set(string $key, mixed $item): void
   {
     if (!$this->cacheActive) {
       Logger::log('rexQL: Cache: Caching is disabled, not saving item for key: ' . $key);

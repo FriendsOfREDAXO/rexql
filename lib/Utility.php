@@ -11,6 +11,7 @@ use GraphQL\Error\SyntaxError;
 use rex;
 use rex_yrewrite;
 use rex_addon;
+use rex_addon_interface;
 use rex_i18n;
 use rex_fragment;
 use rex_logger;
@@ -27,11 +28,12 @@ enum EndpointType: string
 class Utility
 {
 
-  static protected $addon = null;
+  static protected ?rex_addon_interface $addon = null;
 
   /**
    * Checks if YRewrite is enabled
    *
+   * @api
    * @return bool
    */
   public static function isYRewriteEnabled(): bool
@@ -190,6 +192,7 @@ class Utility
   }
 
   /**
+   * @api
    * Checks if an IP is within a CIDR range
    */
   public static function isIpInRange(string $ip, string $range): bool
@@ -198,24 +201,48 @@ class Utility
       return false;
     }
 
-    list($subnet, $bits) = explode('/', $range);
-    $ip = ip2long($ip);
-    $subnet = ip2long($subnet);
-    $mask = -1 << (32 - $bits);
-    $subnet &= $mask;
+    $parts = explode('/', $range);
+    if (count($parts) !== 2) {
+      return false;
+    }
 
-    return ($ip & $mask) === $subnet;
+    $subnet = $parts[0];
+    $bits = (int) $parts[1]; // Cast to integer
+
+    // Validate CIDR bits range
+    if ($bits < 0 || $bits > 32) {
+      return false;
+    }
+
+    // Convert IPs to long integers
+    $ipLong = ip2long($ip);
+    $subnetLong = ip2long($subnet);
+
+    // Validate IP addresses
+    if ($ipLong === false || $subnetLong === false) {
+      return false;
+    }
+
+    // Calculate network mask
+    $mask = -1 << (32 - $bits);
+    $subnetLong &= $mask;
+
+    return ($ipLong & $mask) === $subnetLong;
   }
 
   public static function copyToClipboardButton(string $value): string
   {
-    if (empty($value) || $value === null) {
+    if (empty($value)) {
       return '';
     }
 
     return '<div><button class="btn btn-xs btn-default" data-copy="' . $value . '" title="' . rex_i18n::msg('copy') . '"><i class="fa fa-copy"></i></button></div>';
   }
 
+  /**
+   * @api
+   * clears the REDAXO system log, good for development
+   */
   public static function clearRexSystemLog(): void
   {
     rex_logger::close();
@@ -241,13 +268,20 @@ class Utility
     return strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $input));
   }
 
+  /**
+   * Deconstructs an array by removing specified keys and returning the rest
+   *
+   * @param array<string, mixed> $args The input array
+   * @param array<string> $keys The keys to remove from the array
+   * @return array<string, mixed> The deconstructed array without the specified keys
+   */
   public static function deconstruct(array $args, array $keys): array
   {
     // Remove specified keys from the args array and return the rest
-    return array_keys($args) !== range(0, count($args) - 1) ? array_diff_key($args, array_flip($keys)) : array_diff($args, $keys);
+    return array_keys($args) != range(0, count($args) - 1) ? array_diff_key($args, array_flip($keys)) : array_diff($args, $keys);
   }
 
-  public static function formatGraphQLQuery($query)
+  public static function formatGraphQLQuery(string $query): string
   {
     try {
       // Extract comments and separate GraphQL content
@@ -293,7 +327,15 @@ class Utility
     }
   }
 
-  public static function getFragment($file, $vars = [])
+  /**
+   * Get a fragment from the fragments directory
+   *
+   * @api
+   * @param string $file The fragment file name without extension
+   * @param array<string, mixed> $vars Variables to pass to the fragment
+   * @return string Rendered fragment content
+   */
+  public static function getFragment(string $file, array $vars = []): string
   {
     $fragment = new rex_fragment();
     foreach ($vars as $key => $value) {

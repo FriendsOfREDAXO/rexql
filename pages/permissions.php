@@ -177,7 +177,9 @@ if ($func == 'add' || $func == 'edit') {
 
   // API-Schlüssel (teilweise anzeigen)
   $list->setColumnFormat('api_key', 'custom', function ($params) {
-    $value = $params['list']->getValue('api_key');
+    /** @var \rex_list $list */
+    $list = $params['list'];
+    $value = $list->getValue('api_key');
     return  '<div class="btn-group" style="display:flex">' .
       '<code>' . substr($value, 0, 16) . '...</code>' .
       Utility::copyToClipboardButton($value) .
@@ -185,7 +187,9 @@ if ($func == 'add' || $func == 'edit') {
   });
 
   $list->setColumnFormat('permissions', 'custom', function ($params) {
-    $value = json_decode($params['list']->getValue('permissions'), true) ?: [];
+    /** @var \rex_list $list */
+    $list = $params['list'];
+    $value = json_decode($list->getValue('permissions'), true) ?: [];
     if (in_array('read:all', $value)) {
       $value = array_filter($value, fn($perm) => $perm === 'read:all');
     }
@@ -208,8 +212,10 @@ if ($func == 'add' || $func == 'edit') {
 
 
   $list->setColumnFormat('public_key', 'custom', function ($params) use ($addon) {
-    $value = $params['list']->getValue('public_key');
-    if (empty($value) || $value === null) {
+    /** @var \rex_list $list */
+    $list = $params['list'];
+    $value = $list->getValue('public_key');
+    if (empty($value)) {
       return '<span class="label label-warning">' . $addon->i18n('permissions_not_used') . '</span>';
     }
     return '<div class="btn-group" style="display:flex">' .
@@ -219,8 +225,10 @@ if ($func == 'add' || $func == 'edit') {
   });
 
   $list->setColumnFormat('private_key', 'custom', function ($params) use ($addon) {
-    $value = $params['list']->getValue('private_key');
-    if (empty($value) || $value === null) {
+    /** @var \rex_list $list */
+    $list = $params['list'];
+    $value = $list->getValue('private_key');
+    if (empty($value)) {
       return '<span class="label label-warning">' . $addon->i18n('permissions_not_used') . '</span>';
     }
     return '<div class="btn-group" style="display:flex">' .
@@ -236,8 +244,10 @@ if ($func == 'add' || $func == 'edit') {
 
   // Format domain and IP restrictions
   $list->setColumnFormat('allowed_domains', 'custom', function ($params) {
-    $value = $params['list']->getValue('allowed_domains');
-    if (empty($value) || $value === null) {
+    /** @var \rex_list $list */
+    $list = $params['list'];
+    $value = $list->getValue('allowed_domains');
+    if (empty($value)) {
       return '<span class="text-muted">-</span>';
     }
     $domains = json_decode($value, true);
@@ -248,8 +258,10 @@ if ($func == 'add' || $func == 'edit') {
   });
 
   $list->setColumnFormat('allowed_ips', 'custom', function ($params) {
-    $value = $params['list']->getValue('allowed_ips');
-    if (empty($value) || $value === null) {
+    /** @var \rex_list $list */
+    $list = $params['list'];
+    $value = $list->getValue('allowed_ips');
+    if (empty($value)) {
       return '<span class="text-muted">-</span>';
     }
     $ips = json_decode($value, true);
@@ -267,8 +279,10 @@ if ($func == 'add' || $func == 'edit') {
   // Datum formatieren
   foreach (['last_used', 'createdate', 'updatedate'] as $column) {
     $list->setColumnFormat($column, 'custom', function ($params) use ($column) {
-      $value = $params['list']->getValue($column);
-      if (empty($value) || $value === null || $value === '0000-00-00 00:00:00') {
+      /** @var \rex_list $list */
+      $list = $params['list'];
+      $value = $list->getValue($column);
+      if (empty($value) || $value === '0000-00-00 00:00:00') {
         return '<span class="text-muted">-</span>';
       }
       return rex_formatter::intlDateTime($value);
@@ -276,7 +290,9 @@ if ($func == 'add' || $func == 'edit') {
   }
 
   $list->setColumnFormat('key_type', 'custom', function ($params) {
-    $keyType = ucwords($params['list']->getValue('key_type'));
+    /** @var \rex_list $list */
+    $list = $params['list'];
+    $keyType = ucwords($list->getValue('key_type'));
     $values = explode('_', $keyType);
     return '<span class="label label-info">' . ucwords(implode(' ', $values)) . '</span>';
   });
@@ -284,8 +300,10 @@ if ($func == 'add' || $func == 'edit') {
   // Funktionen
   $list->addColumn('functions', $addon->i18n('permissions_functions'));
   $list->setColumnFormat('functions', 'custom', function ($params) use ($addon) {
-    $editUrl = rex_url::currentBackendPage(['func' => 'edit', 'oid' => $params['list']->getValue('id')]);
-    $deleteUrl = rex_url::currentBackendPage(['func' => 'delete', 'oid' => $params['list']->getValue('id')]);
+    /** @var \rex_list $list */
+    $list = $params['list'];
+    $editUrl = rex_url::currentBackendPage(['func' => 'edit', 'oid' => $list->getValue('id')]);
+    $deleteUrl = rex_url::currentBackendPage(['func' => 'delete', 'oid' => $list->getValue('id')]);
     return '<div class="btn-group" style="display:flex"><a href="' . $editUrl . '" class="btn btn-xs btn-default" title="' . rex_i18n::msg('edit') . '"><i class="fa fa-edit"></i></a> ' .
       '<a href="' . $deleteUrl . '" class="btn btn-xs btn-danger" onclick="return confirm(\'' . rex_i18n::msg('delete') . ' - ' . $addon->i18n('permissions_delete_confirm') . '\')" title="' . rex_i18n::msg('delete') . '"><i class="fa fa-trash"></i></a></div>';
   });

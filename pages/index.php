@@ -1,4 +1,5 @@
 <?php
+/** @var \rex_addon $this */
 
 use \FriendsOfRedaxo\RexQL\RexQL;
 

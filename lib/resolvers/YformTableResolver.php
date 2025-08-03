@@ -11,8 +11,9 @@ use rex_extension;
 use rex_extension_point;
 use rex_yform_manager_collection;
 use rex_yform_manager_dataset;
-use rex_yform_manager_table;
 use rex_yform_manager_field;
+use rex_yform_manager_query;
+use rex_yform_manager_table;
 
 use function rex_getUrl;
 
@@ -37,9 +38,6 @@ class YformTableResolver extends ResolverBase
      * @var rex_yform_manager_table $table
      */
     $table = self::$yformTables[$this->typeName]['name'] ?? null;
-    if (!$table || !($table instanceof rex_yform_manager_table)) {
-      $this->error('YForm table not found: ' . $this->typeName);
-    }
     $this->table = $table->getTableName();
 
     // Get table fields and field selection
@@ -102,11 +100,8 @@ class YformTableResolver extends ResolverBase
        * @var rex_yform_manager_dataset $dataset
        */
       $dataset = rex_yform_manager_dataset::get($this->args['id'], $this->table);
-      if (!$dataset) {
-        $this->error('YForm dataset not found: ' . $this->args['id']);
-      }
       $item = $this->populateData($dataset);
-      $data = $item ?? null;
+      $data = $item;
     }
 
     return $data;
@@ -146,7 +141,7 @@ class YformTableResolver extends ResolverBase
                 $item[$fieldName] = $data;
               } else {
                 $relatedCollection = $dataset->getRelatedCollection($this->datasetRelations[$fieldName]['name']);
-                if (!$relatedCollection || !$relatedCollection->count()) {
+                if (!$relatedCollection->count()) {
                   $item[$fieldName] = [];
                   break;
                 }

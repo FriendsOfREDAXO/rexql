@@ -12,12 +12,7 @@ interface Resolver
 {
   /**
    * Process all roots and return all the information obtained.
-   *
-   * @param array $roots
-   * @param array $args
-   * @param Context $context
-   * @param ResolveInfo $info
-   *
+   * 
    * @return Closure
    */
   public function resolve(): Closure;

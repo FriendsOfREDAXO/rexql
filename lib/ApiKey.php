@@ -7,6 +7,14 @@ use rex_sql_exception;
 
 /**
  * API key management class
+ * 
+ * This class handles the creation, retrieval, and management of API keys
+ * within the RexQL system. It supports various key types including standard,
+ * public/private, and domain-restricted keys.
+ * 
+ * @api
+ * @package FriendsOfRedaxo\RexQL
+ * 
  */
 class ApiKey
 {
@@ -15,6 +23,7 @@ class ApiKey
   private string $apiKey;
   private ?string $publicKey;    // New public key for frontend
   private ?string $privateKey;   // Private key for backend proxy
+  /** @var array<string> */
   private array $permissions;
   private int $rateLimit;
   private ?\DateTime $lastUsed;
@@ -25,7 +34,9 @@ class ApiKey
   private \DateTime $updatedate;
 
   // Domain-Restrictions
+  /** @var array<string> */
   private array $allowedDomains;
+  /** @var array<string> */
   private array $allowedIps;
   private bool $httpsOnly;
   private string $keyType; // 'standard', 'public_private', 'domain_restricted'
@@ -51,6 +62,7 @@ class ApiKey
   /**
    * Get all active API keys
    * 
+   * @api
    * @return self[]
    */
   public static function getAll(): array
@@ -69,6 +81,12 @@ class ApiKey
 
   /**
    * Create a new API key
+   * 
+   * @param string $name The name of the API key
+   * @param array<string> $permissions The permissions for the API key
+   * @param int $rateLimit The rate limit for the API key
+   * @return self
+   * @throws \Exception if there is an error creating the key
    */
   public static function create(string $name, array $permissions = [], int $rateLimit = 100): self
   {
@@ -119,6 +137,7 @@ class ApiKey
   }
 
   /**
+   * @api
    * Check if a specific permission is granted
    */
   public function hasPermission(string $permission): bool
@@ -201,6 +220,14 @@ class ApiKey
 
   /**
    * Extended API key with Public/Private keys
+   * 
+   * @param string $name The name of the API key
+   * @param array<string> $permissions The permissions for the API key
+   * @param int $rateLimit The rate limit for the API key
+   * @param array<string> $allowedDomains Domains allowed to use this key
+   * @param array<string> $allowedIps IPs allowed to use this key
+   * @param bool $httpsOnly Whether to enforce HTTPS only
+   * @return self
    */
   public static function createPublicPrivateKey(
     string $name,
@@ -256,7 +283,15 @@ class ApiKey
   }
 
   /**
+   * @api
    * Generates a domain-restricted API key
+   * @param string $name
+   * @param array<string> $permissions
+   * @param int $rateLimit
+   * @param array<string> $allowedDomains
+   * @param array<string> $allowedIps
+   * @param bool $httpsOnly
+   * @return self
    */
   public static function createDomainRestrictedKey(
     string $name,
@@ -298,6 +333,9 @@ class ApiKey
     return $this->id;
   }
 
+  /**
+   * @api
+   */
   public function getName(): string
   {
     return $this->name;
@@ -318,51 +356,78 @@ class ApiKey
     return $this->privateKey;
   }
 
+  /**
+   * @api
+   * @return array<string>
+   */
   public function getPermissions(): array
   {
     return $this->permissions;
   }
 
+  /**
+   * @api
+   */
   public function getRateLimit(): int
   {
     return $this->rateLimit;
   }
 
+  /**
+   * @api
+   */
   public function getLastUsed(): ?\DateTime
   {
     return $this->lastUsed;
   }
 
+  /**
+   * @api
+   */
   public function getUsageCount(): int
   {
     return $this->usageCount;
   }
 
+  /**
+   * @api
+   */
   public function isActive(): bool
   {
     return $this->active;
   }
 
+  /**
+   * @api
+   */
   public function getCreatedBy(): string
   {
     return $this->createdBy;
   }
 
+  /**
+   * @api
+   */
   public function getCreateDate(): \DateTime
   {
     return $this->createdate;
   }
 
+  /**
+   * @api
+   */
   public function getUpdateDate(): \DateTime
   {
     return $this->updatedate;
   }
 
+  /** @return array<string> */
   public function getAllowedDomains(): array
   {
     return $this->allowedDomains;
   }
 
+  /** @return array<string> */
   public function getAllowedIps(): array
   {
     return $this->allowedIps;

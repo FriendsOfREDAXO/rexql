@@ -1,5 +1,9 @@
 <?php
 
+/**
+ * @var rex_fragment $this
+ */
+
 $func = $this->getVar('func', 'add');
 $oid = $this->getVar('oid', 0);
 

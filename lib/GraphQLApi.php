@@ -2,18 +2,21 @@
 
 namespace FriendsOfRedaxo\RexQL;
 
+use Closure;
 use Exception;
 use FriendsOfRedaxo\RexQL\ApiKey;
 use FriendsOfRedaxo\RexQL\Cache;
 use FriendsOfRedaxo\RexQL\Context;
 use FriendsOfRedaxo\RexQL\Services\Logger;
 use FriendsOfRedaxo\RexQL\Resolver\FieldResolvers;
+use FriendsOfRedaxo\RexQL\Resolver\TypeResolvers;
 use FriendsOfRedaxo\RexQL\Resolver\RootResolvers;
 use FriendsOfRedaxo\RexQL\Utility;
 use GraphQL\Error\DebugFlag;
 use GraphQL\Error\Error;
 use GraphQL\Error\SyntaxError;
 use GraphQL\GraphQL;
+use GraphQL\Language\AST\DocumentNode;
 use GraphQL\Language\Parser;
 use GraphQL\Type\Schema;
 use GraphQL\Utils\AST;
@@ -41,10 +44,14 @@ class RexQL
   protected ?Context $context = null;
 
   protected bool $debugMode = false;
-  protected static $fieldResolvers, $typeResolvers;
+  protected static Closure $fieldResolvers, $typeResolvers;
+  /** @var array<string> */
   protected array $filteredQueryTypes = [];
+  /** @var array<string> */
   protected array $queryTypes = [];
+  /** @var array<string, array<string, mixed>> */
   protected static array $rootResolvers = [];
+  /** @var array<string, mixed> */
   protected array $serverVars = [];
   protected Schema $schema;
 
@@ -61,6 +68,7 @@ class RexQL
     $this->debugMode = $this->addon->getConfig('debug_mode', false);
 
     self::$fieldResolvers = (new FieldResolvers())->get();
+    self::$typeResolvers = (new TypeResolvers())->get();
     self::$rootResolvers = (new RootResolvers())->get();
 
     $configCheckPassed = false;
@@ -128,7 +136,7 @@ class RexQL
     if (!$sdl) {
       throw new rex_api_exception('rexQL: Generator: Schema: Schema file not found!');
     }
-    $sdl = $this->handleExtensions($sdl, $schemaGeneratedFilepath);
+    $sdl = $this->handleExtensions($sdl);
     $generatedSdl = self::loadSdlFile($schemaGeneratedFilepath);
 
     $schemaCache->setCacheKey(serialize('graphql_ast_' . $schemaFilepath . $generatedSdl . $sdl));
@@ -136,6 +144,10 @@ class RexQL
 
     if ($cachedDoc) {
       $doc = AST::fromArray($cachedDoc);
+
+      if (!$doc instanceof DocumentNode) {
+        throw new rex_api_exception('rexQL: Generator: Schema: Invalid cached document type!');
+      }
       return (new BuildSchema($doc, self::$typeResolvers, [], self::$fieldResolvers))->buildSchema();
     } else {
       rex_dir::delete($this->context->get('cachePath') . 'schema', false);
@@ -162,14 +174,17 @@ class RexQL
       'addon' => $this->addon,
     ]));
 
+    // @phpstan-ignore isset.offset, booleanAnd.rightAlwaysTrue
     if (isset($extensions['sdl']) && is_string($extensions['sdl']) && !empty($extensions['sdl'])) {
       $sdl .= "\n" . $extensions['sdl'];
     }
+    // @phpstan-ignore empty.offset, isset.offset, booleanAnd.rightAlwaysTrue, booleanAnd.alwaysFalse
     if (isset($extensions['rootResolvers']) && is_array($extensions['rootResolvers']) && !empty($extensions['rootResolvers'])) {
       foreach ($extensions['rootResolvers'] as $type => $resolvers) {
         if (!isset(self::$rootResolvers[$type])) {
           self::$rootResolvers[$type] = [];
         }
+        // @phpstan-ignore function.alreadyNarrowedType
         if (is_array($resolvers)) {
           self::$rootResolvers[$type] = array_merge(self::$rootResolvers[$type], $resolvers);
         }
@@ -184,6 +199,16 @@ class RexQL
     return $sdl;
   }
 
+  /**
+   * Execute a GraphQL query
+   *
+   * @api
+   * @param string $query The GraphQL query string
+   * @param array<string, mixed> $variables Optional variables for the query
+   * @param string|null $operationName Optional operation name if the query has multiple operations
+   * @return array<string, mixed> The result of the query execution
+   * @throws rex_api_exception If the query is invalid or execution fails
+   */
   public function executeQuery(string $query, array $variables = [], string|null $operationName = null): array
   {
 
@@ -279,11 +304,14 @@ class RexQL
     return true;
   }
 
+  /**
+   * Get all query types available in the schema
+   *
+   * @api
+   * @return array<string> List of query type names
+   */
   public function getQueryTypes(): array
   {
-    if (!$this->schema) {
-      throw new rex_api_exception('Schema not available. Please check error logs.');
-    }
     if (!empty($this->queryTypes)) {
       return $this->queryTypes;
     }
@@ -292,6 +320,15 @@ class RexQL
     return $this->queryTypes;
   }
 
+  /**
+   * Get a filtered list of query types, excluding built-in scalar types
+   * and only including custom types defined in the schema.
+   * This is useful for generating API documentation or UI elements that
+   * should only show custom query types.
+   *
+   * @api
+   * @return array<string> List of query type names
+   */
   public function getFilteredQueryTypes(): array
   {
     if (!empty($this->filteredQueryTypes)) {
@@ -307,18 +344,20 @@ class RexQL
     return $this->filteredQueryTypes;
   }
 
-
+  /**
+   * Get all custom types defined in the schema
+   *
+   * @api
+   * @return array<string> List of custom type names
+   */
   public function getCustomTypes(): array
   {
-    if (!$this->schema) {
-      throw new rex_api_exception('Schema not available. Please check error logs.');
-    }
     return array_values(array_filter(array_keys($this->schema->getTypeMap()), function ($typeName) {
       return !in_array($typeName, ['Query', 'String', 'Int', 'Float', 'Boolean', 'ID', '__Schema', '__Type', '__TypeKind', '__Field', '__InputValue', '__EnumValue', '__Directive', '__DirectiveLocation']);
     }));
   }
 
-  public static function loadSdlFile($filepath): string
+  public static function loadSdlFile(string $filepath): string
   {
     if (!file_exists($filepath)) {
       return '';

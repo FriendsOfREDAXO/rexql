@@ -70,8 +70,7 @@ $statusContent .= '<div class="col-sm-3">
     </div>
 </div>';
 
-if ($api) {
-    $queryTypes = $api->getQueryTypes();
+$queryTypes = $api->getQueryTypes();
     $numQueryTypes = count($queryTypes);
     $statusContent .= '<div class="col-sm-3">
     <div class="rexql-tile">
@@ -88,7 +87,7 @@ if ($api) {
         <p>' . $numTypes . '</p>
     </div>
 </div>';
-}
+
 $statusContent .= '</div>';
 
 

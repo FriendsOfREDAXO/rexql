@@ -4,12 +4,15 @@ namespace FriendsOfRedaxo\RexQL;
 
 use FriendsOfRedaxo\RexQL\ApiKey;
 use FriendsOfRedaxo\RexQL\Services\Logger;
-use FriendsOfRedaxo\RexQL\Utility;
 
 class Context
 {
-  public ?ApiKey $apiKey;
+  /**
+   * @var ApiKey|null
+   */
 
+  protected ?ApiKey $apiKey = null;
+  /** @var array<string, mixed> */
   protected array $data = [];
 
   public function setApiKey(?ApiKey $apiKey): void
@@ -22,17 +25,20 @@ class Context
     return $this->apiKey;
   }
 
-  public function set(string $key, $value): void
+  public function set(string $key, mixed $value): void
   {
     $this->data[$key] = $value;
   }
 
-  public function get(string $key, $default = null)
+  public function get(string $key, mixed $default = null): mixed
   {
     // Return the value if it exists, otherwise return the default value
     return $this->data[$key] ?? $default;
   }
 
+  /**
+   * @api
+   */
   public function has(string $key): bool
   {
     // Check if the key exists in the data array

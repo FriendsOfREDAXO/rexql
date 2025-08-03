@@ -3,21 +3,25 @@
 namespace FriendsOfRedaxo\RexQL;
 
 use rex_addon;
+use rex_addon_interface;
 use rex_article;
 use rex_logger;
-use rex_response;
 use rex_string;
+use rex_yform_manager_table;
 
 /**
  * Webhook service for sending HTTP requests to external endpoints
  */
 class Webhook
 {
-  private static ?rex_addon $addon = null;
+  private static ?rex_addon_interface $addon = null;
   private static ?rex_logger $logger = null;
   private static $loggerContext = '; rexql webhook';
   private static $isDevMode = true;
 
+  /**
+   * @api
+   */
   public static function init()
   {
     // Utility::clearRexSystemLog();
@@ -30,8 +34,7 @@ class Webhook
   /**
    * Send webhook request for a specific event
    * 
-   * @param string $event The event name (e.g., 'ART_ADDED')
-   * @param array $data The event data to send
+   * @param array $params The event data to send
    * @return bool Success status
    */
   public static function send(array $params): bool
@@ -65,7 +68,7 @@ class Webhook
    * Build enhanced payload with normalized names and additional context
    * 
    * @param string $event The event name
-   * @param array $data The event data
+   * @param array $params The event data
    * @return array The enhanced payload
    */
   private static function buildPayload(string $event, array $params): array
@@ -105,7 +108,9 @@ class Webhook
       case 'YFORM_DATA_ADDED':
       case 'YFORM_DATA_UPDATED':
       case 'YFORM_DATA_DELETED':
-        $payload['data']['table_name'] = $params['table']->getTableName();
+        /** @var rex_yform_manager_table $table */
+        $table = $params['table'];
+        $payload['data']['table_name'] = $table->getTableName();
         break;
       default:
         $payload['data']['tag'] = 'all';
@@ -137,7 +142,7 @@ class Webhook
   /**
    * Get normalized article name/slug
    * 
-   * @param mixed $subject The article object or ID
+   * @param string $value The article name
    * @return string The normalized name
    */
   private static function getNormalizedName(string $value): string
@@ -149,7 +154,7 @@ class Webhook
   /**
    * Get normalized category name/slug
    * 
-   * @param mixed $subject The category object or ID
+   * @param int $id The category/article ID
    * @return string The normalized name
    */
   private static function getNormalizedNameById(int $id): string
@@ -162,6 +167,7 @@ class Webhook
   /**
    * Send webhook to a specific webhook configuration
    * 
+   * @api
    * @param array $webhook The webhook configuration
    * @param array $payload The payload to send
    * @return array Result with success status and message

@@ -32,10 +32,11 @@ class Endpoint extends rex_api_function
 
   protected rex_addon $addon;
   protected bool $debugMode = false;
+  protected null|string $operationName = null;
+  protected string $query = '';
   protected array $serverVars = [];
   protected float $startTime = 0;
   protected float $startMemory = 0;
-  protected string $query = '';
   protected array $variables = [];
 
   public function execute()
@@ -49,7 +50,6 @@ class Endpoint extends rex_api_function
       $this->getGraphQLInput();
 
       $response = ['data' => null, 'errors' => []];
-      $operationName = $input['operationName'] ?? null;
 
       if (empty($this->query)) {
         $response['errors'][] = ['message' => rex_i18n::msg('rexql_error_no_query_provided')];
@@ -59,7 +59,7 @@ class Endpoint extends rex_api_function
       $this->variables = $this->castVariables($this->variables);
 
       $rexql = new RexQL();
-      $response = $rexql->executeQuery($this->query, $this->variables, $operationName);
+      $response = $rexql->executeQuery($this->query, $this->variables, $this->operationName);
 
       // Send JSON response
       return $this->sendResponse($response);
@@ -73,9 +73,6 @@ class Endpoint extends rex_api_function
       $status = $e instanceof rex_api_exception ? rex_response::HTTP_BAD_REQUEST : rex_response::HTTP_INTERNAL_ERROR;
       return $this->sendResponse($response, $status);
     }
-
-    // Should never reach here
-    return new rex_api_result(true);
   }
 
 
@@ -117,7 +114,7 @@ class Endpoint extends rex_api_function
     return $variables;
   }
 
-  private function sendResponse(array $response, string $status = rex_response::HTTP_OK): void
+  private function sendResponse(array $response, string $status = rex_response::HTTP_OK): rex_api_result
   {
     $executionTime = $this->getExecutionTime();
     $memoryUsage = $this->getMemoryUsage();
@@ -126,7 +123,7 @@ class Endpoint extends rex_api_function
     if ($this->debugMode) {
       $response['debug'] = array_merge($response['extensions'] ?? [], [
         'executionTime' => round($executionTime, 2) . 'ms',
-        'memoryUsage' => rex_formatter::bytes($memoryUsage),
+        'memoryUsage' => rex_formatter::bytes((int)$memoryUsage),
       ]);
     }
 
@@ -149,7 +146,7 @@ class Endpoint extends rex_api_function
     rex_response::cleanOutputBuffers();
     rex_response::setStatus($status);
     rex_response::sendJson($response);
-    exit;
+    return new rex_api_result(true);
   }
 
   protected function handlePreflightRequest(): ?rex_api_result
@@ -179,6 +176,7 @@ class Endpoint extends rex_api_function
           throw new rex_api_exception('Ungültiges JSON in Request Body');
         }
         // return $input;
+        $this->operationName = $input['operationName'] ?? null;
         $this->query = $input['query'] ?? '';
         $this->variables = $input['variables'] ?? [];
         return;

@@ -52,7 +52,7 @@ $values = array_merge([
 ], $addon->getConfig());
 
 // Development mode notice
-$isAuthEnabled = Utility::isAuthEnabled() || false;
+$isAuthEnabled = Utility::isAuthEnabled();
 
 
 $content = '';

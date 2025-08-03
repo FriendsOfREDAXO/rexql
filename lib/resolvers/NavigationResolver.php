@@ -28,7 +28,7 @@ class NavigationResolver extends ResolverBase
 
     $rootCategory = $categoryId ? rex_category::get($categoryId, $clangId) : null;
 
-    $rootCategories = $rootCategory ? $rootCategory->getChildren(true) : rex_category::getRootCategories(true, $clangId ?? null);
+    $rootCategories = $rootCategory ? $rootCategory->getChildren(true) : rex_category::getRootCategories(true, $clangId);
     foreach ($rootCategories as $category) {
       $subNavigation = null;
       $item = $this->getItem($category);

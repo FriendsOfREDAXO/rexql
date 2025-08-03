@@ -3,7 +3,7 @@
 namespace FriendsOfRedaxo\RexQL\Services;
 
 use rex;
-use rex_addon;
+use rex_addon_interface;
 use rex_logger;
 
 /**
@@ -18,6 +18,7 @@ class Logger
   /**
    * Get the singleton instance of the Logger
    *
+   * @api
    * @return rex_logger
    */
   public static function getInstance(): rex_logger
@@ -27,11 +28,9 @@ class Logger
       return self::$instance;
     }
 
-    /** @var rex_addon $addon */
+    /** @var rex_addon_interface $addon */
     $addon = rex::getProperty('rexql_addon', null);
-    if ($addon) {
-      self::$debugMode = $addon->getConfig('debug_mode', false);
-    }
+    self::$debugMode = $addon->getConfig('debug_mode', false);
 
     return self::$instance;
   }
@@ -49,11 +48,13 @@ class Logger
   {
     $logger = self::getInstance();
     if (self::$debugMode || $level === 'error') {
-      // Use rex_logger to log the message with correct parameter order
+      $safeContext = self::sanitizeContext($context);
+      // Use rex_logger to log the message with PSR-3 placeholders - let rex_logger handle interpolation
+      // @phpstan-ignore psr3.interpolated
       $logger->log(
         $level,
-        $message,
-        $context,
+        (string) $message,
+        $safeContext,
         $file ?: __FILE__,
         $line ?: __LINE__
       );
@@ -61,42 +62,81 @@ class Logger
   }
 
   /**
-   * Log an error
+   * Sanitize context data to prevent injection attacks
    *
-   * @param string|mixed $message The message to log
+   * @param array $context
+   * @return array
    */
-  public static function error($message): void
+  private static function sanitizeContext(array $context): array
   {
-    self::log($message, 'error');
+    $sanitized = [];
+
+    foreach ($context as $key => $value) {
+      // Sanitize key - only allow alphanumeric and common chars
+      $safeKey = preg_replace('/[^a-zA-Z0-9_.-]/', '_', (string) $key);
+
+      // Sanitize value based on type
+      if (is_string($value)) {
+        // Remove control characters that could be used for injection
+        $sanitized[$safeKey] = preg_replace('/[\x00-\x1F\x7F]/', '', $value);
+      } elseif (is_scalar($value)) {
+        $sanitized[$safeKey] = $value;
+      } elseif (is_array($value) || is_object($value)) {
+        // Safely encode complex types
+        $sanitized[$safeKey] = json_encode($value, JSON_UNESCAPED_UNICODE | JSON_PARTIAL_OUTPUT_ON_ERROR);
+      } else {
+        $sanitized[$safeKey] = gettype($value);
+      }
+    }
+
+    return $sanitized;
   }
 
   /**
-   * Log a warning
+   * Log an error with PSR-3 placeholders
    *
-   * @param string|mixed $message The message to log
+   * @api
+   * @param string $message Message template with {placeholders}
+   * @param array $context Context data for placeholders
    */
-  public static function warning($message): void
+  public static function error(string $message, array $context = []): void
   {
-    self::log($message, 'warning');
+    self::log($message, 'error', '', 0, $context);
   }
 
   /**
-   * Log an info message
+   * Log a warning with PSR-3 placeholders
    *
-   * @param string|mixed $message The message to log
+   * @api
+   * @param string $message Message template with {placeholders}
+   * @param array $context Context data for placeholders
    */
-  public static function info($message): void
+  public static function warning(string $message, array $context = []): void
   {
-    self::log($message, 'info');
+    self::log($message, 'warning', '', 0, $context);
   }
 
   /**
-   * Log a debug message
+   * Log an info message with PSR-3 placeholders
    *
-   * @param string|mixed $message The message to log
+   * @api
+   * @param string $message Message template with {placeholders}
+   * @param array $context Context data for placeholders
    */
-  public static function debug($message): void
+  public static function info(string $message, array $context = []): void
   {
-    self::log($message, 'debug');
+    self::log($message, 'info', '', 0, $context);
+  }
+
+  /**
+   * Log a debug message with PSR-3 placeholders
+   *
+   * @api
+   * @param string $message Message template with {placeholders}
+   * @param array $context Context data for placeholders
+   */
+  public static function debug(string $message, array $context = []): void
+  {
+    self::log($message, 'debug', '', 0, $context);
   }
 }

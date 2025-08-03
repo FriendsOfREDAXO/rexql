@@ -2,6 +2,10 @@
 
 use FriendsOfRedaxo\RexQL\Utility;
 
+/**
+ * @var rex_fragment $this
+ */
+
 $name = $this->getVar('name', '');
 $icon = $this->getVar('icon', '');
 $cols = $this->getVar('cols', 3);
@@ -42,7 +46,7 @@ $data = $this->getVar('data', []);
         $class = isset($stats['class']) ? $stats['class'] : '';
       ?>
         <dt><?php echo $icon . $label; ?>:</dt>
-        <?php if (isset($stats['value'])): ?><dd class="<?php echo $class; ?>"><?= $value ?></dd><?php endif; ?>
+        <?php if (isset($stats['value'])): ?><dd class="<?php echo $class; ?>"><?= $value ?? '' ?></dd><?php endif; ?>
       <?php endforeach; ?>
     </dl>
   <?php endif; ?>
@@ -51,6 +55,7 @@ $data = $this->getVar('data', []);
       <?php foreach ($data['queries'] as $query) :
         $key = $query['name'] ?? '[PUBLIC]';
         $formattedQuery = Utility::formatGraphQLQuery($query['query'] ?? '');
+        $dateTime = isset($query['createdate']) ? rex_formatter::date($query['createdate'], 'd.m.Y H:i:s') : '';
       ?>
         <li class="rexql-query-item">
           <pre style="margin:0"><code><?= $formattedQuery; ?></code></pre>
@@ -69,7 +74,7 @@ $data = $this->getVar('data', []);
             </span>
             <span class="rexql-query-meta-item">
               <i class="fa fa-calendar" title="<?= rex_i18n::msg('rexql_permissions_created') ?>"></i>
-              <?= rex_formatter::date($query['createdate'], 'd.m.Y H:i:s') ?? ''; ?>
+              <?= $dateTime ?>
             </span>
           </small>
         </li>

@@ -2,9 +2,6 @@
 
 /**
  * rexQL - GraphQL API for REDAXO CMS
- * 
- * @var rex_addon $this
- * @psalm-scope-this rex_addon
  */
 
 namespace FriendsOfRedaxo\RexQL;
@@ -34,6 +31,7 @@ rex_api_function::register('rexql_proxy', Proxy::class);
 rex_api_function::register('rexql_auth', Auth::class);
 
 // Set default configuration
+/** @var \rex_addon $this */
 if (!$this->hasConfig()) {
   $this->setConfig([
     'rexql_url' => '/index.php?rex-api-call=rexql',
