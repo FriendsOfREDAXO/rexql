@@ -4,16 +4,25 @@ namespace FriendsOfRedaxo\RexQL;
 
 use FriendsOfRedaxo\RexQL\ApiKey;
 use FriendsOfRedaxo\RexQL\Services\Logger;
+use rex_addon_interface;
 
 class Context
 {
-  /**
-   * @var ApiKey|null
-   */
 
+  protected ?rex_addon_interface $addon = null;
   protected ?ApiKey $apiKey = null;
   /** @var array<string, mixed> */
   protected array $data = [];
+
+  public function setAddon(rex_addon_interface $addon): void
+  {
+    $this->addon = $addon;
+  }
+
+  public function getAddon(): rex_addon_interface
+  {
+    return $this->addon;
+  }
 
   public function setApiKey(?ApiKey $apiKey): void
   {

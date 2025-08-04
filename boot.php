@@ -40,6 +40,7 @@ if (!$this->hasConfig()) {
     'endpoint_enabled' => false,
     'proxy_enabled' => false,
     'cache_enabled' => true,
+    'cache_ttl' => 300,
     'require_authentication' => true,
     'max_query_depth' => 10,
     'cors_allowed_origins' => ['*'],          // CORS Origins

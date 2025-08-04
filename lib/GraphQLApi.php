@@ -77,6 +77,7 @@ class RexQL
     }
 
     $this->context = new Context();
+    $this->context->setAddon($this->addon);
     $this->context->set('debugMode', $this->debugMode);
     $this->context->set('configCheckPassed', $configCheckPassed);
     $this->context->setApiKey($this->apiKey ?? null);

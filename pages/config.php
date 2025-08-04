@@ -18,6 +18,7 @@ if (rex_post('formsubmit', 'string') == 'config' && !rex_post('action', 'string'
     $config['max_query_depth'] = (int)($post['max_query_depth'] ?? 0);
     $config['debug_mode'] = isset($post['debug_mode']) ? 1 : 0;
     $config['cache_enabled'] = isset($post['cache_enabled']) ? 1 : 0;
+    $config['cache_ttl'] = (int)($post['cache_ttl'] ?? 300);
     $config['proxy_enabled'] = isset($post['proxy_enabled']) ? 1 : 0;
     $addon->setConfig($config);
     $formSaved = 'config';
@@ -45,6 +46,7 @@ $values = array_merge([
     'max_query_depth' => 10,
     'debug_mode' => 0,
     'cache_enabled' => 0,
+    'cache_ttl' => 300,
     'proxy_enabled' => 0,
     'cors_allowed_origins' => ['*'],
     'cors_allowed_methods' => ['GET', 'POST', 'OPTIONS'],
@@ -126,6 +128,12 @@ $formElements[] = $n;
 $n = [];
 $n['label'] = '<label for="cache_enabled">' . $addon->i18n('config_cache_enabled') . '</label>';
 $n['field'] = '<input type="checkbox" id="cache_enabled" name="config[cache_enabled]" value="1" ' . ($values['cache_enabled'] ? ' checked="checked"' : '') . ' />';
+$formElements[] = $n;
+
+$n = [];
+$n['label'] = '<label for="cache_ttl">' . $addon->i18n('config_cache_ttl') . '</label>';
+$n['field'] = '<input type="number" id="cache_ttl" name="config[cache_ttl]" class="rexql-config-input" value="' . $values['cache_ttl'] . '" min="1" />'
+    . '<small class="rexql-field-hint">' . $addon->i18n('config_cache_ttl_hint') . '</small>';
 $formElements[] = $n;
 
 // Proxy aktivieren

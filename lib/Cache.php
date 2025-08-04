@@ -15,8 +15,6 @@ use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 
 class Cache
 {
-
-
   private CacheItemPoolInterface $cache;
   protected bool $cacheActive = true; // Flag to enable/disable caching
   protected string $cacheKey = '';
@@ -36,7 +34,9 @@ class Cache
     if (!$this->cacheDirectory) {
       throw new rex_api_exception('rexQL: Cache: Cache directory not set in context!');
     }
-    $this->globTTL = $this->debugMode ? 3600 : self::DEFAULT_TTL;
+    $addon = $context->getAddon();
+    $ttl = $addon->getConfig('cache_ttl', self::DEFAULT_TTL);
+    $this->globTTL = $this->debugMode ? 300 : $ttl;
     $this->cache = new FilesystemAdapter($namespace, $this->globTTL, $this->cacheDirectory);
   }
 
