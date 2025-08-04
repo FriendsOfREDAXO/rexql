@@ -19,6 +19,8 @@ $example = '
 {
   article(id:1) {
     id
+    name
+    slug
     slices {
       id
       module {
