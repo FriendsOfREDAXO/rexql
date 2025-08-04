@@ -20,7 +20,27 @@
 
 - 🔄 **Mutationen** - Unterstützung für GraphQL-Mutationen zur Datenmanipulation
 
-## 🚀 Installation & Schnellstart
+## 📋 Inhaltsverzeichnis
+
+1. [Installation & Schnellstart](#installation--schnellstart)
+2. [API-Endpoints](#api-endpoints)
+3. [Schema-Erweiterung mit SDL](#schema-erweiterung-mit-sdl)
+4. [Automatische YForm-Integration](#automatische-yform-integration)
+5. [Unbegrenzte Query-Verschachtelung](#unbegrenze-query-verschachtelung)
+6. [Webhooks](#webhooks)
+7. [Berechtigungen & Sicherheit](#berechtigungen--sicherheit)
+8. [Intelligentes Caching](#intelligentes-caching)
+9. [GraphQL Playground](#graphql-playground)
+10. [Query-Beispiele](#query-beispiele)
+11. [Statistiken & Monitoring](#statistiken--monitoring)
+12. [Entwicklung & Extension Points](#entwicklung--extension-points)
+13. [Konfiguration](#konfiguration)
+14. [Migration & Breaking Changes](#migration--breaking-changes)
+15. [Weiterführende Ressourcen](#weiterführende-ressourcen)
+16. [Support & Community](#support--community)
+17. [Lizenz](#lizenz)
+
+## 🚀 Installation & Schnellstart <a id="installation--schnellstart"></a>
 
 ### 1. Installation
 
@@ -28,11 +48,8 @@ Installieren Sie das Addon über den REDAXO Installer oder manuell:
 
 #### Manuelle Installation
 
-Lade das Addon von GitHub herunter und entpacke es in den `src/addons/rexql` Ordner deines REDAXO-Projekts.
-
-#### Abhängigkeiten installieren
-
-Installiere die Abhängigkeiten im `src/addons/rexql` Ordner mit Composer:
+1. Lade das Addon von GitHub herunter und entpacke es in den `src/addons/rexql` Ordner deines REDAXO-Projekts.
+2. Installiere die Abhängigkeiten im `src/addons/rexql` Ordner über Composer:
 
 ```bash
 cd src/addons/rexql
@@ -49,7 +66,7 @@ Aktiviere das Addon im REDAXO Backend.
 
 2. **rexQL → Berechtigungen**:
    - Erstelle einen API-Key ODER deaktiviere die Authentifizierung für öffentliche APIs
-   - Wähle Berechtigung für gewünschte Typen (z.B. `article`, `media`)
+     - Falls API-Keys verwendet werden, wähle Berechtigung für gewünschte Typen (z.B. `article`, `media`)
 
 3. **Testen**:
    - Öffne **rexQL → Playground**
@@ -65,13 +82,7 @@ Aktiviere das Addon im REDAXO Backend.
 }
 ```
 
-### Backend-Tools (nur im REDAXO Backend verfügbar)
-
-- **GraphQL Playground** - Interaktives Query-Tool mit Schema-Explorer
-- **Berechtigungen verwalten** - API-Keys und Typ-Berechtigungen konfigurieren
-- **Konfiguration** - CORS, Caching und Sicherheitseinstellungen
-
-## 📡 API-Endpoints
+## 📡 API-Endpoints <a id="api-endpoints"></a>
 
 ### Haupt-Endpoint
 
@@ -79,7 +90,7 @@ Aktiviere das Addon im REDAXO Backend.
 POST /index.php?rex-api-call=rexql
 ```
 
-### Kurz-URL (mit .htaccess/.nginx Regel)
+#### Kurz-URL (mit .htaccess/.nginx Regel)
 
 ```
 POST /api/rexql/
@@ -99,13 +110,30 @@ location /api/rexql {
 }
 ```
 
-## 🧩 Schema-Erweiterung mit SDL
+## 🧩 Schema-Erweiterung mit SDL <a id="schema-erweiterung-mit-sdl"></a>
 
 Die wichtigste Neuerung in v1.0 ist die SDL-basierte Schema-Definition. Erweitere die GraphQL-API über REDAXO Extension Points:
 
 ### Basis-SDL Schema
 
-Das Core-Schema in `data/schema.graphql` definiert alle REDAXO Core-Typen:
+Das Core-Schema in `data/schema.graphql` definiert alle REDAXO Core-Typen.
+Das gesamte Schema kann im Playground oder in `data/schema.graphql` eingesehen werden.
+
+Das Core-Schema beinhaltet folgende Typen:
+
+- `article`: Artikel-Typ mit Beziehungen zu `language`, `template` und `slices`.
+- `config`
+- `language`
+- `media`: Medientyp mit Beziehungen zu `mediaCategory`.
+- `mediaCategory`: Mediacategory-Typ mit Beziehungen zu `children` (Unterkategorien).
+- `module`: Modultyp mit Beziehungen zu `slices`.
+- `navigationItem`
+- `route`
+- `slice`: Slice-Typ mit Beziehungen zu `module`, `article` und `language`.
+- `system`: System-Informationen wie REDAXO-Version und Server-Name.
+- `template`: Template-Typ mit Beziehungen zu `articles`.
+- `wildcard`: Wildcard-Typ für Sprog-Übersetzungen.
+- sowie Yform-Tabellen wie `rex_news`, `rex_event`, etc.
 
 ```graphql
 type Query {
@@ -121,17 +149,7 @@ type Query {
   # Media-Queries
   media(id: ID!): media
   medias(categoryId: Int): [media]
-
-  # System-Informationen
-  system(host: String): system!
-
-  # Navigation
-  navigation(
-    categoryId: Int
-    clangId: Int
-    depth: Int
-    nested: Boolean
-  ): [navigationItem]
+  # usw...
 }
 ```
 
@@ -139,6 +157,7 @@ type Query {
 
 Erweitere das Schema über den `REXQL_EXTEND` Extension Point.
 Der ExtensionPoint sollte einen Array zurückgeben, der die `sdl` und `rootResolvers` enthält.
+**Achtung**: `SDL` erweitern und nicht überschreiben!
 Desweitern kann man mit `$ep->getParams()` auf die Parameter des ExtensionPoints zugreifen, welcher den aktuellen Kontext sowie das Addon selbst enthält.
 
 ```php
@@ -196,6 +215,14 @@ class CustomResolver extends ResolverBase
                 'type' => 'hasOne',
                 'localKey' => 'image_id',
                 'foreignKey' => 'id',
+                'relations' => [
+                    'rex_media_category' => [
+                        'alias' => 'category',
+                        'type' => 'hasOne',
+                        'localKey' => 'category_id',
+                        'foreignKey' => 'id',
+                    ]
+                ]
             ]
         ];
 
@@ -249,9 +276,12 @@ Wenn man komplett eigene Resolver-Klassen erstellen möchte, dann hilft ev. folg
 - die Bibliothek `webonyx/graphql-php`, die `rexql` integriert. Darin spezielle die Klasse `GraphQL\Type\Definition\ResolveInfo`, die Informationen über die GraphQL-Query enthält, wie z.B. die angeforderten Felder und Argumente.
 - [GraphQL.org](https://graphql.org/learn/) für allgemeine GraphQL-Konzepte und Best Practices.
 
-## 📊 Automatische YForm-Integration
+## 📊 Automatische YForm-Integration <a id="automatische-yform-integration"></a>
 
-Alle YForm-Tabellen werden automatisch als GraphQL-Typen verfügbar gemacht:
+Alle YForm-Tabellen werden automatisch als GraphQL-Typen verfügbar gemacht (Berechtigungen beachten!).
+Damit kannst du YForm-Daten direkt über GraphQL abfragen, ohne manuelle Schema-Definitionen.
+Ist eine YForm-Tabelle mit einem Profil des REDAXO URL-Addons verknüpft, kann man auch die von URL generierten Slugs für einen Datensatz abfragen. Dabei versucht rexQL, automatisch den korrekten Slug-Namespace zu verwenden, der im YForm-Profil definiert ist. Um sicher zu gehen, dass der korrekte Namespace verwendet wird, kann man den `slugNamespace`-Parameter in der Query angeben.
+**Gut zu wissen:** die `routes`-Query gibt alle Routen aus, auch für eine YForm-Tabelle, die mit dem URL-Addon verknüpft ist.
 
 ### Automatische Schema-Generierung
 
@@ -316,7 +346,7 @@ type rexNews {
 
 ### Slug-Generierung
 
-Wenn das URL-Addon installiert ist, generiert rexQL automatisch Slugs:
+Wenn das REDAXO URL-Addon installiert ist, kann der von URL generierte Slug abgefragt werden, wenn die Tabelle mit einem Profil des URL-Addons verknüpft ist:
 
 ```graphql
 {
@@ -328,9 +358,9 @@ Wenn das URL-Addon installiert ist, generiert rexQL automatisch Slugs:
 }
 ```
 
-## 🔄 Unbegrenzte Query-Verschachtelung
+## 🔄 Unbegrenzte Query-Verschachtelung <a id="unbegrenzte-query-verschachtelung"></a>
 
-Das v1.0 Resolver-System löst automatisch 1:n und n:1 Beziehungen auf:
+Das v1.0 Resolver-System löst automatisch 1:n und n:1 Beziehungen ohne zusätzliche SQL-Queries auf:
 
 ```graphql
 {
@@ -353,29 +383,7 @@ Das v1.0 Resolver-System löst automatisch 1:n und n:1 Beziehungen auf:
 }
 ```
 
-### Automatische Relation-Definition
-
-```php
-// In deinem Custom Resolver
-$this->relations = [
-    'rex_article_slice' => [
-        'alias' => 'slices',
-        'type' => 'hasMany',
-        'localKey' => 'id',
-        'foreignKey' => 'article_id',
-        'relations' => [
-            'rex_module' => [
-                'alias' => 'module',
-                'type' => 'hasOne',
-                'localKey' => 'module_id',
-                'foreignKey' => 'id',
-            ]
-        ]
-    ]
-];
-```
-
-## 📡 Webhooks
+## 📡 Webhooks <a id="webhooks"></a>
 
 Webhooks ermöglichen Cache-Invalidierung und externe Benachrichtigungen:
 
@@ -418,7 +426,7 @@ app.post('/api/webhook', (req, res) => {
 })
 ```
 
-## 🔒 Berechtigungen & Sicherheit
+## 🔒 Berechtigungen & Sicherheit <a id="berechtigungen--sicherheit"></a>
 
 ### Typ-basierte Berechtigungen
 
@@ -426,11 +434,18 @@ Berechtigungen werden automatisch für alle Schema-Typen generiert:
 
 **Verfügbare Berechtigungen:**
 
-- `article` - Artikel-Zugriff
-- `media` - Medien-Zugriff
-- `template` - Template-Zugriff
-- `rexNews` - YForm-Tabelle (automatisch generiert)
-- `system` - System-Informationen
+- `Article` - Zugriff auf `rex_article`
+- `Config` - Zugriff auf `rex_config`
+- `Language` - Zugriff auf `rex_language`
+- `Media` - Zugriff auf `rex_media`
+- `MediaCategory` - Zugriff auf `rex_media_category`
+- `Module` - Zugriff auf `rex_module`
+- `NavigationItem` - Zugriff auf `rex_article` um verschachtelte Navigationen zu ermöglichen
+- `Route` - Zugriff auf `rex_article`, `yrewrite` und `url` um alle möglichen Routen auszulesen
+- `Slice` - Zugriff auf `rex_article_slice` um Slices zu laden
+- `System` - Zugriff auf System-Informationen von REDAXO
+- `Template` - Zugriff auf `rex_template`
+- `Wildcard` - Zugriff auf `sprog` um Wildcards zu laden
 
 ### API-Key Konfiguration
 
@@ -476,7 +491,7 @@ const proxyClient = new GraphQLClient('/index.php?rex-api-call=proxy', {
 })
 ```
 
-## 💾 Intelligentes Caching
+## 💾 Intelligentes Caching <a id="intelligentes-caching"></a>
 
 ### Schema-Caching
 
@@ -484,7 +499,7 @@ Das GraphQL-Schema wird automatisch gecacht und nur bei Änderungen neu generier
 
 ### Query-Caching
 
-Wiederholte Queries werden gecacht (Standard: 5 Minuten):
+Wiederholte Queries werden gecacht (Standard: 5 Minuten; konfigurierbar in den Backend-Einstellungen):
 
 ```bash
 # Cache umgehen für Entwicklung
@@ -509,7 +524,7 @@ Cache::invalidateSchema();
 Cache::invalidateQueries();
 ```
 
-## 🎯 GraphQL Playground
+## 🎯 GraphQL Playground <a id="graphql-playground"></a>
 
 Der erweiterte Playground bietet:
 
@@ -548,7 +563,7 @@ query GetArticleWithContent($id: ID!) {
 }
 ```
 
-## 📋 Query-Beispiele
+## 📋 Query-Beispiele <a id="query-beispiele"></a>
 
 ### Core-Queries
 
@@ -651,7 +666,7 @@ query GetArticleWithContent($id: ID!) {
 }
 ```
 
-## 📈 Statistiken & Monitoring
+## 📈 Statistiken & Monitoring <a id="statistiken--monitoring"></a>
 
 ### Query-Statistiken
 
@@ -676,7 +691,7 @@ query GetArticleWithContent($id: ID!) {
 }
 ```
 
-## 🛠️ Entwicklung & Extension Points
+## 🛠️ Entwicklung & Extension Points <a id="entwicklung--extension-points"></a>
 
 ### Extension Points
 
@@ -702,10 +717,11 @@ $this->log('Debug-Nachricht');
 $this->error('Fehlermeldung');
 
 // Field-Selection aus GraphQL-Query
-$fields = $this->getFields($table, $selection);
+$fieldSelection = $this->info->getFieldSelection(5); // 5 ist die maximale Tiefe
+$fields = $this->getFields($table /* oder */ $typeName, $fieldSelection);
 ```
 
-## 🔧 Konfiguration
+## 🔧 Konfiguration <a id="konfiguration"></a>
 
 ### Backend-Einstellungen
 
@@ -718,6 +734,7 @@ $fields = $this->getFields($table, $selection);
 - **Query-Tiefe-Limit** - Schutz vor DoS-Angriffen
 - **Debug-Modus** - Detaillierte Logs und Timing
 - **Cache aktivieren** - Schema- und Query-Caching
+- **Cache-TTL** - Standard: 5 Minuten, anpassbar
 
 ### .htaccess Kurz-URLs
 
@@ -728,23 +745,23 @@ RewriteRule ^api/rexql/proxy/?$ index.php?rex-api-call=proxy [L,QSA]
 RewriteRule ^api/rexql/auth/?$ index.php?rex-api-call=auth [L,QSA]
 ```
 
-## � Migration & Breaking Changes
+## 📦 Migration & Breaking Changes <a id="migration--breaking-changes"></a>
 
 Da v1.0 ein kompletter Rewrite ist, sind keine Migrations-Pfade verfügbar. Neu aufsetzen empfohlen.
 
-## 📚 Weiterführende Ressourcen
+## 📚 Weiterführende Ressourcen <a id="weiterfuehrende-ressourcen"></a>
 
 - **GraphQL Spezifikation:** https://graphql.org/
 - **REDAXO Dokumentation:** https://redaxo.org/doku/main
 - **YForm Addon:** https://github.com/yakamara/redaxo_yform
 
-## 🤝 Support & Community
+## 🤝 Support & Community <a id="support--community"></a>
 
 - **GitHub Issues:** https://github.com/FriendsOfREDAXO/rexql
 - **REDAXO Slack:** #addon-rexql
 - **REDAXO Community:** https://redaxo.org/community/
 
-## 📄 Lizenz
+## 📄 Lizenz <a id="lizenz"></a>
 
 MIT License - siehe [LICENSE](LICENSE) Datei
 
