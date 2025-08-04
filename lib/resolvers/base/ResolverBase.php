@@ -35,6 +35,7 @@ abstract class ResolverBase implements Resolver
   protected array $fieldResolvers = [];
   protected ResolveInfo $info;
   protected string $joinClause = '';
+  protected array $joinsUsed = [];
   protected array $mainIdColumns = [];
   protected array $params = [];
   protected string $query = '';
@@ -313,6 +314,11 @@ abstract class ResolverBase implements Resolver
         continue;
       }
       $this->checkPermissions($alias);
+      if (isset($this->joinsUsed[$alias]) && in_array($alias, $this->joinsUsed[$alias])) {
+        $alias .= '_' . count($this->joinsUsed[$alias]);
+      }
+      $this->joinsUsed[$alias][] = $alias;
+
       $relationAlias = $this->findRelationByTable($this->relations, $table);
       $tableAlias = $relationAlias ? $relationAlias['alias'] : $table;
       if (!isset($this->fields[$tableAlias])) {
