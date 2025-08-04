@@ -115,8 +115,8 @@ body.rex-theme-dark .rex-page-rexql {
 .rex-page-rexql {
   .row.border-top {
     margin-top: 15px;
-    padding-bottom: 15px;
     border-top: 1px solid var(--rexql-border-color-light);
+    padding-bottom: 15px;
   }
   .primary {
     color: var(--rexql-primary);
@@ -149,8 +149,8 @@ body.rex-theme-dark .rex-page-rexql {
   }
   dt,
   dd {
-    padding: 5px 0;
     border-bottom: 1px solid var(--rexql-border-color);
+    padding: 5px 0;
   }
   dt {
     padding-right: 10px;
@@ -159,8 +159,8 @@ body.rex-theme-dark .rex-page-rexql {
   }
   dd {
     margin: 0;
-    white-space: nowrap;
     text-align: right;
+    white-space: nowrap;
   }
 }
 
@@ -169,31 +169,31 @@ body.rex-theme-dark .rex-page-rexql {
   background-color: var(--rexql-bg-light);
   .rexql-query-item {
     margin-bottom: 15px;
-    padding: 10px;
-    background-color: var(--rexql-bg-code);
     border: 1px solid var(--rexql-border-color);
     border-radius: var(--rexql-border-radius);
+    background-color: var(--rexql-bg-code);
+    padding: 10px;
     pre {
       margin: 0;
       color: var(--rexql-text-color);
       font-size: 12px;
-      font-family: var(--rexql-font-mono);
       line-height: 1.4;
+      font-family: var(--rexql-font-mono);
     }
   }
 }
 
 .rexql-query-meta {
   display: flex;
-  gap: 8px;
   align-items: center;
+  gap: 8px;
   margin-top: 5px;
   color: var(--rexql-text-color);
 }
 .rexql-query-meta-item {
   display: flex;
-  gap: 4px;
   align-items: center;
+  gap: 4px;
   .fa {
     color: var(--rexql-text-muted);
   }
@@ -227,28 +227,28 @@ body.rex-theme-dark .rex-page-rexql {
 }
 
 .rex-page-rexql .rexql-playground textarea {
-  height: 300px;
-  font-size: 13px;
-  font-family: var(--rexql-font-mono);
-  line-height: 1.4;
-  background-color: var(--rexql-bg-light);
   border: 1px solid var(--rexql-border-color);
   border-radius: var(--rexql-border-radius);
+  background-color: var(--rexql-bg-light);
+  height: 300px;
+  font-size: 13px;
+  line-height: 1.4;
+  font-family: var(--rexql-font-mono);
 }
 
 .rex-page-rexql .rexql-playground .result {
-  height: 400px;
   padding: 10px;
+  height: 400px;
   overflow-y: auto;
   color: var(--rexql-text-color);
   font-size: 12px;
-  font-family: var(--rexql-font-mono);
   line-height: 1.4;
+  font-family: var(--rexql-font-mono);
   white-space: pre-wrap;
   word-wrap: break-word;
-  background-color: var(--rexql-bg-code);
   border: 1px solid var(--rexql-border-color);
   border-radius: var(--rexql-border-radius);
+  background-color: var(--rexql-bg-code);
 }
 
 .rex-page-rexql .rexql-stats {
@@ -257,11 +257,11 @@ body.rex-theme-dark .rex-page-rexql {
 
 .rex-page-rexql .rexql-stats .tile {
   margin-bottom: 15px;
-  padding: 15px;
-  text-align: center;
-  background: var(--rexql-bg-light);
   border: 1px solid var(--rexql-border-color);
   border-radius: var(--rexql-border-radius);
+  background: var(--rexql-bg-light);
+  padding: 15px;
+  text-align: center;
 }
 
 .rex-page-rexql .rexql-stats .tile h5 {
@@ -279,13 +279,13 @@ body.rex-theme-dark .rex-page-rexql {
 }
 
 .rex-page-rexql .rexql-api-key {
+  border: 1px solid var(--rexql-border-color);
+  border-radius: 3px;
+  background-color: var(--rexql-bg-code);
   padding: 4px 8px;
   color: var(--rexql-text-color);
   font-size: 12px;
   font-family: var(--rexql-font-mono);
-  background-color: var(--rexql-bg-code);
-  border: 1px solid var(--rexql-border-color);
-  border-radius: 3px;
 }
 
 .rex-page-rexql .rexql-permission-tags .label {
@@ -305,40 +305,40 @@ body.rex-theme-dark .rex-page-rexql {
 }
 
 .rex-page-rexql .rexql-endpoint-url {
+  border: 1px solid var(--rexql-border-color);
+  border-radius: var(--rexql-border-radius);
+  background-color: var(--rexql-bg-code);
   padding: 10px;
   color: var(--rexql-text-color);
   font-size: 13px;
   font-family: var(--rexql-font-mono);
   word-break: break-all;
-  background-color: var(--rexql-bg-code);
-  border: 1px solid var(--rexql-border-color);
-  border-radius: var(--rexql-border-radius);
 }
 
 .rex-page-rexql .rexql-docs pre {
+  border: 1px solid var(--rexql-border-color);
+  border-radius: var(--rexql-border-radius);
+  background-color: var(--rexql-bg-code);
   padding: 12px;
   overflow-x: auto;
   color: var(--rexql-text-color);
-  background-color: var(--rexql-bg-code);
-  border: 1px solid var(--rexql-border-color);
-  border-radius: var(--rexql-border-radius);
 }
 
 .rex-page-rexql .rexql-docs code {
+  border-radius: 3px;
+  background-color: var(--rexql-bg-code);
   padding: 2px 4px;
   color: var(--rexql-text-color);
   font-size: 12px;
   font-family: var(--rexql-font-mono);
-  background-color: var(--rexql-bg-code);
-  border-radius: 3px;
 }
 
 .rex-page-rexql .rexql-docs h3 {
   margin-top: 30px;
   margin-bottom: 15px;
+  border-bottom: 1px solid var(--rexql-border-color);
   padding-bottom: 5px;
   color: var(--rexql-text-color);
-  border-bottom: 1px solid var(--rexql-border-color);
 }
 
 .rex-page-rexql .rexql-docs h4 {
@@ -348,10 +348,10 @@ body.rex-theme-dark .rex-page-rexql {
 }
 
 .rex-page-rexql .rexql-config-table-list {
-  max-height: 300px;
-  overflow-y: auto;
   border: 1px solid var(--rexql-border-color);
   border-radius: var(--rexql-border-radius);
+  max-height: 300px;
+  overflow-y: auto;
 }
 
 .rex-page-rexql .rexql-config-table-list .checkbox {
@@ -370,42 +370,42 @@ body.rex-theme-dark .rex-page-rexql {
 
 .rex-page-rexql .rexql-config-section fieldset {
   margin-bottom: 20px;
-  padding: 20px;
   border: 1px solid var(--rexql-border-color);
   border-radius: var(--rexql-border-radius);
+  padding: 20px;
 }
 
 .rex-page-rexql .rexql-config-section legend {
-  width: auto;
+  border: none;
   padding: 0;
+  width: auto;
   color: var(--rexql-primary);
   font-weight: 600;
   font-size: 16px;
-  border: none;
 }
 
 /* CORS Configuration Styling */
 .rex-page-rexql .rexql-cors-textarea {
-  width: 100% !important;
-  min-height: 120px !important;
-  padding: 12px;
-  font-size: 13px;
-  font-family: var(--rexql-font-mono);
-  line-height: 1.4;
-  background-color: var(--rexql-bg-light);
-  border: 2px solid var(--rexql-border-color);
-  border-radius: var(--rexql-border-radius);
   transition:
     border-color 0.2s ease,
     background-color 0.2s ease;
+  border: 2px solid var(--rexql-border-color);
+  border-radius: var(--rexql-border-radius);
+  background-color: var(--rexql-bg-light);
+  padding: 12px;
+  width: 100% !important;
+  min-height: 120px !important;
   resize: vertical;
+  font-size: 13px;
+  line-height: 1.4;
+  font-family: var(--rexql-font-mono);
 }
 
 .rex-page-rexql .rexql-cors-textarea:focus {
-  background-color: var(--rexql-bg-code);
-  border-color: var(--rexql-primary);
   outline: none;
   box-shadow: 0 0 0 3px var(--rexql-primary-light);
+  border-color: var(--rexql-primary);
+  background-color: var(--rexql-bg-code);
 }
 
 .rex-page-rexql .rexql-cors-textarea::placeholder {
@@ -424,18 +424,18 @@ body.rex-theme-dark .rex-page-rexql {
 .rex-page-rexql .rexql-cors-methods .checkbox-inline {
   display: flex;
   align-items: center;
-  min-width: 80px;
+  transition: all 0.2s ease;
   margin: 0;
-  padding: 8px 12px;
-  background-color: var(--rexql-bg-light);
   border: 1px solid var(--rexql-border-color);
   border-radius: var(--rexql-border-radius);
-  transition: all 0.2s ease;
+  background-color: var(--rexql-bg-light);
+  padding: 8px 12px;
+  min-width: 80px;
 }
 
 .rex-page-rexql .rexql-cors-methods .checkbox-inline:hover {
-  background-color: var(--rexql-primary-light);
   border-color: var(--rexql-primary);
+  background-color: var(--rexql-primary-light);
 }
 
 .rex-page-rexql .rexql-cors-methods .checkbox-inline input[type='checkbox'] {
@@ -456,8 +456,8 @@ body.rex-theme-dark .rex-page-rexql {
 .rex-page-rexql .rexql-field-description {
   margin-top: 5px;
   color: var(--rexql-text-muted);
-  font-size: 12px;
   font-style: italic;
+  font-size: 12px;
 }
 
 .rex-page-rexql .rexql-field-hint {
@@ -469,9 +469,13 @@ body.rex-theme-dark .rex-page-rexql {
 }
 
 /* Enhanced Form Group Styling */
-/* .rex-page-rexql .rex-form-group {
-  margin-bottom: 0;
-} */
+.rex-page-rexql .rex-form-group {
+  > dd {
+    > input {
+      margin-top: 10px;
+    }
+  }
+}
 
 .rex-page-rexql .rex-form-group label {
   color: var(--rexql-text-color);
@@ -480,28 +484,28 @@ body.rex-theme-dark .rex-page-rexql {
 
 /* Number Inputs */
 .rex-page-rexql input[type='number'].rexql-config-input {
-  max-width: 120px;
-  padding: 8px 12px;
-  font-size: 14px;
+  transition: border-color 0.2s ease;
   border: 2px solid var(--rexql-border-color);
   border-radius: var(--rexql-border-radius);
-  transition: border-color 0.2s ease;
+  padding: 8px 12px;
+  max-width: 120px;
+  font-size: 14px;
 }
 
 .rex-page-rexql input[type='number'].rexql-config-input:focus {
-  border-color: var(--rexql-primary);
   outline: none;
   box-shadow: 0 0 0 3px var(--rexql-primary-light);
+  border-color: var(--rexql-primary);
 }
 
 /* Configuration Sections */
 .rex-page-rexql .rexql-config-auth-notice {
   margin-bottom: 20px;
-  padding: 15px;
-  color: var(--rexql-text-color);
-  background-color: var(--rexql-warning-light);
   border: 1px solid var(--rexql-warning);
   border-radius: var(--rexql-border-radius);
+  background-color: var(--rexql-warning-light);
+  padding: 15px;
+  color: var(--rexql-text-color);
 }
 
 .rex-page-rexql .rexql-config-auth-notice .fa {
@@ -511,12 +515,12 @@ body.rex-theme-dark .rex-page-rexql {
 
 .rex-page-rexql .rexql-config-security-note {
   margin-bottom: 10px;
+  border: 1px solid var(--rexql-primary);
+  border-radius: var(--rexql-border-radius);
+  background-color: var(--rexql-primary-light);
   padding: 12px;
   color: var(--rexql-text-color);
   font-size: 13px;
-  background-color: var(--rexql-primary-light);
-  border: 1px solid var(--rexql-primary);
-  border-radius: var(--rexql-border-radius);
 }
 
 .rex-page-rexql .rexql-config-security-note .fa {
@@ -528,16 +532,16 @@ body.rex-theme-dark .rex-page-rexql {
   position: fixed;
   bottom: 20px;
   left: 50%;
+  transform: translateX(-50%);
   z-index: 9999;
-  width: calc(100% - 40px);
-  max-width: 400px;
-  padding: 15px;
-  color: var(--rexql-text-color);
-  background-color: var(--rexql-bg-light);
+  animation: fadeIn 0.3s ease-in-out;
   border: 1px solid var(--rexql-border-color);
   border-radius: var(--rexql-border-radius);
-  transform: translateX(-50%);
-  animation: fadeIn 0.3s ease-in-out;
+  background-color: var(--rexql-bg-light);
+  padding: 15px;
+  width: calc(100% - 40px);
+  max-width: 400px;
+  color: var(--rexql-text-color);
   > div {
     position: relative;
   }

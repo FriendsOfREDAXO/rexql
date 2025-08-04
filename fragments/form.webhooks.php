@@ -42,52 +42,58 @@ if ($func === 'add') {
 ?>
 
 <fieldset>
-  <div class="form-group">
-    <label class="col-sm-2 control-label">Name *</label>
-    <div class="col-sm-10">
+  <dl class="form-group rex-form-group">
+    <dt>
+      <label class="control-label">Name *</label>
+    </dt>
+    <dd>
       <input class="form-control" type="text" name="name" value="<?= rex_escape($data['name']) ?>" required>
       <p class="help-block">A descriptive name for this webhook</p>
-    </div>
-  </div>
+    </dd>
+  </dl>
 
-  <div class="form-group">
-    <label class="col-sm-2 control-label">URL *</label>
-    <div class="col-sm-10">
+  <dl class="form-group rex-form-group">
+    <dt>
+      <label class="control-label">URL *</label>
+    </dt>
+    <dd>
       <input class="form-control" type="url" name="url" value="<?= rex_escape($data['url']) ?>" required>
       <p class="help-block">The endpoint URL where webhook requests will be sent</p>
-    </div>
-  </div>
+    </dd>
+  </dl>
 
-  <div class="form-group">
-    <label class="col-sm-2 control-label">Timeout (seconds)</label>
-    <div class="col-sm-10">
+  <dl class="form-group rex-form-group">
+    <dt>
+      <label class="control-label">Timeout (seconds)</label>
+    </dt>
+    <dd>
       <input class="form-control" type="number" name="timeout" value="<?= $data['timeout'] ?>" min="1" max="300">
       <p class="help-block">How long to wait for a response before timing out (1-300 seconds)</p>
-    </div>
-  </div>
+    </dd>
+  </dl>
 
-  <div class="form-group">
-    <label class="col-sm-2 control-label">Retry Attempts</label>
-    <div class="col-sm-10">
+  <dl class="form-group rex-form-group">
+    <dt>
+      <label class="control-label">Retry Attempts</label>
+    </dt>
+    <dd>
       <input class="form-control" type="number" name="retry_attempts" value="<?= $data['retry_attempts'] ?>" min="0" max="10">
       <p class="help-block">Number of retry attempts if the webhook fails (0-10)</p>
-    </div>
-  </div>
+    </dd>
+  </dl>
 
-  <?php if ($func === 'edit'): ?>
-    <div class="form-group">
-      <label class="col-sm-2 control-label">Active</label>
-      <div class="col-sm-10">
-        <div class="checkbox">
-          <label>
-            <input type="checkbox" name="active" value="1" <?php if ($data['active']) echo 'checked'; ?>>
-            Enable this webhook
-          </label>
-        </div>
-        <p class="help-block">Inactive webhooks will not be called</p>
-      </div>
-    </div>
-  <?php endif; ?>
+  <dl class="form-group rex-form-group">
+    <dt>
+      <label class="control-label">Active</label>
+    </dt>
+    <dd>
+      <label>
+        <input type="checkbox" name="active" value="1" <?php if ($data['active']) echo 'checked'; ?>>
+        Enable this webhook
+      </label>
+      <p class="help-block">Inactive webhooks will not be called</p>
+    </dd>
+  </dl>
 </fieldset>
 
 <div class="alert alert-info">
