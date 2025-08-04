@@ -89,6 +89,7 @@ type article {
   status: Boolean
   parentId: Int
   clangId: Int
+  language: language
   templateId: Int
   startarticle: Boolean
   createdate: String
@@ -175,8 +176,13 @@ type route {
 
 type slice {
   id: ID
+  articleId: Int
+  article: article
+  moduleId: Int
+  module: module
   ctypeId: Int
   clangId: Int
+  language: language
   priority: Int
   status: Boolean
   value1: String
@@ -241,8 +247,6 @@ type slice {
   linklist10: String
   createdate: String
   updatedate: String
-  module: module
-  article: article
 }
 
 type system {

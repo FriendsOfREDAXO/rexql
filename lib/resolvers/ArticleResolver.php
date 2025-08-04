@@ -25,7 +25,14 @@ class ArticleResolver extends ResolverBase
             'type' => 'hasOne',
             'localKey' => 'module_id',
             'foreignKey' => 'id',
-          ]
+          ],
+          'rex_clang' =>
+          [
+            'alias' => 'language',
+            'type' => 'hasOne',
+            'localKey' => 'clang_id',
+            'foreignKey' => 'id',
+          ],
         ]
       ],
       'rex_template' =>
@@ -35,7 +42,13 @@ class ArticleResolver extends ResolverBase
         'localKey' => 'template_id',
         'foreignKey' => 'id',
       ],
-
+      'rex_clang' =>
+      [
+        'alias' => 'language',
+        'type' => 'hasOne',
+        'localKey' => 'clang_id',
+        'foreignKey' => 'id',
+      ],
     ];
 
     $this->fieldResolvers = [

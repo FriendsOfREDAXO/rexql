@@ -14,7 +14,27 @@ class SlicesResolver extends ResolverBase
         'type' => 'hasOne',
         'localKey' => 'module_id',
         'foreignKey' => 'id',
-      ]
+      ],
+      'rex_article' => [
+        'alias' => 'article',
+        'type' => 'hasOne',
+        'localKey' => 'article_id',
+        'foreignKey' => 'id',
+        'relations' => [
+          'rex_template' => [
+            'alias' => 'template',
+            'type' => 'hasOne',
+            'localKey' => 'template_id',
+            'foreignKey' => 'id',
+          ]
+        ]
+      ],
+      'rex_clang' => [
+        'alias' => 'language',
+        'type' => 'hasOne',
+        'localKey' => 'clang_id',
+        'foreignKey' => 'id',
+      ],
     ];
 
     $results = $this->query();
