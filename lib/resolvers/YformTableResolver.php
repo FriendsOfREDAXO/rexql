@@ -193,6 +193,8 @@ class YformTableResolver extends ResolverBase
     $instance = new self();
 
     rex_extension::register('REXQL_EXTEND', function (rex_extension_point $ep) use ($instance) {
+      $extensions = $ep->getSubject();
+
       $sdl = '';
       $sdlEntries = [];
       $yformTables = rex_yform_manager_table::getAll();
@@ -260,7 +262,7 @@ class YformTableResolver extends ResolverBase
         $sdl .= "}\n\n";
       }
 
-      $extensions['sdl'] = $sdl;
+      $extensions['sdl'] .= $sdl;
       $ep->setSubject($extensions);
     }, rex_extension::LATE);
   }
