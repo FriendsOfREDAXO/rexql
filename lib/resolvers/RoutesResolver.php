@@ -36,14 +36,14 @@ class RoutesResolver extends ResolverBase
 
     $this->fieldResolvers = [
       $this->table => [
-        'routeType' => fn($row): string => $row['rex_article_catpriority'] !== 0 ? 'category' : 'article',
+        'routeType' => fn($row): string => $row[$this->table . '_catpriority'] !== 0 ? 'category' : 'article',
         'slug' => function ($row): string {
-          $clangId = isset($row['rex_article_clang_id']) ? $row['rex_article_clang_id'] : (isset($this->args['clangId']) ? $this->args['clangId'] : 1);
-          $url = rex_getUrl($row['rex_article_id'], $clangId);
+          $clangId = isset($row[$this->table . '_clang_id']) ? $row[$this->table . '_clang_id'] : (isset($this->args['clangId']) ? $this->args['clangId'] : 1);
+          $url = rex_getUrl($row[$this->table . '_id'], $clangId);
           $slug = parse_url($url, PHP_URL_PATH);
           return trim($slug, '/');
         },
-        'index' => fn($row): bool => ($row['rex_article_yrewrite_index'] === 0 && $row['rex_article_status']) || ($row['rex_article_yrewrite_index'] !== -1 && $row['rex_article_yrewrite_index'] !== 2),
+        'index' => fn($row): bool => ($row[$this->table . '_yrewrite_index'] === 0 && $row[$this->table . '_status']) || ($row[$this->table . '_yrewrite_index'] !== -1 && $row[$this->table . '_yrewrite_index'] !== 2),
       ]
     ];
 
@@ -67,15 +67,18 @@ class RoutesResolver extends ResolverBase
         $this->table => ['status', 'startarticle', 'routeType', 'isCategory']
       ];
       $this->ensureColumns = [
-        $this->table => ['data_id']
+        $this->table => ['data_id', 'article_id', 'clang_id']
       ];
       $this->fieldResolvers = [
         $this->table => [
           'routeType' => fn(): string => 'url',
           'id' => fn($row): int => $row[$this->table . '_data_id'],
           'slug' => function ($row): string {
+            $parentUrl = rex_getUrl($row[$this->table . '_article_id'], $row[$this->table . '_clang_id']);
+            $baseUrl = parse_url($parentUrl, PHP_URL_PATH);
+
             $slug = parse_url($row[$this->table . '_url'], PHP_URL_PATH);
-            return trim($slug, '/');
+            return ltrim($baseUrl, '/') . trim($slug, '/');
           },
           'name' => function ($row): string {
             $data = json_decode($row[$this->table . '_seo'], true);
