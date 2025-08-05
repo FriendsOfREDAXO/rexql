@@ -1,5 +1,15 @@
 ## 🚀 Changelog
 
+### [1.0.4] - 2025-08-05
+
+#### Changed
+
+- consistent form HTML structure and CSS
+
+#### Fixed
+
+- Fixed missing dependency in composer.json
+
 ### [1.0.3] - 2025-08-04
 
 #### Added
