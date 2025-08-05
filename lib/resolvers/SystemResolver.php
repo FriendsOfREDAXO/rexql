@@ -7,7 +7,7 @@ use rex_addon;
 use rex_clang;
 use rex_config;
 
-class RexSystemResolver extends ResolverBase
+class SystemResolver extends ResolverBase
 {
   public function getData(): array|null
   {
