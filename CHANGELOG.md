@@ -1,10 +1,22 @@
 ## 🚀 Changelog
 
+### [1.0.5] - 2025-08-05
+
+#### Changed
+
+- Verbose logging for permission checks in Context.php
+
+#### Fixed
+
+- Changed dependency version in composer.json
+- Fixed issue with undefined `rex_article_clang_id` in ArticleResolver
+- Fixed issue with incorrect resolver name `system`
+
 ### [1.0.4] - 2025-08-05
 
 #### Changed
 
-- consistent form HTML structure and CSS
+- Consistent form HTML structure and CSS
 
 #### Fixed
 
