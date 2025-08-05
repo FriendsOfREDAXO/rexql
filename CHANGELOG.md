@@ -1,5 +1,17 @@
 ## 🚀 Changelog
 
+### [1.0.6] - 2025-08-05
+
+#### Changed
+
+- Update `route` Schema to use `Int` instead of `ID` to get an integer value
+- Cleanup of `route` resolver
+
+#### Fixed
+
+- Call `init` method in `Webhook` class to ensure proper initialization
+- Fixed issue with `route` resolver not returning base path for `url` slugs
+
 ### [1.0.5] - 2025-08-05
 
 #### Changed
