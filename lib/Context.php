@@ -65,7 +65,7 @@ class Context
     $apiKey = $this->getApiKey();
     if ($apiKey) {
       $permissions = $apiKey->getPermissions();
-      Logger::log('Checking permissions for type: ' . $permissionName . ' permissions: ' . print_r($permissions, true), 'debug', __FILE__, __LINE__);
+      Logger::log('Checking permissions for type: ' . $permissionName, 'debug', __FILE__, __LINE__);
       if (empty($permissions)) {
         return false; // No permissions set for the API key
       }
