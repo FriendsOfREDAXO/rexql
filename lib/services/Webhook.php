@@ -304,6 +304,10 @@ class Webhook
   public static function testWebhook(array $webhook): array
   {
 
+    if (!self::$addon) {
+      self::init();
+    }
+
     $testPayload = self::buildPayload('TEST', [
       'tag' => 'all',
     ]);
