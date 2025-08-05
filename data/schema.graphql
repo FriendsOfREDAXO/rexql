@@ -159,7 +159,7 @@ type navigationItem {
 }
 
 type route {
-  id: ID
+  id: Int
   parentId: Int
   routeType: String
   status: Boolean
