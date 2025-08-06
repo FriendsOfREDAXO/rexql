@@ -1,5 +1,16 @@
 ## 🚀 Changelog
 
+### [1.0.7] - 2025-08-06
+
+#### Added
+
+- Added new fields `parent: article`, `urlProfile: null|string` and `language: language` to type `route` resolver
+- Added `urlProfile: null|string` to yform table resolver
+
+#### Fixed
+
+- Reset query and clauses in `ResolverBase` to ensure clean state for each query
+
 ### [1.0.6] - 2025-08-05
 
 #### Changed
