@@ -1,6 +1,6 @@
 {
   "name": "rexql-assets",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Asset build for rexQL Addon",
   "scripts": {
     "version:sync": "node scripts/sync-version.js",
