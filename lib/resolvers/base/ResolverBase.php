@@ -84,6 +84,14 @@ abstract class ResolverBase implements Resolver
 
   protected function query(): array
   {
+    // reset query and clauses
+    $this->joinClause = '';
+    $this->relationColumns = [];
+    $this->selectClause = '';
+    $this->whereParams = [];
+    $this->joinsUsed = [];
+    $this->fields = [];
+
     $fieldSelection = $this->info->getFieldSelection(5);
     $this->fields = $this->getFields($this->table, $fieldSelection);
 
@@ -115,6 +123,7 @@ abstract class ResolverBase implements Resolver
 
   protected function createQuery()
   {
+
     $orderBy = $this->args['orderBy'] ?? "{$this->table}.priority ASC";
     $customWhere = $this->args['where'] ?? '';
     $limit = $this->args['limit'] ?? 0;
@@ -320,13 +329,18 @@ abstract class ResolverBase implements Resolver
       $this->joinsUsed[$alias][] = $alias;
 
       $relationAlias = $this->findRelationByTable($this->relations, $table);
-      $tableAlias = $relationAlias ? $relationAlias['alias'] : $table;
-      if (!isset($this->fields[$tableAlias])) {
-        $tableAlias = Utility::camelCaseToSnakeCase($table);
+      $localAlias = $relationAlias ? $relationAlias['alias'] : $table;
+      if (!isset($this->fields[$localAlias])) {
+        $localAlias = Utility::camelCaseToSnakeCase($table);
       }
-      $this->joinClause .= " LEFT JOIN {$relation} {$alias} ON {$tableAlias}.`{$options['localKey']}` = {$alias}.`{$options['foreignKey']}`";
-      $this->relationColumns[] = "{$tableAlias}.`{$options['localKey']}` AS `{$tableAlias}_{$options['localKey']}`";
-      $this->relationColumns[] = "{$alias}.`{$options['foreignKey']}` AS `{$alias}_{$options['foreignKey']}`";
+      $foreignAlias = $alias;
+      if ($localAlias === $foreignAlias) {
+        $localAlias = $relation;
+      }
+
+      $this->joinClause .= " LEFT JOIN {$relation} `{$alias}` ON {$localAlias}.`{$options['localKey']}` = {$foreignAlias}.`{$options['foreignKey']}`";
+      $this->relationColumns[] = "{$localAlias}.`{$options['localKey']}` AS `{$localAlias}_{$options['localKey']}`";
+      $this->relationColumns[] = "{$foreignAlias}.`{$options['foreignKey']}` AS `{$foreignAlias}_{$options['foreignKey']}`";
       if (isset($options['relations']) && is_array($options['relations'])) {
         $this->setJoinClause($relation, $options['relations']);
       }
