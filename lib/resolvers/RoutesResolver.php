@@ -11,12 +11,12 @@ class RoutesResolver extends ResolverBase
   {
     $this->table = 'rex_article';
     $orderBy = "CASE ";
-    $orderBy .= "WHEN `startarticle` = 1 AND `parent_id` = 0 THEN `catpriority` ";
-    $orderBy .= "WHEN `parent_id` != 0 THEN (
+    $orderBy .= "WHEN `rex_article`.`startarticle` = 1 AND `rex_article`.`parent_id` = 0 THEN `rex_article`.`catpriority` ";
+    $orderBy .= "WHEN `rex_article`.`parent_id` != 0 THEN (
       SELECT a2.catpriority FROM `rex_article` a2 
-      WHERE a2.id = `rex_article`.parent_id
-    ) * 1000 + `catpriority` ";
-    $orderBy .= "WHEN `startarticle` = 0 AND `parent_id` = 0 THEN 9000 + `priority` ";
+      WHERE a2.id = `rex_article`.`parent_id`
+    ) * 1000 + `rex_article`.`catpriority` ";
+    $orderBy .= "WHEN `rex_article`.`startarticle` = 0 AND `rex_article`.`parent_id` = 0 THEN 9000 + `rex_article`.`priority` ";
     $orderBy .= "ELSE 9999 END";
     $this->args['orderBy'] = $orderBy;
 
@@ -28,10 +28,33 @@ class RoutesResolver extends ResolverBase
       ]
     ];
     $this->excludeFieldsFromSQL = [
-      $this->table => ['slug', 'routeType', 'isCategory']
+      $this->table => ['slug', 'routeType', 'isCategory', 'urlProfile']
     ];
     $this->ensureColumns = [
       $this->table => ['status', 'catpriority']
+    ];
+
+    $this->relations = [
+      $this->table => [
+        'alias' => 'parent',
+        'type' => 'hasOne',
+        'localKey' => 'parent_id',
+        'foreignKey' => 'id',
+        'relations' => [
+          'rex_template' => [
+            'alias' => 'template',
+            'type' => 'hasOne',
+            'localKey' => 'template_id',
+            'foreignKey' => 'id',
+          ]
+        ]
+      ],
+      'rex_clang' => [
+        'alias' => 'language',
+        'type' => 'hasOne',
+        'localKey' => 'clang_id',
+        'foreignKey' => 'id',
+      ],
     ];
 
     $this->fieldResolvers = [
@@ -43,6 +66,7 @@ class RoutesResolver extends ResolverBase
           $slug = parse_url($url, PHP_URL_PATH);
           return trim($slug, '/');
         },
+        'urlProfile' => fn(): null => null,
         'index' => fn($row): bool => ($row[$this->table . '_yrewrite_index'] === 0 && $row[$this->table . '_status']) || ($row[$this->table . '_yrewrite_index'] !== -1 && $row[$this->table . '_yrewrite_index'] !== 2),
       ]
     ];
@@ -51,23 +75,47 @@ class RoutesResolver extends ResolverBase
 
     $redaxo_url = rex_addon::get('url');
     if ($redaxo_url->isAvailable()) {
+      $this->relationColumns = [];
       $this->table = 'rex_url_generator_url';
       $this->args['orderBy'] = "{$this->table}.`id`";
       $this->fieldsMap = [
         $this->table => [
           'parentId' => 'article_id',
           'slug' => 'url',
+          'urlProfile' => 'profile_id',
           'description' => 'seo',
           'image' => 'seo',
           'index' => 'sitemap',
           'name' => 'seo',
         ]
       ];
+      $this->relations = [
+        'rex_article' => [
+          'alias' => 'parent',
+          'type' => 'hasOne',
+          'localKey' => 'article_id',
+          'foreignKey' => 'id',
+          'relations' => [
+            'rex_template' => [
+              'alias' => 'template',
+              'type' => 'hasOne',
+              'localKey' => 'template_id',
+              'foreignKey' => 'id',
+            ]
+          ]
+        ],
+        'rex_clang' => [
+          'alias' => 'language',
+          'type' => 'hasOne',
+          'localKey' => 'clang_id',
+          'foreignKey' => 'id',
+        ],
+      ];
       $this->excludeFieldsFromSQL = [
         $this->table => ['status', 'startarticle', 'routeType', 'isCategory']
       ];
       $this->ensureColumns = [
-        $this->table => ['data_id', 'article_id', 'clang_id']
+        $this->table => ['data_id', 'article_id', 'clang_id', 'profile_id']
       ];
       $this->fieldResolvers = [
         $this->table => [
@@ -79,6 +127,14 @@ class RoutesResolver extends ResolverBase
 
             $slug = parse_url($row[$this->table . '_url'], PHP_URL_PATH);
             return ltrim($baseUrl, '/') . trim($slug, '/');
+          },
+          'urlProfile' => function ($row): string {
+            $profileId = $row[$this->table . '_profile_id'] ?? null;
+            if ($profileId) {
+              $profile = \Url\Profile::get($profileId);
+              return $profile ? $profile->getNamespace() : '';
+            }
+            return '';
           },
           'name' => function ($row): string {
             $data = json_decode($row[$this->table . '_seo'], true);

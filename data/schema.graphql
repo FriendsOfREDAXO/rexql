@@ -161,12 +161,15 @@ type navigationItem {
 type route {
   id: Int
   parentId: Int
+  parent: article
   routeType: String
+  urlProfile: String
   status: Boolean
   slug: String
   name: String
   description: String
   clangId: Int
+  language: language
   startarticle: Boolean
   createdate: String
   updatedate: String
