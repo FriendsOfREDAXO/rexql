@@ -111,6 +111,25 @@ class YformTableResolver extends ResolverBase
   {
     $item = [];
 
+    $slug = '';
+    $profileNamespace = null;
+    if ($this->isUrlAvailable) {
+      if ($this->args['slugNamespace'] ?? null) {
+        $profileNamespace = $this->args['slugNamespace'];
+        $slug = rex_getUrl(null, null, [$profileNamespace => $dataset->getId()]);
+      }
+      if (!$slug) {
+        $profiles = \Url\Profile::getByTableName($this->table);
+        $profile = $profiles ? reset($profiles) : null;
+        if ($profile) {
+          $profileNamespace = $profile->getNamespace();
+          $slug = rex_getUrl(null, null, [$profileNamespace => $dataset->getId()]);
+        }
+      }
+    } else if ($this->args['slugNamespace'] ?? null) {
+      $slug = rex_getUrl(null, null, [$this->args['slugNamespace'] => $this->table, 'id' => $dataset->getId()]);
+    }
+
     foreach ($this->fields as $subTypename => $field) {
       $fieldName = !is_array($field) ? $field : $subTypename;
 
@@ -164,22 +183,10 @@ class YformTableResolver extends ResolverBase
         } else {
           switch ($fieldName) {
             case 'slug':
-              $slug = '';
-              if ($this->isUrlAvailable) {
-                if ($this->args['slugNamespace'] ?? null) {
-                  $slug = rex_getUrl(null, null, [$this->args['slugNamespace'] => $dataset->getId()]);
-                }
-                if (!$slug) {
-                  $profiles = \Url\Profile::getByTableName($this->table);
-                  $profile = $profiles ? reset($profiles) : null;
-                  if ($profile) {
-                    $slug = rex_getUrl(null, null, [$profile->getNamespace() => $dataset->getId()]);
-                  }
-                }
-              } else if ($this->args['slugNamespace'] ?? null) {
-                $slug = rex_getUrl(null, null, [$this->args['slugNamespace'] => $this->table, 'id' => $dataset->getId()]);
-              }
               $item['slug'] = $slug;
+              break;
+            case 'urlProfile':
+              $item['urlProfile'] = $profileNamespace;
               break;
           }
         }
@@ -214,6 +221,7 @@ class YformTableResolver extends ResolverBase
 
         $sdlEntries[$key]['fields']['id'] = ['type' => Type::id(), 'orgType' => 'integer', 'orgName' => 'id']; // Ensure 'id' is always present
         $sdlEntries[$key]['fields']['slug'] = ['type' => Type::string(), 'orgType' => 'text', 'orgName' => 'slug']; // Ensure 'slug' is always present
+        $sdlEntries[$key]['fields']['urlProfile'] = ['type' => Type::string(), 'orgType' => 'text', 'orgName' => 'urlProfile']; // Ensure 'urlProfile' is always present
 
         /**
          * @var rex_yform_manager_field $field
