@@ -10,11 +10,12 @@ class RoutesResolver extends ResolverBase
   public function getData(): array|null
   {
     $this->table = 'rex_article';
+    $this->mainIdColumns = [$this->table => 'pid'];
     $orderBy = "CASE ";
     $orderBy .= "WHEN `rex_article`.`startarticle` = 1 AND `rex_article`.`parent_id` = 0 THEN `rex_article`.`catpriority` ";
     $orderBy .= "WHEN `rex_article`.`parent_id` != 0 THEN (
       SELECT a2.catpriority FROM `rex_article` a2 
-      WHERE a2.id = `rex_article`.`parent_id`
+      WHERE a2.id = `rex_article`.`parent_id` AND a2.clang_id = `rex_article`.`clang_id`
     ) * 1000 + `rex_article`.`catpriority` ";
     $orderBy .= "WHEN `rex_article`.`startarticle` = 0 AND `rex_article`.`parent_id` = 0 THEN 9000 + `rex_article`.`priority` ";
     $orderBy .= "ELSE 9999 END";
@@ -31,7 +32,7 @@ class RoutesResolver extends ResolverBase
       $this->table => ['slug', 'routeType', 'isCategory', 'urlProfile']
     ];
     $this->ensureColumns = [
-      $this->table => ['status', 'catpriority']
+      $this->table => ['id', 'status', 'catpriority', 'clang_id']
     ];
 
     $this->relations = [
@@ -124,9 +125,8 @@ class RoutesResolver extends ResolverBase
           'slug' => function ($row): string {
             $parentUrl = rex_getUrl($row[$this->table . '_article_id'], $row[$this->table . '_clang_id']);
             $baseUrl = parse_url($parentUrl, PHP_URL_PATH);
-
             $slug = parse_url($row[$this->table . '_url'], PHP_URL_PATH);
-            return ltrim($baseUrl, '/') . trim($slug, '/');
+            return ltrim($baseUrl, '/') . trim(str_replace($baseUrl, '', $slug), '/');
           },
           'urlProfile' => function ($row): string {
             $profileId = $row[$this->table . '_profile_id'] ?? null;
