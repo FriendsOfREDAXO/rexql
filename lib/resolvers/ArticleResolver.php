@@ -9,6 +9,10 @@ class ArticleResolver extends ResolverBase
   public function getData(): array|null
   {
     $this->table = 'rex_article';
+    $this->mainIdColumns = [$this->table => 'pid'];
+    if (!isset($this->args['clangId'])) {
+      $this->args['clangId'] = 1;
+    }
     $this->excludeFieldsFromSQL = [
       $this->table => ['slug']
     ];
@@ -49,6 +53,13 @@ class ArticleResolver extends ResolverBase
         'localKey' => 'clang_id',
         'foreignKey' => 'id',
       ],
+    ];
+    $this->relations[$this->table] = [
+      'alias' => 'parent',
+      'type' => 'hasOne',
+      'localKey' => 'parent_id',
+      'foreignKey' => 'id',
+      'relations' => $this->relations,
     ];
 
     $this->fieldResolvers = [

@@ -302,7 +302,12 @@ abstract class ResolverBase implements Resolver
           $mapped[$relationType][$id] = !empty($relationData['data']) ? $relationData['data'] : [];
         }
         if (isset($relationData['relations'])) {
-          $mapped[$relationType][$id] = array_merge($mapped[$relationType][$id], $this->mapRelationResult($relationData['relations']));
+          $nestedResult = $this->mapRelationResult($relationData['relations']);
+          if (isset($mapped[$relationType][$id])) {
+            $mapped[$relationType][$id] = array_merge($mapped[$relationType][$id], $nestedResult);
+          } else {
+            $mapped[$relationType] = array_merge($mapped[$relationType], $nestedResult);
+          }
         }
       }
     }
@@ -315,7 +320,7 @@ abstract class ResolverBase implements Resolver
 
     foreach ($relations as $relation => $options) {
       $normalizedRelation = $options['alias'] ?? Utility::snakeCaseToCamelCase($relation);
-      if (!isset($this->fields[$normalizedRelation])) {
+      if (!isset($this->fields[$normalizedRelation]) && !isset($this->fields[$relation])) {
         continue;
       }
       $alias = $options['alias'] ?? $relation;
@@ -328,7 +333,8 @@ abstract class ResolverBase implements Resolver
       }
       $this->joinsUsed[$alias][] = $alias;
 
-      $relationAlias = $this->findRelationByTable($this->relations, $table);
+      $relationsToSearch = isset($this->relations[$relation]) ? $this->relations[$relation] : $this->relations;
+      $relationAlias = $this->findRelationByTable($relationsToSearch, $table);
       $localAlias = $relationAlias ? $relationAlias['alias'] : $table;
       if (!isset($this->fields[$localAlias])) {
         $localAlias = Utility::camelCaseToSnakeCase($table);
