@@ -2,13 +2,13 @@
 # nested relations are handled automatically by the resolver (currently only 2 levels deep - WIP)
 type Query {
   # Retrieves a single article by ID, optionally filtered by language and content type
-  article(id: ID!, clangId: Int, ctypeId: Int): article
+  article(id: ID!, clangId: ID, ctypeId: ID): article
 
   # Retrieves a list of articles with optional filters for language, content type, category, status, and pagination
   articles(
-    clangId: Int
-    ctypeId: Int
-    categoryId: Int
+    clangId: ID
+    ctypeId: ID
+    categoryId: ID
     status: Boolean
     where: String
     orderBy: String
@@ -32,13 +32,13 @@ type Query {
   media(id: ID!): media
 
   # Retrieves a list of media items filtered by category ID
-  medias(categoryId: Int): [media]
+  medias(categoryId: ID): [media]
 
   # Retrieves a single media category by ID
   mediaCategory(id: ID!): mediaCategory
 
   # Retrieves media categories, optionally filtered by parent ID or path
-  mediaCategories(parentId: Int, path: String): [mediaCategory]
+  mediaCategories(parentId: ID, path: String): [mediaCategory]
 
   # Retrieves a single module by ID or key
   module(id: ID, key: String): module
@@ -48,9 +48,9 @@ type Query {
 
   # Retrieves a navigation structure based on category ID, language ID, depth, and whether to nest items
   navigation(
-    categoryId: Int
-    clangId: Int
-    depth: Int
+    categoryId: ID
+    clangId: ID
+    depth: ID
     nested: Boolean
   ): [navigationItem]
 
@@ -62,7 +62,7 @@ type Query {
   slice(id: ID!): slice
 
   # Retrieves slices of an article by article ID, optionally filtered by language and content type
-  slices(articleId: ID!, clangId: Int, ctypeId: Int): [slice]
+  slices(articleId: ID!, clangId: ID, ctypeId: ID): [slice]
 
   # Retrieves system information, such as server details, version, and domain settings
   system(host: String): system!
@@ -74,10 +74,10 @@ type Query {
   templates(active: Boolean): [template]
 
   # Retrieves a single wildcard by wildcard string, language ID, and ID
-  wildcard(wildcard: String, clangId: Int, id: ID): wildcard
+  wildcard(wildcard: String, clangId: ID, id: ID): wildcard
 
   # Retrieves all wildcards, optionally filtered by language ID
-  wildcards(clangId: Int): [wildcard]
+  wildcards(clangId: ID): [wildcard]
 }
 
 type article {
@@ -87,10 +87,11 @@ type article {
   priority: Int
   catPriority: Int
   status: Boolean
-  parentId: Int
-  clangId: Int
+  parentId: ID
+  parent: article
+  clangId: ID
   language: language
-  templateId: Int
+  templateId: ID
   startarticle: Boolean
   createdate: String
   updatedate: String
@@ -136,7 +137,7 @@ type media {
 type mediaCategory {
   id: ID!
   name: String
-  parentId: Int
+  parentId: ID
   createdate: String
   updatedate: String
   medias: [media]
@@ -153,14 +154,14 @@ type module {
 type navigationItem {
   id: ID!
   name: String
-  parentId: Int
+  parentId: ID
   slug: String
   children: [navigationItem]
 }
 
 type route {
-  id: Int
-  parentId: Int
+  id: ID!
+  parentId: ID
   parent: article
   routeType: String
   urlProfile: String
@@ -168,7 +169,7 @@ type route {
   slug: String
   name: String
   description: String
-  clangId: Int
+  clangId: ID
   language: language
   startarticle: Boolean
   createdate: String
@@ -179,12 +180,12 @@ type route {
 
 type slice {
   id: ID
-  articleId: Int
+  articleId: ID
   article: article
-  moduleId: Int
+  moduleId: ID
   module: module
-  ctypeId: Int
-  clangId: Int
+  ctypeId: ID
+  clangId: ID
   language: language
   priority: Int
   status: Boolean
@@ -257,13 +258,13 @@ type system {
   serverName: String
   errorEmail: String
   version: String
-  startArticleId: Int
-  notFoundArticleId: Int
-  defaultTemplateId: Int
+  startArticleId: ID
+  notFoundArticleId: ID
+  defaultTemplateId: ID
   domainHost: String
   domainUrl: String
-  domainStartId: Int
-  domainNotfoundId: Int
+  domainStartId: ID
+  domainNotfoundId: ID
   domainLanguages: [language]
   domainDefaultLanguage: language
   startClangHidden: Boolean
@@ -284,7 +285,7 @@ type wildcard {
   id: ID!
   wildcard: String
   value: String
-  clangId: Int
+  clangId: ID
   createdate: String
   updatedate: String
 }
