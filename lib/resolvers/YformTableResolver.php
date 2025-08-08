@@ -104,6 +104,7 @@ class YformTableResolver extends ResolverBase
       $data = $item;
     }
 
+    $this->log('Yform Resolver: data: ' . json_encode($data, \JSON_PRETTY_PRINT));
     return $data;
   }
 
@@ -132,11 +133,14 @@ class YformTableResolver extends ResolverBase
 
     foreach ($this->fields as $subTypename => $field) {
       $fieldName = !is_array($field) ? $field : $subTypename;
+      $valueName = Utility::camelCaseToSnakeCase($fieldName);
+
+      $this->log('Processing field: ' . $fieldName);
 
       if (isset($this->tableFields[$fieldName])) {
         $fieldType = $this->tableFields[$fieldName]['orgType'];
 
-        if ($dataset->hasValue($fieldName)) {
+        if ($dataset->hasValue($valueName)) {
 
           switch ($fieldType) {
             case 'id':
@@ -177,7 +181,7 @@ class YformTableResolver extends ResolverBase
               }
               break;
             default:
-              $item[$fieldName] = $dataset->getValue($fieldName);
+              $item[$fieldName] = $dataset->getValue($valueName);
               break;
           }
         } else {
