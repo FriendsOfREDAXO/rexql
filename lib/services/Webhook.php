@@ -5,6 +5,7 @@ namespace FriendsOfRedaxo\RexQL;
 use rex_addon;
 use rex_addon_interface;
 use rex_article;
+use rex_clang;
 use rex_logger;
 use rex_string;
 use rex_yform_manager_table;
@@ -87,15 +88,18 @@ class Webhook
       case 'ART_UPDATED':
       case 'ART_DELETED':
       case 'ART_MOVED':
-      case 'ART_STATUS':
       case 'ART_SLICES_COPY':
       case 'CAT_ADDED':
       case 'CAT_UPDATED':
       case 'CAT_DELETED':
       case 'CAT_MOVED':
-      case 'CAT_STATUS':
         $payload['data']['table_name'] = 'rex_article';
         $payload['data']['tag'] = self::getNormalizedName($params['name']);
+        break;
+      case 'ART_STATUS':
+      case 'CAT_STATUS':
+        $payload['data']['table_name'] = 'rex_article';
+        $payload['data']['tag'] = self::getNormalizedNameById($params['id']);
         break;
       case 'SLICE_ADDED':
       case 'SLICE_UPDATE':
@@ -159,7 +163,8 @@ class Webhook
    */
   private static function getNormalizedNameById(int $id): string
   {
-    $article = rex_article::get($id);
+    $clang_id = rex_clang::getCurrentId();
+    $article = rex_article::get($id, $clang_id);
     $name = $article ? $article->getName() : 'unknown';
     return rex_string::normalize($name);
   }
