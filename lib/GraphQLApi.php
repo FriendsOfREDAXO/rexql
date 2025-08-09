@@ -135,7 +135,11 @@ class RexQL
 
     $sdl = self::loadSdlFile($schemaFilepath);
     if (!$sdl) {
-      throw new rex_api_exception('rexQL: Generator: Schema: Schema file not found!');
+      rex_dir::copy($this->addon->getPath('data'), $this->addon->getDataPath());
+      $sdl = self::loadSdlFile($schemaFilepath);
+      if (!$sdl) {
+        throw new rex_api_exception('rexQL: Generator: Schema: Could not load SDL file from ' . $schemaFilepath);
+      }
     }
     $sdl = $this->handleExtensions($sdl);
     $generatedSdl = self::loadSdlFile($schemaGeneratedFilepath);
