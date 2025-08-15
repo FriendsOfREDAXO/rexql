@@ -23,7 +23,7 @@ class Cache
   protected string $cacheDirectory = '';
   protected bool $debugMode = false;
   protected ?int $globTTL = 0; // Globally set TTL for cache items
-  protected const DEFAULT_TTL = 300; // Default TTL for cache items (in seconds)
+  protected const DEFAULT_TTL = 31557600; // Default TTL for cache items (in seconds)
 
   public function __construct(Context $context, string $namespace)
   {
