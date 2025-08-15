@@ -143,7 +143,6 @@ class Endpoint extends rex_api_function
     unset($response['apiKeyId']); // Remove apiKeyId from response
     unset($response['fromCache']); // Remove extensions from response
 
-    rex_response::cleanOutputBuffers();
     rex_response::setStatus($status);
     rex_response::sendJson($response);
     return new rex_api_result(true);
