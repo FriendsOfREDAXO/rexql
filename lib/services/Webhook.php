@@ -94,12 +94,12 @@ class Webhook
       case 'CAT_DELETED':
       case 'CAT_MOVED':
         $payload['data']['table_name'] = 'rex_article';
-        $payload['data']['tag'] = self::getNormalizedName($params['name']);
+        $payload['data']['tag'] = 'page-' . self::getNormalizedName($params['name']);
         break;
       case 'ART_STATUS':
       case 'CAT_STATUS':
         $payload['data']['table_name'] = 'rex_article';
-        $payload['data']['tag'] = self::getNormalizedNameById($params['id']);
+        $payload['data']['tag'] = 'page-' . self::getNormalizedNameById($params['id']);
         break;
       case 'SLICE_ADDED':
       case 'SLICE_UPDATE':
@@ -107,7 +107,8 @@ class Webhook
       case 'SLICE_MOVE':
       case 'SLICE_STATUS':
         $payload['data']['table_name'] = 'rex_article_slice';
-        $payload['data']['tag'] = self::getNormalizedNameById($params['article_id']);
+        // $payload['data']['tag'] = self::getNormalizedNameById($params['article_id']);
+        $payload['data']['tag'] = 'slice-' . $params['slice_id'];
         break;
       case 'YFORM_DATA_ADDED':
       case 'YFORM_DATA_UPDATED':
