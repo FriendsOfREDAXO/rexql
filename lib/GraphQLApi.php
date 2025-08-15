@@ -225,12 +225,12 @@ class RexQL
     $queryCache->setCacheKey(serialize($query . serialize($variables) . $operationName . json_encode(self::$rootResolvers)));
     $cachedResults = $queryCache->get('results', null);
     if ($cachedResults) {
-      Logger::log('rexQL: API: Cache hit for query');
+      Logger::log('rexQL: API: Cache hit for query ' . $operationName);
       $cachedResults['fromCache'] = true;
       return $cachedResults;
     }
 
-    Logger::log('rexQL: API: Executing query');
+    Logger::log('rexQL: API: Executing query: ' . $operationName);
 
     // Check query depth
     $maxDepth = $this->addon->getConfig('max_query_depth', 10);
